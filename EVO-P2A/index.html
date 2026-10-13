@@ -617,6 +617,7 @@ body.editing .sdn{cursor:grab}.sdn.dragging{cursor:grabbing;box-shadow:0 8px 20p
 <div class="toast" id="toast" hidden></div>
 
 <script>
+window.EVO_PRE={flavor:"ai",base:""};
 /* EVO P2A standalone: runs outside claude.ai.
    Replaces the claude.ai page features (shared storage, signed-in user, AI, files, downloads)
    with this browser's own storage, the AI the person picks in Settings, and plain file downloads. */
@@ -625,7 +626,8 @@ body.editing .sdn{cursor:grab}.sdn.dragging{cursor:grabbing;box-shadow:0 8px 20p
 const SKEY='evop2a.settings';
 const DEF={role:'agent',ai:{provider:'gemini',method:'api',keys:{},models:{},teamKeys:{},share:{}},admin:{token:'',publicRepo:'GrigorReverie/EVO',privateRepo:'GrigorReverie/EVO-admin',appPath:'EVO-P2A',shareLink:''},lastVersion:0,lastVersionAt:0,dismissed:0};
 function loadSet(){try{const o=JSON.parse(localStorage.getItem(SKEY)||'{}');return {...DEF,...o,ai:{...DEF.ai,...(o.ai||{}),keys:{...(o.ai&&o.ai.keys||{})},models:{...(o.ai&&o.ai.models||{})}},admin:{...DEF.admin,...(o.admin||{})}}}catch(e){return JSON.parse(JSON.stringify(DEF))}}
-const EVO=window.EVO={settings:(()=>{const x=loadSet();x.ai.method='api';if(!x.ai.provider)x.ai.provider='gemini';x.ai.teamKeys=x.ai.teamKeys||{};x.ai.share=x.ai.share||{};return x})(),saveSettings(){try{localStorage.setItem(SKEY,JSON.stringify(EVO.settings))}catch(e){}},listeners:new Set(),onChange(f){EVO.listeners.add(f)},changed(){EVO.listeners.forEach(f=>{try{f()}catch(e){}})}};
+const PRE=window.EVO_PRE||{};
+const EVO=window.EVO={FLAVOR:PRE.flavor||'ai',DATA_BASE:PRE.base||'',settings:(()=>{const x=loadSet();x.ai.method='api';if(!x.ai.provider)x.ai.provider='gemini';x.ai.teamKeys=x.ai.teamKeys||{};x.ai.share=x.ai.share||{};return x})(),saveSettings(){try{localStorage.setItem(SKEY,JSON.stringify(EVO.settings))}catch(e){}},listeners:new Set(),onChange(f){EVO.listeners.add(f)},changed(){EVO.listeners.forEach(f=>{try{f()}catch(e){}})}};
 
 /* ---------- IndexedDB ---------- */
 let idbP=null;
@@ -1928,7 +1930,7 @@ function renderPane(){$('evoAgTab').hidden=ST.role!=='admin';if(TAB==='agents'&&
  if(TAB==='agents'){EVO.renderAgents&&EVO.renderAgents(P);return}
  if(TAB==='ai'){const a=ST.ai,pv=a.provider||'gemini',PR=EVO.PROV,ad=ST.role==='admin';
   const st=k=>{const P=PR[k],own=(a.keys[P.key]||'').trim(),team=(a.teamKeys&&a.teamKeys[P.key]||'').trim();return own?'<span class="evook">Connected</span>':team?'<span class="evook">Connected · team key</span>':'<span class="mut">Not connected</span>'};
-  P.innerHTML=`<p class="mut">Pick the AI that reads the email, thinks it through and writes the analysis and solution. It runs right here in the app. Gemini is the default and has a free tier.</p>
+  P.innerHTML=`<p class="mut">${EVO.FLAVOR==='rules'?'This version works without AI: SOPs are matched and templates filled by rules. AI is only used when someone presses <b>✨ Ask AI</b>. Pick which AI that uses.':'Pick the AI that reads the email, thinks it through and writes the analysis and solution. It runs right here in the app.'} Gemini is the default and has a free tier.</p>
   <div class="evochoice">${Object.entries(PR).map(([k,p])=>`<label><input type="radio" name="evoProv" value="${k}" ${pv===k?'checked':''}><span><b>${p.name}</b><small>${k==='gemini'?'Free tier':'Pay as you go'}<br>${st(k)}</small></span></label>`).join('')}</div>
   <div class="evobox"><h4>${PR[pv].name}</h4>
    <div class="actions"><button class="btn" id="evoConn">${EVO.keyFor(pv)?'Reconnect':'Connect '+PR[pv].name}</button>${(a.keys[PR[pv].key]||'').trim()?'<button class="btn sm sec" id="evoTest">Test</button><button class="btn sm danger" id="evoDisc">Disconnect</button>':''}<span class="mut" id="evoTestMsg"></span></div>
@@ -2006,7 +2008,7 @@ window.addEventListener('focus',async()=>{if(K.hidden||!CONN||$('evoConnKey').va
 
 /* ---------- versions: version.json next to the app says which update is newest ---------- */
 let LATEST=null;
-async function checkUpdates(loud){try{const r=await fetch('version.json?t='+Date.now(),{cache:'no-store'});if(!r.ok)throw 0;LATEST=await r.json()}catch(e){LATEST=null;if(loud)toast('Could not check for updates right now.');renderBanner();return null}
+async function checkUpdates(loud){try{const r=await fetch((EVO.DATA_BASE||'')+'version.json?t='+Date.now(),{cache:'no-store'});if(!r.ok)throw 0;LATEST=await r.json()}catch(e){LATEST=null;if(loud)toast('Could not check for updates right now.');renderBanner();return null}
  if(loud)toast(LATEST.version>(ST.lastVersion||0)?'Update '+LATEST.version+' is available.':'You are up to date.');renderBanner();return LATEST}
 function renderBanner(){const parts=[];
  if(ST.role!=='admin'&&LATEST&&LATEST.version>(ST.lastVersion||0)&&ST.dismissed!==LATEST.version){
@@ -2093,7 +2095,7 @@ EVO.onChange(queueFs);setInterval(()=>writeFolder(false),30000);window.addEventL
 (async()=>{try{const h=await EVO.idb.get('kv','folder');if(h){FOLDER=h;const p=await h.queryPermission({mode:'readwrite'});FOLDER_OK=p==='granted'}}catch(e){}renderBanner()})();
 
 /* ---------- quick AI picker, bottom right of Problem2Action ---------- */
-const QA=document.createElement('div');QA.id='evoQA';QA.innerHTML='<label for="evoQAs">AI</label><select id="evoQAs" aria-label="Which AI analyzes"></select>';document.body.appendChild(QA);
+const QA=document.createElement('div');QA.id='evoQA';QA.innerHTML='<label for="evoQAs">'+(EVO.FLAVOR==='rules'?'Ask AI uses':'AI')+'</label><select id="evoQAs" aria-label="Which AI analyzes"></select>';document.body.appendChild(QA);
 const qcss=document.createElement('style');qcss.textContent=`#evoQA{position:fixed;right:14px;bottom:14px;z-index:15;display:flex;align-items:center;gap:6px;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:4px 6px 4px 12px;box-shadow:0 4px 14px rgba(0,0,0,.12);font-size:12px}
 #evoQA label{font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--mut);font-size:11px}
 #evoQA select{border:0;background:transparent;color:var(--ink);font:inherit;font-weight:600;padding:3px 4px;cursor:pointer;border-radius:12px}
@@ -2155,7 +2157,7 @@ html.evo-locked body>*:not(#evoGate):not(.toast){visibility:hidden}
 
 /* ---------- the access list ---------- */
 let ACCESS=null; // null = could not load; [] = open (nobody added yet)
-async function loadAccess(){try{const r=await fetch('agents.json?t='+Date.now(),{cache:'no-store'});if(r.status===404){ACCESS=[];LS.set('accessCache',[]);return ACCESS}if(!r.ok)throw 0;const j=await r.json();ACCESS=Array.isArray(j.agents)?j.agents:[];LS.set('accessCache',ACCESS)}catch(e){ACCESS=LS.get('accessCache',null)}return ACCESS}
+async function loadAccess(){try{const r=await fetch((EVO.DATA_BASE||'')+'agents.json?t='+Date.now(),{cache:'no-store'});if(r.status===404){ACCESS=[];LS.set('accessCache',[]);return ACCESS}if(!r.ok)throw 0;const j=await r.json();ACCESS=Array.isArray(j.agents)?j.agents:[];LS.set('accessCache',ACCESS)}catch(e){ACCESS=LS.get('accessCache',null)}return ACCESS}
 const session=()=>LS.get('session',null);
 
 /* ---------- sign-in gate ---------- */
