@@ -2074,11 +2074,16 @@ async function nameKey(n){return hex(await crypto.subtle.digest('SHA-256',new Te
 const ITER=150000;
 async function pwHash(pw,saltHex){const k=await crypto.subtle.importKey('raw',new TextEncoder().encode(String(pw)),'PBKDF2',false,['deriveBits']);
  return hex(await crypto.subtle.deriveBits({name:'PBKDF2',hash:'SHA-256',salt:unhex(saltHex),iterations:ITER},k,256))}
+async function nameKeyFromPw(pw,saltHex){const k=await crypto.subtle.importKey('raw',new TextEncoder().encode(String(pw)),'PBKDF2',false,['deriveKey']);
+ return crypto.subtle.deriveKey({name:'PBKDF2',hash:'SHA-256',salt:new TextEncoder().encode('evo-p2a-name:'+saltHex),iterations:ITER},k,{name:'AES-GCM',length:256},false,['encrypt','decrypt'])}
+async function seal(pw,saltHex,obj){const iv=crypto.getRandomValues(new Uint8Array(12)),ct=await crypto.subtle.encrypt({name:'AES-GCM',iv},await nameKeyFromPw(pw,saltHex),new TextEncoder().encode(JSON.stringify(obj)));return {iv:hex(iv),ct:hex(ct)}}
+async function unseal(pw,saltHex,box){try{const pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:unhex(box.iv)},await nameKeyFromPw(pw,saltHex),unhex(box.ct));return JSON.parse(new TextDecoder().decode(pt))}catch(e){return null}}
 const newSalt=()=>hex(crypto.getRandomValues(new Uint8Array(16)));
 function genPw(){const w='abcdefghjkmnpqrstuvwxyz',d='23456789',u='ABCDEFGHJKLMNPQRSTUVWXYZ',r=n=>crypto.getRandomValues(new Uint32Array(1))[0]%n;let s='';for(let i=0;i<4;i++)s+=w[r(w.length)];s+=u[r(u.length)];for(let i=0;i<3;i++)s+=d[r(d.length)];s+='-';for(let i=0;i<4;i++)s+=w[r(w.length)];return s}
 
 /* ---------- styles ---------- */
 const css=document.createElement('style');css.textContent=`
+html.evo-locked body>*:not(#evoGate):not(.toast){visibility:hidden}
 #evoGate{position:fixed;inset:0;z-index:100;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:16px}
 #evoGate form{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.18);padding:22px;width:min(380px,100%);display:flex;flex-direction:column;gap:10px}
 #evoGate h2{margin:0;color:var(--title)}#evoGate .brand{font-weight:800;letter-spacing:.08em;color:var(--cyan-dk);font-size:12px}
@@ -2096,7 +2101,7 @@ async function loadAccess(){try{const r=await fetch('agents.json?t='+Date.now(),
 const session=()=>LS.get('session',null);
 
 /* ---------- sign-in gate ---------- */
-function gate(msg){let g=$('evoGate');if(!g){g=document.createElement('div');g.id='evoGate';g.setAttribute('role','dialog');g.setAttribute('aria-modal','true');g.setAttribute('aria-labelledby','evoGateT');document.body.appendChild(g)}
+function gate(msg){document.documentElement.classList.add('evo-locked');let g=$('evoGate');if(!g){g=document.createElement('div');g.id='evoGate';g.setAttribute('role','dialog');g.setAttribute('aria-modal','true');g.setAttribute('aria-labelledby','evoGateT');document.body.appendChild(g)}
  g.innerHTML=`<form id="evoGateF"><span class="brand">◆ EVO P2A</span><h2 id="evoGateT">Sign in</h2><p class="mut" style="margin:0">Use the name and password your EVO P2A admin gave you.</p>
  ${msg?`<div class="warn">${esc(msg)}</div>`:''}
  <div><label class="l" for="evoGN">Name</label><input class="t" id="evoGN" autocomplete="username" required></div>
@@ -2106,21 +2111,22 @@ function gate(msg){let g=$('evoGate');if(!g){g=document.createElement('div');g.i
  $('evoGateF').onsubmit=async e=>{e.preventDefault();const n=$('evoGN').value,p=$('evoGP').value,m=$('evoGM');$('evoGB').disabled=true;m.textContent='Checking…';
   try{const A=ACCESS||await loadAccess()||[],k=await nameKey(n),a=A.find(x=>x.key===k);
    if(!a||await pwHash(p,a.salt)!==a.hash){m.textContent='Name or password is not right.';$('evoGB').disabled=false;return}
-   LS.set('session',{key:k,name:n.trim().replace(/\s+/g,' '),role:a.role==='admin'?'admin':'agent',hash:a.hash,at:Date.now()});await signedIn(true)}
+   const who=a.n?await unseal(p,a.salt,a.n):null;LS.set('session',{key:k,name:(who&&who.name)||n.trim().replace(/\s+/g,' '),title:(who&&who.title)||'',role:a.role==='admin'?'admin':'agent',hash:a.hash,at:Date.now()});await signedIn(true)}
   catch(err){m.textContent='Could not check right now. Try again.';$('evoGB').disabled=false}}}
-async function signedIn(fresh){const s=session();if(!s)return;const g=$('evoGate');if(g)g.hidden=true;
+async function signedIn(fresh){const s=session();if(!s)return;const g=$('evoGate');if(g)g.hidden=true;unlock();
  /* the name goes on this person's edits, so the admin knows whose they are */
- try{const sb=JSON.parse(localStorage.getItem('evoarch.sandbox')||'{}');if(sb.name!==s.name){sb.name=s.name;sb.title=sb.title||(s.role==='admin'?'Admin':'Agent');localStorage.setItem('evoarch.sandbox',JSON.stringify(sb))}}catch(e){}
- const lg=$('login');if(lg&&!lg.hidden){$('lgName').value=s.name;$('lgTitle').value=$('lgTitle').value||(s.role==='admin'?'Admin':'Agent');$('lgForm').requestSubmit()}
+ try{const sb=JSON.parse(localStorage.getItem('evoarch.sandbox')||'{}');if(sb.name!==s.name){sb.name=s.name;sb.title=s.title||sb.title||(s.role==='admin'?'Admin':'Agent');localStorage.setItem('evoarch.sandbox',JSON.stringify(sb))}}catch(e){}
+ const lg=$('login');if(lg&&!lg.hidden){$('lgName').value=s.name;$('lgTitle').value=s.title||$('lgTitle').value||(s.role==='admin'?'Admin':'Agent');$('lgForm').requestSubmit()}
  const want=s.role==='admin'?'admin':'agent';if(ST.role!==want){ST.role=want;EVO.saveSettings();location.reload();return}
  renderWho();if(fresh)toast('Signed in as '+s.name)}
 async function removedHere(){/* access was taken away: clear this browser's copy of the library and edits */
  try{await EVO.db.restore({items:{},learned:{},proposals:{},docs:{}})}catch(e){}try{localStorage.removeItem('evoarch.sandbox')}catch(e){}LS.del('session');ST.lastVersion=0;ST.role='agent';EVO.saveSettings()}
+function unlock(){document.documentElement.classList.remove('evo-locked');const g=$('evoGate');if(g)g.hidden=true}
 function renderWho(){const s=session();let b=$('evoWho');if(!s){b&&b.remove();return}
  if(!b){b=document.createElement('button');b.className='hbtn';b.id='evoWho';const set=$('evoSetBtn');set.parentNode.insertBefore(b,set)}
- b.textContent=s.name+' · Sign out';b.title='Signed in as '+s.name+(s.role==='admin'?' (admin)':'');b.onclick=()=>{if(!confirm('Sign out of EVO P2A on this browser?'))return;LS.del('session');location.reload()}}
+ b.innerHTML='<span aria-hidden="true">👤</span> '+esc(s.name);b.title='Signed in as '+s.name+(s.title?' · '+s.title:'')+'. Click to sign out.';b.setAttribute('aria-label',s.name+', click to sign out');b.onclick=()=>{if(!confirm('Sign out, '+s.name+'?'))return;LS.del('session');location.reload()}}
 async function start(){const A=await loadAccess(),s=session();
- if(!A||!A.length){renderWho();return}            /* nobody added yet (or offline with no saved list): open */
+ if(!A||!A.length){unlock();renderWho();return}            /* nobody added yet (or offline with no saved list): open */
  if(!s)return gate();
  const a=A.find(x=>x.key===s.key);
  if(!a){await removedHere();return gate('Your access to EVO P2A was removed. Ask the admin if this is a mistake.')}
@@ -2150,12 +2156,12 @@ EVO.renderAgents=P=>{const pub=ROSTER.length?`${ROSTER.length} ${ROSTER.length==
  $('evoAdd').onclick=async()=>{const n=$('evoAN').value.trim().replace(/\s+/g,' '),t=$('evoAT').value.trim(),p=$('evoAP').value;
   if(!n){m.textContent='Type a name.';return}if(p.length<8){m.textContent='The password needs at least 8 characters.';return}
   const k=await nameKey(n);if(ROSTER.some(a=>a.key===k)){m.textContent=n+' is already on the list. Use New password instead.';return}
-  const salt=newSalt(),now=Date.now();ROSTER.push({name:n,title:t,key:k,salt,hash:await pwHash(p,salt),role:$('evoAA').checked?'admin':'agent',addedAt:now,pwAt:now});
+  const salt=newSalt(),now=Date.now();ROSTER.push({name:n,title:t,key:k,salt,hash:await pwHash(p,salt),n:await seal(p,salt,{name:n,title:t}),role:$('evoAA').checked?'admin':'agent',addedAt:now,pwAt:now});
   ROSTER.sort((a,b)=>a.name.localeCompare(b.name));saveRoster(true);SHOWPW={name:n,pw:p};EVO.rerenderSettings()};
  if($('evoPwCopy'))$('evoPwCopy').onclick=async e=>{try{await navigator.clipboard.writeText(SHOWPW.pw);e.target.textContent='Copied'}catch(_){}};
  if($('evoPwDone'))$('evoPwDone').onclick=()=>{SHOWPW=null;EVO.rerenderSettings()};
  P.querySelectorAll('[data-pw]').forEach(b=>b.onclick=async()=>{const a=ROSTER[+b.dataset.pw];if(!confirm('Make a new password for '+a.name+'? Their old one stops working once you publish.'))return;
-  const p=genPw(),salt=newSalt();a.salt=salt;a.hash=await pwHash(p,salt);a.pwAt=Date.now();saveRoster(true);SHOWPW={name:a.name,pw:p};EVO.rerenderSettings()});
+  const p=genPw(),salt=newSalt();a.salt=salt;a.hash=await pwHash(p,salt);a.n=await seal(p,salt,{name:a.name,title:a.title||''});a.pwAt=Date.now();saveRoster(true);SHOWPW={name:a.name,pw:p};EVO.rerenderSettings()});
  P.querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{const a=ROSTER[+b.dataset.rm],me=session();
   if(!confirm('Remove '+a.name+'? Once you publish, they are signed out and the library is cleared from their browser.'+(me&&me.key===a.key?'\n\nThis is you: you will be signed out too.':'')))return;
   ROSTER.splice(+b.dataset.rm,1);saveRoster(true);EVO.rerenderSettings()});
@@ -2164,7 +2170,7 @@ async function publish(){const pm=$('evoAPM');if(ROSTER.length&&!ROSTER.some(a=>
  BUSY=true;$('evoAPub').disabled=true;pm.className='mut';pm.textContent='Publishing…';
  try{const G=EVO.gh,app=ST.admin.appPath;
   await G.putFile(ST.admin.privateRepo,app+'/agents-roster.json',JSON.stringify({source:'EVO P2A agents',savedAt:Date.now(),agents:ROSTER},null,1),'EVO P2A agents: '+ROSTER.length);
-  await G.putFile(ST.admin.publicRepo,app+'/agents.json',JSON.stringify({updatedAt:Date.now(),agents:ROSTER.map(a=>({key:a.key,salt:a.salt,hash:a.hash,role:a.role}))})+'\n','EVO P2A sign-in list');
+  await G.putFile(ST.admin.publicRepo,app+'/agents.json',JSON.stringify({updatedAt:Date.now(),agents:ROSTER.map(a=>({key:a.key,salt:a.salt,hash:a.hash,role:a.role,...(a.n?{n:a.n}:{})}))})+'\n','EVO P2A sign-in list');
   saveRoster(false);pm.className='evook';pm.textContent='Published. It reaches everyone in about a minute.';
   /* keep this browser signed in as the admin who just published */
   const me=session();if(me){const a=ROSTER.find(x=>x.key===me.key);if(a&&a.hash!==me.hash){me.hash=a.hash;LS.set('session',me)}}
@@ -2175,6 +2181,7 @@ async function loadRoster(){const pm=$('evoAPM');pm.className='mut';pm.textConte
   if(ROSTER.length&&!confirm('Replace the list in this browser with the one saved '+new Date(o.savedAt).toLocaleString()+'?'))return void(pm.textContent='');
   ROSTER=o.agents||[];saveRoster(false);EVO.rerenderSettings()}catch(e){pm.className='evobad';pm.textContent=e.message}}
 
+{const c=LS.get('accessCache',null);if(c===null||c.length){document.documentElement.classList.add('evo-locked');const g=document.createElement('div');g.id='evoGate';g.innerHTML='<p class="mut">Loading EVO P2A…</p>';document.body.appendChild(g)}}
 start();
 })();
 
