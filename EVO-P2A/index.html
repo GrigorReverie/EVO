@@ -1915,24 +1915,20 @@ function renderPane(){$('evoAgTab').hidden=ST.role!=='admin';if(TAB==='agents'&&
    <div class="evorow"><div><label class="l" for="evoPub">Public app repo</label><input class="t" id="evoPub" value="${esc(ST.admin.publicRepo)}"></div><div><label class="l" for="evoPriv">Private master repo</label><input class="t" id="evoPriv" value="${esc(ST.admin.privateRepo)}"></div></div>
    <div class="actions"><button class="btn sm sec" id="evoVerify">Check connection</button><button class="btn sm sec" id="evoLoadMaster">Load master from private repo</button><span class="mut" id="evoVerMsg"></span></div>
    <span class="mut" style="font-size:12px">Use a fine-grained token with <b>Contents: Read and write</b> on both repos (GitHub → Settings → Developer settings → Fine-grained tokens). It stays in this browser only.</span></div>
-  <div class="actions"><button class="btn sm danger" id="evoBeAgent">Switch this browser to agent</button></div>`
+  `
   :`<p class="mut">Your library comes from the <b>EVO P2A admin</b>. You can edit your own copy: open <b>Your copy</b> in the top bar to see your changes or send them to the admin.</p>
   <div class="evobox"><h4>Updates from the admin</h4><span id="evoVerLine" class="mut">Your library: update ${ST.lastVersion||0}${ST.lastVersionAt?' · '+fmtDate(ST.lastVersionAt):''}. Checking for newer…</span>
    <div class="actions"><button class="btn" id="evoImpUpd">Import update file</button><button class="btn sm sec" id="evoCheck">Check for updates</button><input type="file" id="evoUpdFile" accept=".json,application/json" hidden></div></div>
   <div class="evobox"><h4>Send your changes to the admin</h4><span class="mut" style="font-size:12px">Open <b>Your copy</b> in the top bar and press <b>Download my edits</b>, then send the file to the admin.</span><div class="actions"><button class="btn sm sec" id="evoMine">Open Your copy</button></div></div>
-  <details class="evobox"><summary class="mut">I'm the admin</summary><p class="mut" style="font-size:12px">The admin edits the master library and pushes updates. You need a GitHub token with write access to the EVO repos.</p>
-   <div class="evorow"><div><label class="l" for="evoTok">GitHub token</label><input class="t" id="evoTok" type="password" autocomplete="off" value="${esc(ST.admin.token)}" placeholder="github_pat_…"></div><div><label class="l" for="evoPriv">Private master repo</label><input class="t" id="evoPriv" value="${esc(ST.admin.privateRepo)}"></div></div>
-   <div class="actions"><button class="btn sm" id="evoBeAdmin">Check and become admin</button><span class="mut" id="evoVerMsg"></span></div></details>`;
+  `;
   const bindAdm=()=>{[['evoTok','token'],['evoShare','shareLink'],['evoPub','publicRepo'],['evoPriv','privateRepo']].forEach(([id,k])=>{if($(id))$(id).oninput=e=>{ST.admin[k]=e.target.value.trim();save()}})};bindAdm();
   if(ad){
    $('evoPush').onclick=()=>pushUpdate(true);$('evoExp').onclick=()=>pushUpdate(false);
    $('evoVerify').onclick=async()=>{const m=$('evoVerMsg');m.className='mut';m.textContent='Checking…';try{m.textContent=await verifyAdmin();m.className='evook'}catch(e){m.textContent=e.message;m.className='evobad'}};
    $('evoLoadMaster').onclick=loadMaster;
-   $('evoBeAgent').onclick=()=>{if(!confirm('Switch this browser to agent? Your master library stays saved here and in your private repo.'))return;ST.role='agent';save();location.reload()};
   }else{
    $('evoImpUpd').onclick=()=>$('evoUpdFile').click();$('evoUpdFile').onchange=e=>{const f=e.target.files[0];e.target.value='';if(f)importUpdate(f)};
    $('evoCheck').onclick=()=>checkUpdates(true);$('evoMine').onclick=()=>{M.hidden=true;$('sbBtn')&&$('sbBtn').click()};
-   $('evoBeAdmin').onclick=async()=>{const m=$('evoVerMsg');m.className='mut';m.textContent='Checking…';try{await verifyAdmin(true);ST.role='admin';save();m.textContent='You are the admin. Reloading…';m.className='evook';setTimeout(()=>location.reload(),600)}catch(e){m.textContent=e.message;m.className='evobad'}};
    checkUpdates(false).then(v=>{const l=$('evoVerLine');if(!l)return;l.textContent='Your library: update '+(ST.lastVersion||0)+(ST.lastVersionAt?' · '+fmtDate(ST.lastVersionAt):'')+'. '+(v==null?'Could not check for newer updates.':v.version>(ST.lastVersion||0)?'Update '+v.version+' is available.':'You are up to date.')})}
   return}
  if(TAB==='folder'){const ok='showDirectoryPicker' in window;
@@ -2086,6 +2082,9 @@ const css=document.createElement('style');css.textContent=`
 html.evo-locked body>*:not(#evoGate):not(.toast){visibility:hidden}
 #evoGate{position:fixed;inset:0;z-index:100;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:16px}
 #evoGate form{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.18);padding:22px;width:min(380px,100%);display:flex;flex-direction:column;gap:10px}
+#evoGate .evoadm{align-self:center;background:none;border:0;color:var(--mut);font:inherit;font-size:11px;text-decoration:underline;cursor:pointer;margin-top:6px;padding:4px}
+#evoGate .evoadm:hover{color:var(--cyan-dk)}
+#evoGate form[hidden]{display:none}
 #evoGate h2{margin:0;color:var(--title)}#evoGate .brand{font-weight:800;letter-spacing:.08em;color:var(--cyan-dk);font-size:12px}
 .evoag{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
 .evoag li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;border:1px solid var(--line);border-radius:10px;padding:8px 12px}
@@ -2106,13 +2105,29 @@ function gate(msg){document.documentElement.classList.add('evo-locked');let g=$(
  ${msg?`<div class="warn">${esc(msg)}</div>`:''}
  <div><label class="l" for="evoGN">Name</label><input class="t" id="evoGN" autocomplete="username" required></div>
  <div><label class="l" for="evoGP">Password</label><input class="t" id="evoGP" type="password" autocomplete="current-password" required></div>
- <div class="actions"><button class="btn" type="submit" id="evoGB">Sign in</button><span class="mut" id="evoGM"></span></div></form>`;
+ <div class="actions"><button class="btn" type="submit" id="evoGB">Sign in</button><span class="mut" id="evoGM"></span></div>
+ <button type="button" class="evoadm" id="evoGAdm">Admin sign in</button></form>
+ <form id="evoAdmF" hidden><span class="brand">◆ EVO P2A</span><h2>Admin sign in</h2><p class="mut" style="margin:0">Paste your GitHub token, the one with access to the EVO repos. GitHub checks it, and you get full admin access: edit the master library, push updates and manage agents.</p>
+ <div><label class="l" for="evoGT">GitHub token</label><input class="t" id="evoGT" type="password" autocomplete="off" placeholder="github_pat_…" required></div>
+ <div class="actions"><button class="btn" type="submit" id="evoGTB">Sign in as admin</button><span class="mut" id="evoGTM"></span></div>
+ <button type="button" class="evoadm" id="evoGBack">← Agent sign in</button></form>`;
  g.hidden=false;setTimeout(()=>$('evoGN').focus(),50);
+ $('evoGAdm').onclick=()=>{$('evoGateF').hidden=true;$('evoAdmF').hidden=false;$('evoGT').focus()};
+ $('evoGBack').onclick=()=>{$('evoAdmF').hidden=true;$('evoGateF').hidden=false;$('evoGN').focus()};
+ $('evoAdmF').onsubmit=async e=>{e.preventDefault();const t=$('evoGT').value.trim(),m=$('evoGTM');$('evoGTB').disabled=true;m.textContent='Checking with GitHub…';
+  try{const who=await adminCheck(t);ST.admin.token=t;EVO.saveSettings();LS.set('session',{admin:true,name:who,role:'admin',at:Date.now()});await signedIn(true)}
+  catch(err){m.textContent=err.message;$('evoGTB').disabled=false}};
  $('evoGateF').onsubmit=async e=>{e.preventDefault();const n=$('evoGN').value,p=$('evoGP').value,m=$('evoGM');$('evoGB').disabled=true;m.textContent='Checking…';
   try{const A=ACCESS||await loadAccess()||[],k=await nameKey(n),a=A.find(x=>x.key===k);
+   if(!A.length){m.textContent='No agents have been added yet. Ask your EVO P2A admin.';$('evoGB').disabled=false;return}
    if(!a||await pwHash(p,a.salt)!==a.hash){m.textContent='Name or password is not right.';$('evoGB').disabled=false;return}
    const who=a.n?await unseal(p,a.salt,a.n):null;LS.set('session',{key:k,name:(who&&who.name)||n.trim().replace(/\s+/g,' '),title:(who&&who.title)||'',role:a.role==='admin'?'admin':'agent',hash:a.hash,at:Date.now()});await signedIn(true)}
   catch(err){m.textContent='Could not check right now. Try again.';$('evoGB').disabled=false}}}
+async function gh0(t,path){const r=await fetch('https://api.github.com'+path,{headers:{'Authorization':'Bearer '+t,'Accept':'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28'}});return r}
+async function adminCheck(t){if(!t)throw new Error('Paste the token.');let r;try{r=await gh0(t,'/repos/'+ST.admin.privateRepo)}catch(e){const x=new Error('Could not reach GitHub. Check your connection.');x.net=true;throw x}
+ if(r.status===401)throw new Error('GitHub did not accept that token.');if(r.status===404||r.status===403)throw new Error('That token has no access to '+ST.admin.privateRepo+'.');if(!r.ok){const x=new Error('GitHub error '+r.status+'. Try again.');x.net=true;throw x}
+ const j=await r.json();if(!j.permissions||!j.permissions.push)throw new Error('That token cannot write to '+ST.admin.privateRepo+'.');
+ let name='Admin';try{const u=await gh0(t,'/user');if(u.ok){const uj=await u.json();name=uj.name||uj.login||name}}catch(e){}return name}
 async function signedIn(fresh){const s=session();if(!s)return;const g=$('evoGate');if(g)g.hidden=true;unlock();
  /* the name goes on this person's edits, so the admin knows whose they are */
  try{const sb=JSON.parse(localStorage.getItem('evoarch.sandbox')||'{}');if(sb.name!==s.name){sb.name=s.name;sb.title=s.title||sb.title||(s.role==='admin'?'Admin':'Agent');localStorage.setItem('evoarch.sandbox',JSON.stringify(sb))}}catch(e){}
@@ -2124,17 +2139,20 @@ async function removedHere(){/* access was taken away: clear this browser's copy
 function unlock(){document.documentElement.classList.remove('evo-locked');const g=$('evoGate');if(g)g.hidden=true}
 function renderWho(){const s=session();let b=$('evoWho');if(!s){b&&b.remove();return}
  if(!b){b=document.createElement('button');b.className='hbtn';b.id='evoWho';const set=$('evoSetBtn');set.parentNode.insertBefore(b,set)}
- b.innerHTML='<span aria-hidden="true">👤</span> '+esc(s.name);b.title='Signed in as '+s.name+(s.title?' · '+s.title:'')+'. Click to sign out.';b.setAttribute('aria-label',s.name+', click to sign out');b.onclick=()=>{if(!confirm('Sign out, '+s.name+'?'))return;LS.del('session');location.reload()}}
-async function start(){const A=await loadAccess(),s=session();
- if(!A||!A.length){unlock();renderWho();return}            /* nobody added yet (or offline with no saved list): open */
+ b.innerHTML='<span aria-hidden="true">👤</span> '+esc(s.name);b.title='Signed in as '+s.name+(s.title?' · '+s.title:'')+'. Click to sign out.';b.setAttribute('aria-label',s.name+', click to sign out');b.onclick=()=>{if(!confirm('Sign out, '+s.name+'?'+(s.admin?'\n\nYour GitHub token is removed from this browser; you will paste it again next time.':'')))return;if(s.admin){ST.admin.token='';EVO.saveSettings()}LS.del('session');location.reload()}}
+async function start(){const s=session();
  if(!s)return gate();
+ if(s.admin){/* admin: the GitHub token is checked again each time the app opens */
+  try{await adminCheck(ST.admin.token);return signedIn(false)}catch(e){if(e.net&&ST.admin.token)return signedIn(false);ST.admin.token='';EVO.saveSettings();LS.del('session');return gate('Your admin sign-in ended ('+e.message+') Sign in again.')}}
+ const A=await loadAccess();
+ if(!A)return signedIn(false);                               /* offline with no saved list: keep the last sign-in */
  const a=A.find(x=>x.key===s.key);
  if(!a){await removedHere();return gate('Your access to EVO P2A was removed. Ask the admin if this is a mistake.')}
  if(a.hash!==s.hash){LS.del('session');return gate('Your password was changed. Sign in with the new one.')}
  if((a.role==='admin'?'admin':'agent')!==s.role){s.role=a.role==='admin'?'admin':'agent';LS.set('session',s)}
  signedIn(false)}
 /* check again now and then, so a removed agent is signed out without reloading */
-setInterval(async()=>{const s=session();if(!s)return;const A=await loadAccess();if(A&&A.length&&!A.find(x=>x.key===s.key))location.reload()},10*60*1000);
+setInterval(async()=>{const s=session();if(!s||s.admin)return;const A=await loadAccess();if(A&&A.length&&!A.find(x=>x.key===s.key))location.reload()},10*60*1000);
 
 /* ---------- admin: the Agents page ---------- */
 let ROSTER=LS.get('roster',[]),DIRTY=LS.get('rosterDirty',false),SHOWPW=null,BUSY=false;
@@ -2181,7 +2199,7 @@ async function loadRoster(){const pm=$('evoAPM');pm.className='mut';pm.textConte
   if(ROSTER.length&&!confirm('Replace the list in this browser with the one saved '+new Date(o.savedAt).toLocaleString()+'?'))return void(pm.textContent='');
   ROSTER=o.agents||[];saveRoster(false);EVO.rerenderSettings()}catch(e){pm.className='evobad';pm.textContent=e.message}}
 
-{const c=LS.get('accessCache',null);if(c===null||c.length){document.documentElement.classList.add('evo-locked');const g=document.createElement('div');g.id='evoGate';g.innerHTML='<p class="mut">Loading EVO P2A…</p>';document.body.appendChild(g)}}
+{{document.documentElement.classList.add('evo-locked');const g=document.createElement('div');g.id='evoGate';g.innerHTML='<p class="mut">Loading EVO P2A…</p>';document.body.appendChild(g)}}
 start();
 })();
 
