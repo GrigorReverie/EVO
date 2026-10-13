@@ -1,5 +1,4 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
-<title>EVO P2A</title>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>EVO P2A</title><meta name="description" content="Problem2Action for the Evo member support team"><meta name="robots" content="noindex,nofollow"><link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230d1b26'/%3E%3Cpath d='M16 6l9 10-9 10-9-10z' fill='%235BC2E7'/%3E%3C/svg%3E"><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300..800&display=swap">
 <style>
@@ -683,28 +682,70 @@ const user={isOwner:()=>EVO.settings.role==='admin',canEdit:()=>true,id:async()=
 
 /* ---------- AI: ChatGPT, Gemini or Claude, by API key or through the person's own chat tab ---------- */
 const PROV={
- chatgpt:{name:'ChatGPT',key:'openai',model:'gpt-4.1-mini',chat:p=>p.length<6000?'https://chatgpt.com/?q='+encodeURIComponent(p):'https://chatgpt.com/'},
- gemini:{name:'Gemini',key:'gemini',model:'gemini-2.5-flash',chat:()=>'https://gemini.google.com/app'},
- claude:{name:'Claude',key:'anthropic',model:'claude-haiku-5-5',chat:p=>p.length<6000?'https://claude.ai/new?q='+encodeURIComponent(p):'https://claude.ai/new'}};
+ chatgpt:{name:'ChatGPT',key:'openai',model:''},
+ gemini:{name:'Gemini',key:'gemini',model:''},
+ claude:{name:'Claude',key:'anthropic',model:''}};
 EVO.PROV=PROV;
 function aiErr(code,message){const e=new Error(message);e.code=code;return e}
 function parseJSON(t){t=String(t||'').trim();const f=t.match(/```(?:json)?\s*([\s\S]*?)```/i);if(f)t=f[1].trim();
  try{return JSON.parse(t)}catch(e){}const a=t.indexOf('{'),b=t.lastIndexOf('}');if(a>=0&&b>a){try{return JSON.parse(t.slice(a,b+1))}catch(e){}}
- throw aiErr('invalid_json','The AI answer was not in the expected format. Try again, or paste the whole answer.')}
+ throw aiErr('invalid_json','The AI answer was not in the expected format. Try again.')}
 const keyFor=prov=>{const s=EVO.settings.ai,P=PROV[prov];return ((s.keys[P.key]||'').trim()||(s.teamKeys&&s.teamKeys[P.key]||'').trim())};EVO.keyFor=keyFor;
-async function callApi(prov,prompt,signal,keyOverride){const s=EVO.settings.ai,P=PROV[prov],key=(keyOverride||keyFor(prov)).trim(),model=(s.models[prov]||'').trim()||P.model;
+
+/* ---------- which model: providers rename models often, so ask them which ones this key can use ---------- */
+const ver=id=>{const m=String(id).match(/(\d+(?:\.\d+)*)/);return m?m[1].split('.').map(Number):[0]};
+const newer=(a,b)=>{const x=ver(a),y=ver(b);for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d}return 0};
+const pick=(ids,tests)=>{for(const t of tests){const c=ids.filter(id=>t.test(id));if(c.length)return c.sort((a,b)=>newer(b,a))[0]}return ''};
+async function listModels(prov,key){
+ if(prov==='gemini'){const r=await fetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=200&key='+encodeURIComponent(key));const j=await r.json();if(!r.ok)throw Object.assign(j,{_st:r.status});
+  const ids=(j.models||[]).filter(m=>(m.supportedGenerationMethods||[]).includes('generateContent')).map(m=>String(m.name).replace(/^models\//,''));
+  return pick(ids,[/^gemini-[\d.]+-flash$/,/^gemini-[\d.]+-flash-lite$/,/^gemini-[\d.]+-flash(-\d+)?$/,/^gemini-[\d.]+-pro$/,/^gemini-[\d.]+-flash/,/^gemini-/])}
+ if(prov==='chatgpt'){const r=await fetch('https://api.openai.com/v1/models',{headers:{'Authorization':'Bearer '+key}});const j=await r.json();if(!r.ok)throw Object.assign(j,{_st:r.status});
+  const bad=/audio|realtime|image|tts|transcribe|search|embedding|moderation|dall|whisper|codex|instruct|preview|vision|computer/i,ids=(j.data||[]).map(m=>m.id).filter(id=>/^(gpt|o\d)/.test(id)&&!bad.test(id)&&!/-\d{4}-\d{2}-\d{2}$/.test(id));
+  return pick(ids,[/^gpt-[\d.]+-(luna|mini)$/,/^gpt-[\d.]+-nano$/,/^gpt-[\d.]+$/,/^gpt-[\d.]+-\w+$/,/^o\d+-mini$/,/./])}
+ if(prov==='claude'){const r=await fetch('https://api.anthropic.com/v1/models?limit=100',{headers:{'x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'}});const j=await r.json();if(!r.ok)throw Object.assign(j,{_st:r.status});
+  const ids=(j.data||[]).map(m=>m.id);return pick(ids,[/haiku/,/sonnet/,/./])}
+ return ''}
+async function modelFor(prov,key,fresh){const s=EVO.settings.ai;s.autoModels=s.autoModels||{};const own=(s.models[prov]||'').trim();if(own&&!fresh)return own;
+ if(!fresh&&s.autoModels[prov])return s.autoModels[prov];
+ const m=await listModels(prov,key).catch(()=>'');if(m){s.autoModels[prov]=m;EVO.saveSettings()}return m||own||s.autoModels[prov]||''}
+EVO.modelFor=prov=>{const s=EVO.settings.ai;return (s.models[prov]||'').trim()||(s.autoModels&&s.autoModels[prov])||'picked automatically'};
+
+/* ---------- pacing: free tiers allow only a few requests a minute, so space calls out and retry once on "too many" ---------- */
+let lastCall=0;const GAP=3500;
+const wait=(ms,signal)=>new Promise((res,rej)=>{const t=setTimeout(res,ms);if(signal)signal.addEventListener('abort',()=>{clearTimeout(t);rej(Object.assign(new Error('Stopped'),{name:'AbortError'}))})});
+
+async function send(prov,key,model,prompt,signal){let r,j;
+ if(prov==='chatgpt'){
+  r=await fetch('https://api.openai.com/v1/responses',{method:'POST',signal,headers:{'Authorization':'Bearer '+key,'Content-Type':'application/json'},body:JSON.stringify({model,input:prompt,text:{format:{type:'json_object'}}})});j=await r.json().catch(()=>({}));
+  if(r.ok)return {ok:true,text:j.output_text||(j.output||[]).flatMap(o=>o.content||[]).map(c=>c.text||'').join('')};
+  if(r.status===404&&!/model/i.test(JSON.stringify(j))){/* older accounts: Chat Completions */
+   r=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',signal,headers:{'Authorization':'Bearer '+key,'Content-Type':'application/json'},body:JSON.stringify({model,messages:[{role:'user',content:prompt}],response_format:{type:'json_object'}})});j=await r.json().catch(()=>({}));
+   if(r.ok)return {ok:true,text:j.choices[0].message.content}}
+  return {ok:false,st:r.status,j,retry:r.headers.get('retry-after')}}
+ if(prov==='gemini'){r=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+encodeURIComponent(model)+':generateContent?key='+encodeURIComponent(key),{method:'POST',signal,headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{role:'user',parts:[{text:prompt}]}],generationConfig:{responseMimeType:'application/json'}})});j=await r.json().catch(()=>({}));
+  if(r.ok){const c=j.candidates&&j.candidates[0];if(!c||!c.content)return {ok:false,st:200,j:{error:{message:'Gemini returned no answer'+(c&&c.finishReason?' ('+c.finishReason+')':'')+'. Try again.'}}};return {ok:true,text:(c.content.parts||[]).map(p=>p.text||'').join('')}}
+  return {ok:false,st:r.status,j,retry:r.headers.get('retry-after')}}
+ if(prov==='claude'){r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',signal,headers:{'x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true','content-type':'application/json'},body:JSON.stringify({model,max_tokens:4096,messages:[{role:'user',content:prompt}]})});j=await r.json().catch(()=>({}));
+  if(r.ok)return {ok:true,text:(j.content||[]).map(c=>c.text||'').join('')};return {ok:false,st:r.status,j,retry:r.headers.get('retry-after')}}
+ return {ok:false,st:0,j:{}}}
+const isModelErr=res=>res.st===404||(res.st===400&&/model/i.test(JSON.stringify(res.j||{})))||(res.st===403&&/model/i.test(JSON.stringify(res.j||{})));
+
+async function callApi(prov,prompt,signal,keyOverride){const P=PROV[prov],key=(keyOverride||keyFor(prov)).trim();
  if(!key){if(EVO.connectAI)EVO.connectAI(prov);throw aiErr('not_configured',P.name+' is not connected yet. Connect it to analyze.')}
- let r,j;
  try{
- if(prov==='chatgpt'){r=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',signal,headers:{'Authorization':'Bearer '+key,'Content-Type':'application/json'},body:JSON.stringify({model,messages:[{role:'user',content:prompt}],response_format:{type:'json_object'}})});j=await r.json();if(!r.ok)throw j;return j.choices[0].message.content}
- if(prov==='gemini'){r=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+encodeURIComponent(model)+':generateContent?key='+encodeURIComponent(key),{method:'POST',signal,headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{role:'user',parts:[{text:prompt}]}],generationConfig:{responseMimeType:'application/json'}})});j=await r.json();if(!r.ok)throw j;return (j.candidates&&j.candidates[0]&&j.candidates[0].content.parts.map(p=>p.text||'').join(''))||''}
- if(prov==='claude'){r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',signal,headers:{'x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true','content-type':'application/json'},body:JSON.stringify({model,max_tokens:4096,messages:[{role:'user',content:prompt}]})});j=await r.json();if(!r.ok)throw j;return (j.content||[]).map(c=>c.text||'').join('')}
- }catch(e){if(e&&e.name==='AbortError')throw aiErr('aborted','Stopped');const st=r&&r.status,msg=(e&&(e.error&&(e.error.message||e.error)||e.message))||'';
-  if(st===401||st===403)throw aiErr('not_granted',P.name+' did not accept the API key. Check it in Settings.');
-  if(st===429)throw aiErr('rate_limited',P.name+': too many requests or no credit left. Try again in a minute.');
-  if(st===404)throw aiErr('model',P.name+' could not find the model "'+model+'". Change it in Settings.');
-  throw aiErr('provider',P.name+' error'+(st?' '+st:'')+(msg?': '+String(typeof msg==='string'?msg:JSON.stringify(msg)).slice(0,200):'. Check your connection.'))}
- throw aiErr('not_configured','Pick an AI in Settings.')}
+  let model=await modelFor(prov,key,false);if(!model)throw aiErr('model','Could not find a '+P.name+' model this key can use. Check the key, or type a model name in Settings → AI.');
+  const gap=GAP-(Date.now()-lastCall);if(gap>0)await wait(gap,signal);lastCall=Date.now();
+  let res=await send(prov,key,model,prompt,signal);
+  if(!res.ok&&isModelErr(res)&&!(EVO.settings.ai.models[prov]||'').trim()){const m2=await modelFor(prov,key,true);if(m2&&m2!==model){model=m2;res=await send(prov,key,model,prompt,signal)}}
+  if(!res.ok&&res.st===429){await wait(Math.min(20,Number(res.retry)||8)*1000,signal);lastCall=Date.now();res=await send(prov,key,model,prompt,signal)}
+  if(res.ok)return res.text;
+  const st=res.st,e=res.j||{},msg=(e.error&&(e.error.message||e.error))||e.message||'';
+  if(st===401||(st===403&&!/model/i.test(String(msg)))||(st===400&&/api key|API_KEY/i.test(String(msg))))throw aiErr('not_granted',P.name+' did not accept the key. Reconnect it in Settings → AI.');
+  if(st===429)throw aiErr('rate_limited',P.name+' says too many requests (or no credit left). Wait a minute and try again.');
+  if(isModelErr(res))throw aiErr('model',P.name+' could not use the model "'+model+'". Clear or change it in Settings → AI.');
+  throw aiErr('provider',P.name+' error'+(st?' '+st:'')+(msg?': '+String(typeof msg==='string'?msg:JSON.stringify(msg)).slice(0,200):'.'))}
+ catch(e){if(e&&e.name==='AbortError')throw aiErr('aborted','Stopped');if(e&&e.code)throw e;throw aiErr('network','Could not reach '+P.name+'. Check your connection and try again.')}}
 const JSON_TAIL='\n\nReply with only the JSON object described above. No markdown, no code fences, no text before or after it.';
 const sample={async json(prompt,opts){opts=opts||{};const s=EVO.settings.ai;
   if(!s.provider||!PROV[s.provider]){if(EVO.openSettings)EVO.openSettings('ai');throw aiErr('not_configured','Pick ChatGPT, Gemini or Claude in Settings to use AI.')}
@@ -1859,7 +1900,6 @@ const css=document.createElement('style');css.textContent=`
 .evobox h4{margin:0;font-size:13px;color:var(--title)}
 .evook{color:var(--ok);font-weight:600}.evobad{color:var(--bad);font-weight:600}
 .evosteps{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
-#evoChatAns{min-height:140px;font:12.5px/1.45 var(--mono)}
 `;document.head.appendChild(css);
 
 /* ---------- header button, banner ---------- */
@@ -1892,7 +1932,7 @@ function renderPane(){$('evoAgTab').hidden=ST.role!=='admin';if(TAB==='agents'&&
   <div class="evochoice">${Object.entries(PR).map(([k,p])=>`<label><input type="radio" name="evoProv" value="${k}" ${pv===k?'checked':''}><span><b>${p.name}</b><small>${k==='gemini'?'Free tier':'Pay as you go'}<br>${st(k)}</small></span></label>`).join('')}</div>
   <div class="evobox"><h4>${PR[pv].name}</h4>
    <div class="actions"><button class="btn" id="evoConn">${EVO.keyFor(pv)?'Reconnect':'Connect '+PR[pv].name}</button>${(a.keys[PR[pv].key]||'').trim()?'<button class="btn sm sec" id="evoTest">Test</button><button class="btn sm danger" id="evoDisc">Disconnect</button>':''}<span class="mut" id="evoTestMsg"></span></div>
-   <details><summary class="mut" style="font-size:12px">Model</summary><input class="t" id="evoModel" value="${esc(a.models[pv]||'')}" placeholder="${esc(PR[pv].model)}" style="margin-top:6px"><span class="mut" style="font-size:12px">Leave empty for ${esc(PR[pv].model)}.</span></details>
+   <details><summary class="mut" style="font-size:12px">Model</summary><input class="t" id="evoModel" value="${esc(a.models[pv]||'')}" placeholder="Automatic" style="margin-top:6px"><span class="mut" style="font-size:12px">Using: ${esc(EVO.modelFor(pv))}. Leave empty and the app picks the best fast model your key can use.</span></details>
    ${ad&&(a.keys[PR[pv].key]||'').trim()?`<label class="mut"><input type="checkbox" id="evoShareKey" ${a.share&&a.share[PR[pv].key]?'checked':''}> Share this ${PR[pv].name} key with all agents (sent in your update file, so agents can analyze without their own key; usage counts on your key)</label>`:''}
   </div>
   <span class="mut" style="font-size:12px">Keys stay in this browser. A shared team key reaches agents inside the update file.</span>`;
@@ -1963,25 +2003,6 @@ $('evoConnGo').onclick=()=>window.open(KEYPAGE[CONN][0],'_blank','noopener');
 $('evoConnUse').onclick=()=>tryKey($('evoConnKey').value.trim());$('evoConnKey').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();$('evoConnUse').click()}};
 $('evoConnX').onclick=()=>{K.hidden=true};
 window.addEventListener('focus',async()=>{if(K.hidden||!CONN||$('evoConnKey').value)return;try{const t=await navigator.clipboard.readText(),mm=String(t||'').match(KEYPAGE[CONN][2]);if(mm){$('evoConnKey').value=mm[0];tryKey(mm[0])}}catch(e){}});
-
-/* ---------- AI through the person's own chat tab ---------- */
-const C=document.createElement('div');C.className='modal';C.id='evoChat';C.hidden=true;C.setAttribute('role','dialog');C.setAttribute('aria-modal','true');C.setAttribute('aria-labelledby','evoChatT');
-C.innerHTML=`<div class="mbox" style="width:min(640px,100%)"><div class="mhead"><h2 id="evoChatT" class="ptitle">Ask</h2><span class="mact"><button class="btn sm sec" id="evoChatX">Cancel</button></span></div>
-<ol class="evosteps"><li><button class="btn" id="evoChatGo">Copy request and open</button> <span class="mut" id="evoChatCp"></span></li><li id="evoChatHow">Send it there (paste with Ctrl+V / Cmd+V if it is not already typed in).</li><li>Copy the whole answer and paste it below.</li></ol>
-<textarea class="t" id="evoChatAns" placeholder="Paste the whole answer here"></textarea><div class="actions"><button class="btn" id="evoChatUse">Use this answer</button><button class="btn sm sec" id="evoChatCopy">Copy request again</button><span class="mut" id="evoChatMsg"></span></div></div>`;
-document.body.appendChild(C);
-let pending=null;
-async function copyText(t){try{await navigator.clipboard.writeText(t);return true}catch(e){const a=document.createElement('textarea');a.value=t;document.body.appendChild(a);a.select();let ok=false;try{ok=document.execCommand('copy')}catch(_){}a.remove();return ok}}
-EVO.askChat=(prov,prompt,signal)=>new Promise((resolve,reject)=>{const P=EVO.PROV[prov];
- if(pending){const e=new Error('Replaced by a newer request');e.code='aborted';pending.reject(e)}
- pending={resolve,reject,prompt};$('evoChatT').textContent='Ask '+P.name;$('evoChatGo').textContent='Copy request and open '+P.name;$('evoChatAns').value='';$('evoChatMsg').textContent='';$('evoChatCp').textContent='';
- $('evoChatHow').textContent=prov==='gemini'?'Paste it into Gemini (Ctrl+V / Cmd+V) and send.':'Send it there. If the box is empty, paste with Ctrl+V / Cmd+V.';
- C.hidden=false;
- if(signal)signal.addEventListener('abort',()=>{if(pending&&pending.reject===reject){pending=null;C.hidden=true;const e=new Error('Stopped');e.code='aborted';reject(e)}});
- $('evoChatGo').onclick=async()=>{const ok=await copyText(prompt);$('evoChatCp').textContent=ok?'Copied.':'Copy did not work. Use "Copy request again".';window.open(P.chat(prompt),'_blank','noopener');setTimeout(()=>$('evoChatAns').focus(),400)};
- $('evoChatCopy').onclick=async()=>{$('evoChatMsg').textContent=(await copyText(prompt))?'Copied':'Could not copy'};
- $('evoChatUse').onclick=()=>{const t=$('evoChatAns').value.trim();if(!t){$('evoChatMsg').textContent='Paste the answer first.';return}const p=pending;pending=null;C.hidden=true;p&&p.resolve(t)};
- $('evoChatX').onclick=()=>{const p=pending;pending=null;C.hidden=true;const e=new Error('Cancelled');e.code='aborted';p&&p.reject(e)}});
 
 /* ---------- versions: version.json next to the app says which update is newest ---------- */
 let LATEST=null;

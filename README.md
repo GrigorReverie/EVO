@@ -7,7 +7,13 @@ Tools for the Evo member support team. Live at **https://grigorreverie.github.io
 | EVO P2A | `EVO-P2A/` | https://grigorreverie.github.io/EVO/EVO-P2A/ |
 
 ## EVO P2A
-- Runs fully in the browser. Each agent's library and edits are kept in their own browser (and optionally a folder on their computer).
-- The admin keeps the master library in a separate **private** repo and pushes updates from the app (Settings → Library & updates). `EVO-P2A/version.json` only says which update is newest; it holds no content.
-- AI: each person picks ChatGPT, Gemini or Claude in Settings, using an API key (kept in their browser only) or their own chat account.
-- No SOP content or internal links are stored in this public repo.
+- **Sign in first.** Agents sign in with the name and password the admin gave them (Settings → Agents). The admin uses **Admin sign in** with a GitHub token that can write to the private `EVO-admin` repo.
+- **AI runs inside the app.** Gemini is the default (free tier). Agents can connect ChatGPT or Claude with their own key; the admin can share a team key through the update file. The app picks a current model automatically.
+- **Library.** The admin keeps the master in the private `EVO-admin` repo and pushes updates from the app (Settings → Library & updates). Agents get a notice, import the update file, and can send their own edits back for review.
+
+## Files in this repo
+- `EVO-P2A/index.html`: the app (built from the claude.ai version; no SOP content or internal links).
+- `EVO-P2A/version.json`: which library update is newest. Written by the admin's **Push update** button.
+- `EVO-P2A/agents.json`: the sign-in list. Only scrambled values; no names or passwords. Written by **Publish sign-in list**.
+
+Don't edit `version.json` or `agents.json` by hand; the app manages them.
