@@ -1874,7 +1874,7 @@ renderRole();
 /* ---------- settings modal ---------- */
 const M=document.createElement('div');M.className='modal';M.id='evoSet';M.hidden=true;M.setAttribute('role','dialog');M.setAttribute('aria-modal','true');M.setAttribute('aria-labelledby','evoSetT');
 M.innerHTML=`<div class="mbox evoset"><div class="mhead"><h2 id="evoSetT" class="ptitle">Settings</h2><span class="mact"><button class="btn sm sec" id="evoSetClose">Close</button></span></div>
-<div class="evotabs" role="tablist"><button role="tab" data-et="ai">AI</button><button role="tab" data-et="sync">Library &amp; updates</button><button role="tab" data-et="folder">Save to folder</button></div><div id="evoPane" class="evopane"></div></div>`;
+<div class="evotabs" role="tablist"><button role="tab" data-et="ai">AI</button><button role="tab" data-et="sync">Library &amp; updates</button><button role="tab" data-et="folder">Save to folder</button><button role="tab" data-et="agents" id="evoAgTab">Agents</button></div><div id="evoPane" class="evopane"></div></div>`;
 document.body.appendChild(M);
 let TAB='ai';
 EVO.openSettings=t=>{if(t)TAB=t;M.hidden=false;renderPane()};
@@ -1884,7 +1884,8 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!M.hidden)M.hidden=
 M.querySelectorAll('[data-et]').forEach(b=>b.onclick=()=>{TAB=b.dataset.et;renderPane()});
 
 const KEYHELP={chatgpt:['OpenAI','https://platform.openai.com/api-keys','Pay as you go, separate from ChatGPT Plus.'],gemini:['Google AI Studio','https://aistudio.google.com/apikey','Has a free tier.'],claude:['Anthropic Console','https://console.anthropic.com/settings/keys','Pay as you go, separate from a Claude subscription.']};
-function renderPane(){M.querySelectorAll('[data-et]').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.et===TAB)));const P=$('evoPane');
+function renderPane(){$('evoAgTab').hidden=ST.role!=='admin';if(TAB==='agents'&&ST.role!=='admin')TAB='ai';M.querySelectorAll('[data-et]').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.et===TAB)));const P=$('evoPane');
+ if(TAB==='agents'){EVO.renderAgents&&EVO.renderAgents(P);return}
  if(TAB==='ai'){const a=ST.ai,pv=a.provider,PR=EVO.PROV;
   P.innerHTML=`<p class="mut">Pick the AI that reads emails and writes the analysis. Your keys stay in this browser only.</p>
   <label class="l">AI</label><div class="evochoice">${Object.entries(PR).map(([k,p])=>`<label><input type="radio" name="evoProv" value="${k}" ${pv===k?'checked':''}><span><b>${p.name}</b><small>${k==='gemini'?'Free API key available':k==='chatgpt'?'OpenAI':'Anthropic'}</small></span></label>`).join('')}</div>
@@ -2001,6 +2002,7 @@ async function gh(path,opt){const t=ST.admin.token;if(!t)throw new Error('Add yo
  return opt.raw?r.text():r.json()}
 async function getSha(repo,path){const o=await gh('/repos/'+repo+'/contents/'+path,{allow404:true});return o&&o.sha||null}
 async function putFile(repo,path,text,msg){const sha=await getSha(repo,path);return gh('/repos/'+repo+'/contents/'+path,{method:'PUT',body:JSON.stringify({message:msg,content:enc64(text),...(sha?{sha}:{})})})}
+EVO.gh={gh,putFile,b64,unb64};EVO.rerenderSettings=()=>{if(!M.hidden)renderPane()};
 async function verifyAdmin(onlyPrivate){const pv=await gh('/repos/'+ST.admin.privateRepo);if(!pv.permissions||!pv.permissions.push)throw new Error('The token cannot write to '+ST.admin.privateRepo+'.');
  if(!pv.private)throw new Error(ST.admin.privateRepo+' is public. The master library repo should be private.');
  if(onlyPrivate)return 'OK';const pb=await gh('/repos/'+ST.admin.publicRepo);if(!pb.permissions||!pb.permissions.push)throw new Error('The token cannot write to '+ST.admin.publicRepo+'.');
@@ -2054,6 +2056,126 @@ EVO.onChange(queueFs);setInterval(()=>writeFolder(false),30000);window.addEventL
 /* ---------- start ---------- */
 checkUpdates(false);setInterval(()=>checkUpdates(false),15*60*1000);
 if(!ST.ai.provider)setTimeout(()=>{if(!ST.ai.provider&&!localStorage.getItem('evop2a.aiAsked')){localStorage.setItem('evop2a.aiAsked','1');EVO.openSettings('ai')}},1500);
+})();
+
+/* EVO P2A standalone: agent sign-in and the admin's Agents page.
+   The public access list (agents.json, next to the app) holds no names or passwords: only a hash of
+   each name and a salted, slow hash of each password. The admin's full list with names lives in this
+   browser and in the private repo. This is a sign-in gate for a static site, not server security. */
+(function(){
+'use strict';
+const EVO=window.EVO,ST=EVO.settings,$=id=>document.getElementById(id),esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const toast=m=>{if(typeof window.toast==='function')window.toast(m)};
+const LS={get(k,d){try{const v=localStorage.getItem('evop2a.'+k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem('evop2a.'+k,JSON.stringify(v))}catch(e){}},del(k){try{localStorage.removeItem('evop2a.'+k)}catch(e){}}};
+const hex=b=>[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('');
+const unhex=h=>new Uint8Array((h.match(/../g)||[]).map(x=>parseInt(x,16)));
+const norm=n=>String(n||'').trim().replace(/\s+/g,' ').toLowerCase();
+async function nameKey(n){return hex(await crypto.subtle.digest('SHA-256',new TextEncoder().encode('evo-p2a-agent:'+norm(n))))}
+const ITER=150000;
+async function pwHash(pw,saltHex){const k=await crypto.subtle.importKey('raw',new TextEncoder().encode(String(pw)),'PBKDF2',false,['deriveBits']);
+ return hex(await crypto.subtle.deriveBits({name:'PBKDF2',hash:'SHA-256',salt:unhex(saltHex),iterations:ITER},k,256))}
+const newSalt=()=>hex(crypto.getRandomValues(new Uint8Array(16)));
+function genPw(){const w='abcdefghjkmnpqrstuvwxyz',d='23456789',u='ABCDEFGHJKLMNPQRSTUVWXYZ',r=n=>crypto.getRandomValues(new Uint32Array(1))[0]%n;let s='';for(let i=0;i<4;i++)s+=w[r(w.length)];s+=u[r(u.length)];for(let i=0;i<3;i++)s+=d[r(d.length)];s+='-';for(let i=0;i<4;i++)s+=w[r(w.length)];return s}
+
+/* ---------- styles ---------- */
+const css=document.createElement('style');css.textContent=`
+#evoGate{position:fixed;inset:0;z-index:100;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:16px}
+#evoGate form{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.18);padding:22px;width:min(380px,100%);display:flex;flex-direction:column;gap:10px}
+#evoGate h2{margin:0;color:var(--title)}#evoGate .brand{font-weight:800;letter-spacing:.08em;color:var(--cyan-dk);font-size:12px}
+.evoag{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.evoag li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;border:1px solid var(--line);border-radius:10px;padding:8px 12px}
+.evoag .nm{font-weight:700;color:var(--title)}.evoag .sub{font-size:12px;color:var(--mut)}.evoag .ac{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.evoag .role{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--cyan-dk);margin-left:6px}
+.evopw{font:600 15px/1.2 var(--mono);background:var(--accbg);border:1px dashed var(--cyan);border-radius:8px;padding:8px 10px;user-select:all}
+.evodirty{color:var(--warn);font-weight:600}
+`;document.head.appendChild(css);
+
+/* ---------- the access list ---------- */
+let ACCESS=null; // null = could not load; [] = open (nobody added yet)
+async function loadAccess(){try{const r=await fetch('agents.json?t='+Date.now(),{cache:'no-store'});if(r.status===404){ACCESS=[];LS.set('accessCache',[]);return ACCESS}if(!r.ok)throw 0;const j=await r.json();ACCESS=Array.isArray(j.agents)?j.agents:[];LS.set('accessCache',ACCESS)}catch(e){ACCESS=LS.get('accessCache',null)}return ACCESS}
+const session=()=>LS.get('session',null);
+
+/* ---------- sign-in gate ---------- */
+function gate(msg){let g=$('evoGate');if(!g){g=document.createElement('div');g.id='evoGate';g.setAttribute('role','dialog');g.setAttribute('aria-modal','true');g.setAttribute('aria-labelledby','evoGateT');document.body.appendChild(g)}
+ g.innerHTML=`<form id="evoGateF"><span class="brand">◆ EVO P2A</span><h2 id="evoGateT">Sign in</h2><p class="mut" style="margin:0">Use the name and password your EVO P2A admin gave you.</p>
+ ${msg?`<div class="warn">${esc(msg)}</div>`:''}
+ <div><label class="l" for="evoGN">Name</label><input class="t" id="evoGN" autocomplete="username" required></div>
+ <div><label class="l" for="evoGP">Password</label><input class="t" id="evoGP" type="password" autocomplete="current-password" required></div>
+ <div class="actions"><button class="btn" type="submit" id="evoGB">Sign in</button><span class="mut" id="evoGM"></span></div></form>`;
+ g.hidden=false;setTimeout(()=>$('evoGN').focus(),50);
+ $('evoGateF').onsubmit=async e=>{e.preventDefault();const n=$('evoGN').value,p=$('evoGP').value,m=$('evoGM');$('evoGB').disabled=true;m.textContent='Checking…';
+  try{const A=ACCESS||await loadAccess()||[],k=await nameKey(n),a=A.find(x=>x.key===k);
+   if(!a||await pwHash(p,a.salt)!==a.hash){m.textContent='Name or password is not right.';$('evoGB').disabled=false;return}
+   LS.set('session',{key:k,name:n.trim().replace(/\s+/g,' '),role:a.role==='admin'?'admin':'agent',hash:a.hash,at:Date.now()});await signedIn(true)}
+  catch(err){m.textContent='Could not check right now. Try again.';$('evoGB').disabled=false}}}
+async function signedIn(fresh){const s=session();if(!s)return;const g=$('evoGate');if(g)g.hidden=true;
+ /* the name goes on this person's edits, so the admin knows whose they are */
+ try{const sb=JSON.parse(localStorage.getItem('evoarch.sandbox')||'{}');if(sb.name!==s.name){sb.name=s.name;sb.title=sb.title||(s.role==='admin'?'Admin':'Agent');localStorage.setItem('evoarch.sandbox',JSON.stringify(sb))}}catch(e){}
+ const lg=$('login');if(lg&&!lg.hidden){$('lgName').value=s.name;$('lgTitle').value=$('lgTitle').value||(s.role==='admin'?'Admin':'Agent');$('lgForm').requestSubmit()}
+ const want=s.role==='admin'?'admin':'agent';if(ST.role!==want){ST.role=want;EVO.saveSettings();location.reload();return}
+ renderWho();if(fresh)toast('Signed in as '+s.name)}
+async function removedHere(){/* access was taken away: clear this browser's copy of the library and edits */
+ try{await EVO.db.restore({items:{},learned:{},proposals:{},docs:{}})}catch(e){}try{localStorage.removeItem('evoarch.sandbox')}catch(e){}LS.del('session');ST.lastVersion=0;ST.role='agent';EVO.saveSettings()}
+function renderWho(){const s=session();let b=$('evoWho');if(!s){b&&b.remove();return}
+ if(!b){b=document.createElement('button');b.className='hbtn';b.id='evoWho';const set=$('evoSetBtn');set.parentNode.insertBefore(b,set)}
+ b.textContent=s.name+' · Sign out';b.title='Signed in as '+s.name+(s.role==='admin'?' (admin)':'');b.onclick=()=>{if(!confirm('Sign out of EVO P2A on this browser?'))return;LS.del('session');location.reload()}}
+async function start(){const A=await loadAccess(),s=session();
+ if(!A||!A.length){renderWho();return}            /* nobody added yet (or offline with no saved list): open */
+ if(!s)return gate();
+ const a=A.find(x=>x.key===s.key);
+ if(!a){await removedHere();return gate('Your access to EVO P2A was removed. Ask the admin if this is a mistake.')}
+ if(a.hash!==s.hash){LS.del('session');return gate('Your password was changed. Sign in with the new one.')}
+ if((a.role==='admin'?'admin':'agent')!==s.role){s.role=a.role==='admin'?'admin':'agent';LS.set('session',s)}
+ signedIn(false)}
+/* check again now and then, so a removed agent is signed out without reloading */
+setInterval(async()=>{const s=session();if(!s)return;const A=await loadAccess();if(A&&A.length&&!A.find(x=>x.key===s.key))location.reload()},10*60*1000);
+
+/* ---------- admin: the Agents page ---------- */
+let ROSTER=LS.get('roster',[]),DIRTY=LS.get('rosterDirty',false),SHOWPW=null,BUSY=false;
+const saveRoster=d=>{LS.set('roster',ROSTER);if(d!==undefined){DIRTY=d;LS.set('rosterDirty',d)}};
+EVO.renderAgents=P=>{const pub=ROSTER.length?`${ROSTER.length} ${ROSTER.length===1?'person':'people'}`:'nobody yet';const admins=ROSTER.filter(a=>a.role==='admin').length;
+ P.innerHTML=`<p class="mut">Add the agents who can sign in to EVO P2A, with a name and a password. Removing someone signs them out and clears the library from their browser the next time their app checks (on opening, or within 10 minutes).</p>
+ ${SHOWPW?`<div class="evobox"><h4>Password for ${esc(SHOWPW.name)}</h4><span class="mut" style="font-size:12px">Copy it now and give it to them privately. It is not stored anywhere and can't be shown again; you can always set a new one.</span><div class="evopw">${esc(SHOWPW.pw)}</div><div class="actions"><button class="btn sm sec" id="evoPwCopy">Copy</button><button class="btn sm sec" id="evoPwDone">Done</button></div></div>`:''}
+ <div class="evobox"><h4>Add an agent</h4><div class="evorow"><div><label class="l" for="evoAN">Name</label><input class="t" id="evoAN" placeholder="e.g. Sam Lee" autocomplete="off"></div><div><label class="l" for="evoAT">Title (optional)</label><input class="t" id="evoAT" placeholder="e.g. Member Services Agent" autocomplete="off"></div></div>
+  <div class="evorow"><div><label class="l" for="evoAP">Password</label><div class="tplpick"><input class="t" id="evoAP" autocomplete="new-password" placeholder="At least 8 characters"><button class="btn sm sec" id="evoAG" type="button">Make one</button></div></div><div style="display:flex;align-items:flex-end"><label class="mut"><input type="checkbox" id="evoAA"> Admin (can push updates and manage agents)</label></div></div>
+  <div class="actions"><button class="btn" id="evoAdd">Add</button><span class="mut" id="evoAM"></span></div></div>
+ <div class="evobox"><h4>People who can sign in · ${esc(pub)}</h4>
+  <ul class="evoag">${ROSTER.map((a,i)=>`<li><div><span class="nm">${esc(a.name)}</span>${a.role==='admin'?'<span class="role">Admin</span>':''}<div class="sub">${esc(a.title||'')}${a.title?' · ':''}added ${new Date(a.addedAt).toLocaleDateString()}${a.pwAt&&a.pwAt!==a.addedAt?' · password changed '+new Date(a.pwAt).toLocaleDateString():''}</div></div>
+   <div class="ac"><button class="btn sm sec" data-pw="${i}">New password</button><button class="btn sm danger" data-rm="${i}">Remove</button></div></li>`).join('')||'<li class="mut" style="display:block;border-style:dashed">Nobody yet. Until you add someone and publish, anyone with the link can use the app. Add yourself as Admin first.</li>'}</ul>
+  ${ROSTER.length&&!admins?'<div class="warn">Add yourself as Admin before publishing, or you will be locked out of the admin tools.</div>':''}
+  <div class="actions"><button class="btn" id="evoAPub" ${BUSY?'disabled':''}>Publish sign-in list</button><button class="btn sm sec" id="evoALoad">Load list from private repo</button><span id="evoAPM" class="${DIRTY?'evodirty':'mut'}">${DIRTY?'Changes not published yet. Nothing changes for agents until you publish.':'Published.'}</span></div>
+  <span class="mut" style="font-size:12px">Publishing writes the names (with titles) to your private repo and a sign-in list with no names or passwords in it to the public app. It takes about a minute to reach everyone.</span></div>`;
+ const m=$('evoAM');
+ $('evoAG').onclick=()=>{$('evoAP').value=genPw()};
+ $('evoAdd').onclick=async()=>{const n=$('evoAN').value.trim().replace(/\s+/g,' '),t=$('evoAT').value.trim(),p=$('evoAP').value;
+  if(!n){m.textContent='Type a name.';return}if(p.length<8){m.textContent='The password needs at least 8 characters.';return}
+  const k=await nameKey(n);if(ROSTER.some(a=>a.key===k)){m.textContent=n+' is already on the list. Use New password instead.';return}
+  const salt=newSalt(),now=Date.now();ROSTER.push({name:n,title:t,key:k,salt,hash:await pwHash(p,salt),role:$('evoAA').checked?'admin':'agent',addedAt:now,pwAt:now});
+  ROSTER.sort((a,b)=>a.name.localeCompare(b.name));saveRoster(true);SHOWPW={name:n,pw:p};EVO.rerenderSettings()};
+ if($('evoPwCopy'))$('evoPwCopy').onclick=async e=>{try{await navigator.clipboard.writeText(SHOWPW.pw);e.target.textContent='Copied'}catch(_){}};
+ if($('evoPwDone'))$('evoPwDone').onclick=()=>{SHOWPW=null;EVO.rerenderSettings()};
+ P.querySelectorAll('[data-pw]').forEach(b=>b.onclick=async()=>{const a=ROSTER[+b.dataset.pw];if(!confirm('Make a new password for '+a.name+'? Their old one stops working once you publish.'))return;
+  const p=genPw(),salt=newSalt();a.salt=salt;a.hash=await pwHash(p,salt);a.pwAt=Date.now();saveRoster(true);SHOWPW={name:a.name,pw:p};EVO.rerenderSettings()});
+ P.querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{const a=ROSTER[+b.dataset.rm],me=session();
+  if(!confirm('Remove '+a.name+'? Once you publish, they are signed out and the library is cleared from their browser.'+(me&&me.key===a.key?'\n\nThis is you: you will be signed out too.':'')))return;
+  ROSTER.splice(+b.dataset.rm,1);saveRoster(true);EVO.rerenderSettings()});
+ $('evoAPub').onclick=publish;$('evoALoad').onclick=loadRoster};
+async function publish(){const pm=$('evoAPM');if(ROSTER.length&&!ROSTER.some(a=>a.role==='admin')){pm.className='evobad';pm.textContent='Add at least one Admin first.';return}
+ BUSY=true;$('evoAPub').disabled=true;pm.className='mut';pm.textContent='Publishing…';
+ try{const G=EVO.gh,app=ST.admin.appPath;
+  await G.putFile(ST.admin.privateRepo,app+'/agents-roster.json',JSON.stringify({source:'EVO P2A agents',savedAt:Date.now(),agents:ROSTER},null,1),'EVO P2A agents: '+ROSTER.length);
+  await G.putFile(ST.admin.publicRepo,app+'/agents.json',JSON.stringify({updatedAt:Date.now(),agents:ROSTER.map(a=>({key:a.key,salt:a.salt,hash:a.hash,role:a.role}))})+'\n','EVO P2A sign-in list');
+  saveRoster(false);pm.className='evook';pm.textContent='Published. It reaches everyone in about a minute.';
+  /* keep this browser signed in as the admin who just published */
+  const me=session();if(me){const a=ROSTER.find(x=>x.key===me.key);if(a&&a.hash!==me.hash){me.hash=a.hash;LS.set('session',me)}}
+ }catch(e){pm.className='evobad';pm.textContent=e.message+(ST.admin.token?'':' Add your GitHub token in Library & updates.')}
+ finally{BUSY=false;const b=$('evoAPub');if(b)b.disabled=false}}
+async function loadRoster(){const pm=$('evoAPM');pm.className='mut';pm.textContent='Loading…';
+ try{const raw=await EVO.gh.gh('/repos/'+ST.admin.privateRepo+'/contents/'+ST.admin.appPath+'/agents-roster.json',{raw:true});const o=JSON.parse(raw);if(o.source!=='EVO P2A agents')throw new Error('That is not an EVO P2A agents list.');
+  if(ROSTER.length&&!confirm('Replace the list in this browser with the one saved '+new Date(o.savedAt).toLocaleString()+'?'))return void(pm.textContent='');
+  ROSTER=o.agents||[];saveRoster(false);EVO.rerenderSettings()}catch(e){pm.className='evobad';pm.textContent=e.message}}
+
+start();
 })();
 
 </script>
