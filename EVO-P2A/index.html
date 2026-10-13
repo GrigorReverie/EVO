@@ -624,9 +624,9 @@ body.editing .sdn{cursor:grab}.sdn.dragging{cursor:grabbing;box-shadow:0 8px 20p
 (function(){
 'use strict';
 const SKEY='evop2a.settings';
-const DEF={role:'agent',ai:{provider:'',method:'chat',keys:{},models:{}},admin:{token:'',publicRepo:'GrigorReverie/EVO',privateRepo:'GrigorReverie/EVO-admin',appPath:'EVO-P2A',shareLink:''},lastVersion:0,lastVersionAt:0,dismissed:0};
+const DEF={role:'agent',ai:{provider:'gemini',method:'api',keys:{},models:{},teamKeys:{},share:{}},admin:{token:'',publicRepo:'GrigorReverie/EVO',privateRepo:'GrigorReverie/EVO-admin',appPath:'EVO-P2A',shareLink:''},lastVersion:0,lastVersionAt:0,dismissed:0};
 function loadSet(){try{const o=JSON.parse(localStorage.getItem(SKEY)||'{}');return {...DEF,...o,ai:{...DEF.ai,...(o.ai||{}),keys:{...(o.ai&&o.ai.keys||{})},models:{...(o.ai&&o.ai.models||{})}},admin:{...DEF.admin,...(o.admin||{})}}}catch(e){return JSON.parse(JSON.stringify(DEF))}}
-const EVO=window.EVO={settings:loadSet(),saveSettings(){try{localStorage.setItem(SKEY,JSON.stringify(EVO.settings))}catch(e){}},listeners:new Set(),onChange(f){EVO.listeners.add(f)},changed(){EVO.listeners.forEach(f=>{try{f()}catch(e){}})}};
+const EVO=window.EVO={settings:(()=>{const x=loadSet();x.ai.method='api';if(!x.ai.provider)x.ai.provider='gemini';x.ai.teamKeys=x.ai.teamKeys||{};x.ai.share=x.ai.share||{};return x})(),saveSettings(){try{localStorage.setItem(SKEY,JSON.stringify(EVO.settings))}catch(e){}},listeners:new Set(),onChange(f){EVO.listeners.add(f)},changed(){EVO.listeners.forEach(f=>{try{f()}catch(e){}})}};
 
 /* ---------- IndexedDB ---------- */
 let idbP=null;
@@ -691,8 +691,9 @@ function aiErr(code,message){const e=new Error(message);e.code=code;return e}
 function parseJSON(t){t=String(t||'').trim();const f=t.match(/```(?:json)?\s*([\s\S]*?)```/i);if(f)t=f[1].trim();
  try{return JSON.parse(t)}catch(e){}const a=t.indexOf('{'),b=t.lastIndexOf('}');if(a>=0&&b>a){try{return JSON.parse(t.slice(a,b+1))}catch(e){}}
  throw aiErr('invalid_json','The AI answer was not in the expected format. Try again, or paste the whole answer.')}
-async function callApi(prov,prompt,signal){const s=EVO.settings.ai,P=PROV[prov],key=(s.keys[P.key]||'').trim(),model=(s.models[prov]||'').trim()||P.model;
- if(!key)throw aiErr('not_configured','Add your '+P.name+' API key in Settings, or switch to "Use my chat account".');
+const keyFor=prov=>{const s=EVO.settings.ai,P=PROV[prov];return ((s.keys[P.key]||'').trim()||(s.teamKeys&&s.teamKeys[P.key]||'').trim())};EVO.keyFor=keyFor;
+async function callApi(prov,prompt,signal,keyOverride){const s=EVO.settings.ai,P=PROV[prov],key=(keyOverride||keyFor(prov)).trim(),model=(s.models[prov]||'').trim()||P.model;
+ if(!key){if(EVO.connectAI)EVO.connectAI(prov);throw aiErr('not_configured',P.name+' is not connected yet. Connect it to analyze.')}
  let r,j;
  try{
  if(prov==='chatgpt'){r=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',signal,headers:{'Authorization':'Bearer '+key,'Content-Type':'application/json'},body:JSON.stringify({model,messages:[{role:'user',content:prompt}],response_format:{type:'json_object'}})});j=await r.json();if(!r.ok)throw j;return j.choices[0].message.content}
@@ -708,12 +709,11 @@ const JSON_TAIL='\n\nReply with only the JSON object described above. No markdow
 const sample={async json(prompt,opts){opts=opts||{};const s=EVO.settings.ai;
   if(!s.provider||!PROV[s.provider]){if(EVO.openSettings)EVO.openSettings('ai');throw aiErr('not_configured','Pick ChatGPT, Gemini or Claude in Settings to use AI.')}
   const p=String(prompt)+JSON_TAIL;let text;
-  if(s.method==='api')text=await callApi(s.provider,p,opts.signal);
-  else{if(!EVO.askChat)throw aiErr('unavailable','AI is still loading. Try again.');text=await EVO.askChat(s.provider,p,opts.signal)}
+  text=await callApi(s.provider,p,opts.signal);
   if(opts.onText){try{opts.onText({text})}catch(e){}}
   return parseJSON(text)}};
-EVO.testAI=async()=>{const s=EVO.settings.ai;if(s.method!=='api')return 'Chat account mode has nothing to test. It opens '+(PROV[s.provider]||{name:'the chat'}).name+' when you analyze.';
- const r=parseJSON(await callApi(s.provider,'Return this JSON exactly: {"ok":true}'+JSON_TAIL));return r&&r.ok?'Connected to '+PROV[s.provider].name+'.':'Connected, but the answer was unexpected.'};
+EVO.testAI=async(prov,key)=>{const s=EVO.settings.ai;prov=prov||s.provider;
+ const r=parseJSON(await callApi(prov,'Return this JSON exactly: {"ok":true}'+JSON_TAIL,undefined,key));return r&&r.ok?'Connected to '+PROV[prov].name+'.':'Connected, but the answer was unexpected.'};
 
 window.claude={use:async name=>{if(name==='db'){await load();return db}if(name==='sample')return sample;if(name==='user')return user;if(name==='downloads')return downloads;if(name==='assets')return assets;return null}};
 })();
@@ -1886,21 +1886,22 @@ M.querySelectorAll('[data-et]').forEach(b=>b.onclick=()=>{TAB=b.dataset.et;rende
 const KEYHELP={chatgpt:['OpenAI','https://platform.openai.com/api-keys','Pay as you go, separate from ChatGPT Plus.'],gemini:['Google AI Studio','https://aistudio.google.com/apikey','Has a free tier.'],claude:['Anthropic Console','https://console.anthropic.com/settings/keys','Pay as you go, separate from a Claude subscription.']};
 function renderPane(){$('evoAgTab').hidden=ST.role!=='admin';if(TAB==='agents'&&ST.role!=='admin')TAB='ai';M.querySelectorAll('[data-et]').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.et===TAB)));const P=$('evoPane');
  if(TAB==='agents'){EVO.renderAgents&&EVO.renderAgents(P);return}
- if(TAB==='ai'){const a=ST.ai,pv=a.provider,PR=EVO.PROV;
-  P.innerHTML=`<p class="mut">Pick the AI that reads emails and writes the analysis. Your keys stay in this browser only.</p>
-  <label class="l">AI</label><div class="evochoice">${Object.entries(PR).map(([k,p])=>`<label><input type="radio" name="evoProv" value="${k}" ${pv===k?'checked':''}><span><b>${p.name}</b><small>${k==='gemini'?'Free API key available':k==='chatgpt'?'OpenAI':'Anthropic'}</small></span></label>`).join('')}</div>
-  <label class="l">How to connect</label><div class="evochoice">
-   <label><input type="radio" name="evoMeth" value="chat" ${a.method!=='api'?'checked':''}><span><b>Use my chat account</b><small>Opens ${pv?PR[pv].name:'the chat'} in a new tab with your own login, free or paid. You paste the answer back.</small></span></label>
-   <label><input type="radio" name="evoMeth" value="api" ${a.method==='api'?'checked':''}><span><b>API key</b><small>Runs automatically inside the app. Needs a key from the provider.</small></span></label></div>
-  ${pv&&a.method==='api'?`<div class="evobox"><h4>${PR[pv].name} API key</h4><div class="evorow"><div><label class="l" for="evoKey">Key</label><input class="t" id="evoKey" type="password" autocomplete="off" value="${esc(a.keys[PR[pv].key]||'')}" placeholder="Paste your key"></div><div><label class="l" for="evoModel">Model</label><input class="t" id="evoModel" value="${esc(a.models[pv]||'')}" placeholder="${esc(PR[pv].model)}"></div></div>
-   <span class="mut" style="font-size:12px">Get a key at <a href="${KEYHELP[pv][1]}" target="_blank" rel="noopener">${KEYHELP[pv][0]} ↗</a>. ${KEYHELP[pv][2]} Leave Model empty to use ${esc(PR[pv].model)}.</span>
-   <div class="actions"><button class="btn sm" id="evoTest">Test connection</button><span class="mut" id="evoTestMsg"></span></div></div>`:''}
-  ${pv&&a.method!=='api'?`<div class="evobox"><h4>How it works</h4><ol class="evosteps"><li>When you analyze, a window asks you to open ${PR[pv].name}. The request is copied for you${pv==='gemini'?'':' and usually already typed in'}.</li><li>Paste it if needed and send. Log in first if you want to use your own account.</li><li>Copy ${PR[pv].name}'s whole answer and paste it back here. The app fills in the results.</li></ol><span class="mut" style="font-size:12px">With Live analysis on, each change asks again, so it works best with Live off.</span></div>`:''}`;
-  P.querySelectorAll('[name=evoProv]').forEach(r=>r.onchange=()=>{a.provider=r.value;save();renderPane()});
-  P.querySelectorAll('[name=evoMeth]').forEach(r=>r.onchange=()=>{a.method=r.value;save();renderPane()});
-  if($('evoKey'))$('evoKey').oninput=e=>{a.keys[EVO.PROV[pv].key]=e.target.value.trim();save()};
+ if(TAB==='ai'){const a=ST.ai,pv=a.provider||'gemini',PR=EVO.PROV,ad=ST.role==='admin';
+  const st=k=>{const P=PR[k],own=(a.keys[P.key]||'').trim(),team=(a.teamKeys&&a.teamKeys[P.key]||'').trim();return own?'<span class="evook">Connected</span>':team?'<span class="evook">Connected · team key</span>':'<span class="mut">Not connected</span>'};
+  P.innerHTML=`<p class="mut">Pick the AI that reads the email, thinks it through and writes the analysis and solution. It runs right here in the app. Gemini is the default and has a free tier.</p>
+  <div class="evochoice">${Object.entries(PR).map(([k,p])=>`<label><input type="radio" name="evoProv" value="${k}" ${pv===k?'checked':''}><span><b>${p.name}</b><small>${k==='gemini'?'Free tier':'Pay as you go'}<br>${st(k)}</small></span></label>`).join('')}</div>
+  <div class="evobox"><h4>${PR[pv].name}</h4>
+   <div class="actions"><button class="btn" id="evoConn">${EVO.keyFor(pv)?'Reconnect':'Connect '+PR[pv].name}</button>${(a.keys[PR[pv].key]||'').trim()?'<button class="btn sm sec" id="evoTest">Test</button><button class="btn sm danger" id="evoDisc">Disconnect</button>':''}<span class="mut" id="evoTestMsg"></span></div>
+   <details><summary class="mut" style="font-size:12px">Model</summary><input class="t" id="evoModel" value="${esc(a.models[pv]||'')}" placeholder="${esc(PR[pv].model)}" style="margin-top:6px"><span class="mut" style="font-size:12px">Leave empty for ${esc(PR[pv].model)}.</span></details>
+   ${ad&&(a.keys[PR[pv].key]||'').trim()?`<label class="mut"><input type="checkbox" id="evoShareKey" ${a.share&&a.share[PR[pv].key]?'checked':''}> Share this ${PR[pv].name} key with all agents (sent in your update file, so agents can analyze without their own key; usage counts on your key)</label>`:''}
+  </div>
+  <span class="mut" style="font-size:12px">Keys stay in this browser. A shared team key reaches agents inside the update file.</span>`;
+  P.querySelectorAll('[name=evoProv]').forEach(r=>r.onchange=()=>{a.provider=r.value;save();renderPane();if(!EVO.keyFor(r.value))EVO.connectAI(r.value)});
+  $('evoConn').onclick=()=>EVO.connectAI(pv);
   if($('evoModel'))$('evoModel').oninput=e=>{a.models[pv]=e.target.value.trim();save()};
-  if($('evoTest'))$('evoTest').onclick=async()=>{const m=$('evoTestMsg');m.className='mut';m.textContent='Testing…';try{m.textContent=await EVO.testAI();m.className='evook'}catch(e){m.textContent=e.message;m.className='evobad'}};
+  if($('evoTest'))$('evoTest').onclick=async()=>{const m=$('evoTestMsg');m.className='mut';m.textContent='Testing…';try{m.textContent=await EVO.testAI(pv);m.className='evook'}catch(e){m.textContent=e.message;m.className='evobad'}};
+  if($('evoDisc'))$('evoDisc').onclick=()=>{if(!confirm('Remove your '+PR[pv].name+' key from this browser?'))return;delete a.keys[PR[pv].key];if(a.share)delete a.share[PR[pv].key];save();renderPane()};
+  if($('evoShareKey'))$('evoShareKey').onchange=e=>{a.share=a.share||{};a.share[PR[pv].key]=e.target.checked;save()};
   return}
  if(TAB==='sync'){const ad=ST.role==='admin';
   P.innerHTML=ad?`<p class="mut">You are the <b>EVO P2A admin</b>. You edit the master library here, then push it to everyone. Agents get a notice and import the update. Their own edits stay on top.</p>
@@ -1943,6 +1944,26 @@ function renderPane(){$('evoAgTab').hidden=ST.role!=='admin';if(TAB==='agents'&&
   $('evoRest').onclick=()=>$('evoRestF').click();$('evoRestF').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;try{await restoreCollection(JSON.parse(await f.text()))}catch(err){toast('That is not an EVO P2A backup file.')}};
  }}
 
+/* ---------- connect an AI: sign in on the provider's site in a new tab, create a key, come back ---------- */
+const KEYPAGE={chatgpt:['https://platform.openai.com/api-keys','OpenAI',/sk-[A-Za-z0-9_\-]{20,}/],gemini:['https://aistudio.google.com/apikey','Google AI Studio',/AIza[0-9A-Za-z_\-]{35}/],claude:['https://console.anthropic.com/settings/keys','Anthropic Console',/sk-ant-[A-Za-z0-9_\-]{20,}/]};
+const K=document.createElement('div');K.className='modal';K.id='evoConnect';K.hidden=true;K.setAttribute('role','dialog');K.setAttribute('aria-modal','true');K.setAttribute('aria-labelledby','evoConnT');
+K.innerHTML=`<div class="mbox" style="width:min(560px,100%)"><div class="mhead"><h2 id="evoConnT" class="ptitle">Connect</h2><span class="mact"><button class="btn sm sec" id="evoConnX">Close</button></span></div>
+<ol class="evosteps"><li><button class="btn" id="evoConnGo">Open</button> <span class="mut" style="font-size:12px">Opens in a new tab. Sign in with your account.</span></li>
+<li id="evoConnHow"></li><li>Come back to this tab. The key is picked up from what you copied, or paste it below.</li></ol>
+<div class="tplpick"><input class="t" id="evoConnKey" type="password" autocomplete="off" placeholder="Paste the key"><button class="btn sm" id="evoConnUse">Connect</button></div><span class="mut" id="evoConnMsg"></span></div>`;
+document.body.appendChild(K);
+let CONN=null;
+EVO.connectAI=prov=>{const P=EVO.PROV[prov],kp=KEYPAGE[prov];CONN=prov;$('evoConnT').textContent='Connect '+P.name;$('evoConnGo').textContent='Open '+kp[1];
+ $('evoConnHow').innerHTML=prov==='gemini'?'Press <b>Create API key</b> (it is free), then <b>Copy</b>.':prov==='chatgpt'?'Press <b>Create new secret key</b>, then <b>Copy</b>. OpenAI asks for billing before keys work.':'Press <b>Create Key</b>, then <b>Copy</b>. Anthropic asks for billing before keys work.';
+ $('evoConnKey').value='';$('evoConnMsg').textContent='';$('evoConnMsg').className='mut';K.hidden=false};
+const tryKey=async k=>{const prov=CONN,m=$('evoConnMsg');if(!prov||!k)return;m.className='mut';m.textContent='Checking the key with '+EVO.PROV[prov].name+'…';
+ try{await EVO.testAI(prov,k);ST.ai.keys[EVO.PROV[prov].key]=k;ST.ai.provider=prov;save();m.className='evook';m.textContent='Connected. '+EVO.PROV[prov].name+' now does the analysis.';toast(EVO.PROV[prov].name+' connected');setTimeout(()=>{K.hidden=true;if(!M.hidden)renderPane()},900)}
+ catch(e){m.className='evobad';m.textContent=e.message}};
+$('evoConnGo').onclick=()=>window.open(KEYPAGE[CONN][0],'_blank','noopener');
+$('evoConnUse').onclick=()=>tryKey($('evoConnKey').value.trim());$('evoConnKey').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();$('evoConnUse').click()}};
+$('evoConnX').onclick=()=>{K.hidden=true};
+window.addEventListener('focus',async()=>{if(K.hidden||!CONN||$('evoConnKey').value)return;try{const t=await navigator.clipboard.readText(),mm=String(t||'').match(KEYPAGE[CONN][2]);if(mm){$('evoConnKey').value=mm[0];tryKey(mm[0])}}catch(e){}});
+
 /* ---------- AI through the person's own chat tab ---------- */
 const C=document.createElement('div');C.className='modal';C.id='evoChat';C.hidden=true;C.setAttribute('role','dialog');C.setAttribute('aria-modal','true');C.setAttribute('aria-labelledby','evoChatT');
 C.innerHTML=`<div class="mbox" style="width:min(640px,100%)"><div class="mhead"><h2 id="evoChatT" class="ptitle">Ask</h2><span class="mact"><button class="btn sm sec" id="evoChatX">Cancel</button></span></div>
@@ -1979,7 +2000,8 @@ const b64=async blob=>{const buf=new Uint8Array(await blob.arrayBuffer());let s=
 const unb64=(s,type)=>{const bin=atob(s),a=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)a[i]=bin.charCodeAt(i);return new Blob([a],{type:type||''})};
 async function buildUpdate(version,notes,onlyApproved){const lib=await EVO.db.library();let items=lib.items;if(onlyApproved)items=items.filter(x=>x.status==='approved');
  const keep=new Set(items.map(x=>x.id)),files={};for(const x of items)if(x.assetId){const b=await EVO.files.blob(x.assetId);if(b)files[x.assetId]={name:x.fileName||'file',type:x.fileType||b.type||'',data:await b64(b)}}
- return {source:'EVO P2A update',version,publishedAt:Date.now(),notes:notes||'',items,learned:lib.learned.filter(l=>!onlyApproved||keep.has(l.sopId)||!l.sopId),layout:lib.layout,files}}
+ const teamKeys={};Object.entries(ST.ai.share||{}).forEach(([k,on])=>{if(on&&ST.ai.keys[k])teamKeys[k]=ST.ai.keys[k]});
+ return {source:'EVO P2A update',version,publishedAt:Date.now(),notes:notes||'',teamKeys,items,learned:lib.learned.filter(l=>!onlyApproved||keep.has(l.sopId)||!l.sopId),layout:lib.layout,files}}
 async function importUpdate(file){let u;try{u=JSON.parse(await file.text())}catch(e){toast('That file could not be read.');return}
  if(!u||u.source!=='EVO P2A update'||!Array.isArray(u.items)){toast('That is not an EVO P2A update file.');return}
  const cur=await EVO.db.library(),curIds=new Map(cur.items.map(x=>[x.id,x])),newIds=new Set(u.items.map(x=>x.id));
@@ -1987,7 +2009,7 @@ async function importUpdate(file){let u;try{u=JSON.parse(await file.text())}catc
  const older=(u.version||0)<(ST.lastVersion||0);
  if(!confirm(`Import EVO P2A update ${u.version}${u.notes?'\n"'+u.notes+'"':''}\n\n${add} new, ${chg} changed, ${rm} removed.${older?'\n\nThis update is OLDER than the one you have ('+ST.lastVersion+').':''}\n\nYour own edits (Your copy) are kept on top.`))return;
  for(const [id,f] of Object.entries(u.files||{}))await EVO.files.put(id,f.name,f.type,unb64(f.data,f.type));
- await EVO.db.replaceBase(u);ST.lastVersion=u.version||0;ST.lastVersionAt=u.publishedAt||Date.now();ST.dismissed=0;save();
+ await EVO.db.replaceBase(u);ST.ai.teamKeys=u.teamKeys||{};ST.lastVersion=u.version||0;ST.lastVersionAt=u.publishedAt||Date.now();ST.dismissed=0;save();
  toast('Update '+u.version+' imported');setTimeout(()=>location.reload(),500)}
 
 /* ---------- GitHub (admin) ---------- */
@@ -2049,9 +2071,25 @@ const queueFs=()=>{clearTimeout(fsT);fsT=setTimeout(()=>writeFolder(false),2500)
 EVO.onChange(queueFs);setInterval(()=>writeFolder(false),30000);window.addEventListener('beforeunload',()=>{});
 (async()=>{try{const h=await EVO.idb.get('kv','folder');if(h){FOLDER=h;const p=await h.queryPermission({mode:'readwrite'});FOLDER_OK=p==='granted'}}catch(e){}renderBanner()})();
 
+/* ---------- quick AI picker, bottom right of Problem2Action ---------- */
+const QA=document.createElement('div');QA.id='evoQA';QA.innerHTML='<label for="evoQAs">AI</label><select id="evoQAs" aria-label="Which AI analyzes"></select>';document.body.appendChild(QA);
+const qcss=document.createElement('style');qcss.textContent=`#evoQA{position:fixed;right:14px;bottom:14px;z-index:15;display:flex;align-items:center;gap:6px;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:4px 6px 4px 12px;box-shadow:0 4px 14px rgba(0,0,0,.12);font-size:12px}
+#evoQA label{font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--mut);font-size:11px}
+#evoQA select{border:0;background:transparent;color:var(--ink);font:inherit;font-weight:600;padding:3px 4px;cursor:pointer;border-radius:12px}
+#evoQA select:focus-visible{outline:2px solid var(--cyan)}#evoQA[hidden]{display:none}
+html.evo-locked #evoQA{display:none}`;document.head.appendChild(qcss);
+function renderQA(){const a=ST.ai,sel=$('evoQAs');
+ sel.innerHTML=(a.provider?'':'<option value="">Pick an AI…</option>')+Object.entries(EVO.PROV).map(([k,p])=>`<option value="${k}" ${a.provider===k?'selected':''}>${p.name}${EVO.keyFor(k)?'':' (connect)'}</option>`).join('')+'<option value="__set">Settings…</option>';
+ const onP2A=document.querySelector('[data-app="p2a"]')?.getAttribute('aria-selected')==='true';QA.hidden=!onP2A}
+$('evoQAs').onchange=e=>{const v=e.target.value;if(v==='__set'){renderQA();return EVO.openSettings('ai')}if(!v)return;ST.ai.provider=v;save();
+ if(!EVO.keyFor(v))EVO.connectAI(v);else toast('Using '+EVO.PROV[v].name);renderQA()};
+new MutationObserver(renderQA).observe(document.querySelector('.appsw')||document.body,{attributes:true,subtree:true,attributeFilter:['aria-selected']});
+{const _sv=EVO.saveSettings;EVO.saveSettings=function(){_sv.apply(this,arguments);try{renderQA()}catch(e){}}}
+renderQA();
+
 /* ---------- start ---------- */
 checkUpdates(false);setInterval(()=>checkUpdates(false),15*60*1000);
-if(!ST.ai.provider)setTimeout(()=>{if(!ST.ai.provider&&!localStorage.getItem('evop2a.aiAsked')){localStorage.setItem('evop2a.aiAsked','1');EVO.openSettings('ai')}},1500);
+
 })();
 
 /* EVO P2A standalone: agent sign-in and the admin's Agents page.
