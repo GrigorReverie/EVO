@@ -472,7 +472,7 @@ body.sdfull .toast{z-index:46}
 .miniok .yes{color:#fff;background:var(--bad,#d64545);border-color:var(--bad,#d64545)}.miniok .no{color:var(--ink)}
 .sdn{position:absolute;width:230px;box-sizing:border-box;display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px;align-items:start;border:1px solid var(--line);border-left:4px solid var(--k-sop);border-radius:10px;background:var(--card);padding:8px 10px;font-size:13px;line-height:1.4;cursor:pointer;touch-action:none}
 body.editing .sdn{cursor:grab}.sdn.dragging{cursor:grabbing;box-shadow:0 8px 20px rgba(0,0,0,.15);z-index:5}
-.sdn.sel{box-shadow:0 0 0 2px var(--cyan)}
+.sdn.sel{box-shadow:0 0 0 2px var(--cyan)}.sdn.msel{box-shadow:0 0 0 2px var(--cyan),0 0 0 5px color-mix(in srgb,var(--cyan) 25%,transparent)}
 .sdpop{position:fixed;z-index:8000;background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.2);padding:4px}.sdpop .sdpanel{border:0;margin:0}
 html:not([data-theme="dark"]) .sdn:not(.sdempty){background:color-mix(in srgb,var(--k-sop) 5%,var(--card))}.sdn.sdempty{cursor:default;border-style:dashed}
 .sdn .stn{min-width:24px;padding:0 4px;box-sizing:border-box;height:24px;border-radius:12px;background:var(--k-sop-bg);color:var(--k-sop);font-weight:600;font-size:12px;display:grid;place-items:center}
@@ -977,7 +977,7 @@ function foldSections(E){[...E.children].forEach(el=>{const lab=el.firstElementC
  lab.onclick=()=>{flip();requestAnimationFrame(fitBody)};lab.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();flip()}}})}
 const ICO={full:'<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>',exit:'<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg>',add:'<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>'};
 /* ---------- SOP Diagram: the SOP's steps as boxes in order; move, link and add steps like the UX Diagram ---------- */
-let SOPTAB=S.get('sopTab','content'),SDZ=1,SDX=20,SDY=20,SDFOR='',sdSel=null,sdLink=null,sdUnlink=false,sdPop=false;
+let SOPTAB=S.get('sopTab','content'),SDZ=1,SDX=20,SDY=20,SDFOR='',sdSel=null,sdLink=null,sdUnlink=false,sdPop=false,sdMulti=new Set();
 const SDW=230,sdNew=()=>'s'+Math.random().toString(36).slice(2,9);
 function sdEnsure(d){const st=stepsParse(d.body).steps;let g=d.stepDiagram&&typeof d.stepDiagram==='object'?d.stepDiagram:null;
  if(!g){const ids=st.map(sdNew);g={ids,pos:{},links:ids.slice(1).map((id,i)=>[ids[i],id]),fresh:1};d.stepDiagram=g}
@@ -1016,7 +1016,7 @@ function sdMount(ro,mark){const d=draft;if(!d)return;const g=sdEnsure(d),cv=$('s
  const draw=()=>{let s='';g.links.forEach(([a,b])=>{const pa=g.pos[a],pb=g.pos[b];if(!pa||!pb)return;const x1=pa.x+SDW/2,y1=pa.y+H(a)+1,x2=pb.x+SDW/2,y2=pb.y-2,dy=Math.max(28,Math.abs(y2-y1)/2);const dd=`M${x1},${y1} C${x1},${y1+dy} ${x2},${y2-dy} ${x2},${y2}`;s+=`<path d="${dd}" marker-end="url(#sdArrow)" data-la="${a}" data-lb="${b}"/><path class="sdhit" d="${dd}" data-la="${a}" data-lb="${b}"/>`});$('sdG').innerHTML=s;bindLines();
   const B=bounds(),W=Math.max(B.r+60,400),Hh=Math.max(B.b+60,300);/* boxes left of or above the start are drawn too (overflow shows) */cv.style.width=W+'px';cv.style.height=Hh+'px';const sv=$('sdSvg');sv.setAttribute('width',W);sv.setAttribute('height',Hh)};
  const build=()=>{const st=steps(),LB=sdLabels(g);cv.querySelectorAll('.sdn').forEach(n=>n.remove());
-  g.ids.forEach((id,i)=>{const p=g.pos[id],n=document.createElement('div');n.className='sdn'+(sdSel===id?' sel':'');n.dataset.sid=id;n.style.left=p.x+'px';n.style.top=p.y+'px';n.tabIndex=0;n.setAttribute('role','button');n.setAttribute('aria-label','Step '+(i+1));
+  g.ids.forEach((id,i)=>{const p=g.pos[id],n=document.createElement('div');n.className='sdn'+(sdSel===id?' sel':'')+(sdMulti.has(id)?' msel':'');n.dataset.sid=id;n.style.left=p.x+'px';n.style.top=p.y+'px';n.tabIndex=0;n.setAttribute('role','button');n.setAttribute('aria-label','Step '+(i+1));
    n.innerHTML=`<span class="stn">${LB[i]}</span><span class="sdt">${st[i]&&st[i].trim()?esc(st[i]):'<i class="mut">Empty step</i>'}</span>${ro?'':`<button type="button" class="sdd t${sdLink&&sdLink.id===id&&sdLink.side==='t'?' src':''}" data-side="t" aria-label="Link dot above step ${i+1}"></button><button type="button" class="sdd b${sdLink&&sdLink.id===id&&sdLink.side==='b'?' src':''}" data-side="b" aria-label="Link dot below step ${i+1}"></button>`}`;cv.appendChild(n)});
   if(!g.ids.length)cv.insertAdjacentHTML('beforeend',`<div class="sdn sdempty" style="left:40px;top:30px"><span></span><span class="sdt mut">${ro?'No steps yet.':'No steps yet. Press + Add step.'}</span></div>`);
   wrap.classList.toggle('linking',!!sdLink);draw();panel();bindNodes()};
@@ -1050,11 +1050,15 @@ function sdMount(ro,mark){const d=draft;if(!d)return;const g=sdEnsure(d),cv=$('s
   n.onkeydown=e=>{if(e.key==='Enter'&&e.target===n){e.preventDefault();select(id,true);$('sdTxt')?.focus()}};
   n.ondblclick=e=>{if(e.target.closest('.sdd'))return;e.stopPropagation();select(id,true);const t=$('sdTxt');if(t){t.focus({preventScroll:true});t.setSelectionRange(t.value.length,t.value.length)}};
   n.onpointerdown=e=>{if(e.button!==0||e.target.closest('.sdd'))return;e.stopPropagation();const sx=e.clientX,sy=e.clientY,q0={...g.pos[id]};let moved=false;
+   if(!ro&&!sdLink&&(e.ctrlKey||e.metaKey||e.shiftKey)){e.preventDefault();sdMulti.has(id)?sdMulti.delete(id):sdMulti.add(id);n.classList.toggle('msel',sdMulti.has(id));if(sdPop)select(null);toast(sdMulti.size?sdMulti.size+' step'+(sdMulti.size===1?'':'s')+' selected. Drag one to move them together. Click an empty spot or press Esc to clear.':'Nothing selected');return}
    if(ro||sdLink){const up=()=>{n.removeEventListener('pointerup',up);if(!sdLink)select(id)};n.addEventListener('pointerup',up);return}
+   if(!sdMulti.has(id)&&sdMulti.size){sdMulti.clear();cv.querySelectorAll('.sdn.msel').forEach(x=>x.classList.remove('msel'))}
+   const grp=(sdMulti.has(id)&&sdMulti.size>1?[...sdMulti]:[id]).filter(k=>g.pos[k]),g0=new Map(grp.map(k=>[k,{...g.pos[k]}])),gel=new Map(grp.map(k=>[k,cv.querySelector(`[data-sid="${k}"]`)]));
    try{n.setPointerCapture(e.pointerId)}catch(_){}
    /* no edges: boxes go anywhere, and dragging near the side of the grid keeps moving the view */
    const X0=SDX,Y0=SDY;let last=null,raf=0;
-   const place=()=>{if(!last)return;const dx=(last.clientX-sx-(SDX-X0))/SDZ,dy=(last.clientY-sy-(SDY-Y0))/SDZ;if(!moved&&Math.hypot(dx,dy)<4)return;moved=true;n.classList.add('dragging');g.pos[id]={x:Math.round((q0.x+dx)/10)*10,y:Math.round((q0.y+dy)/10)*10};n.style.left=g.pos[id].x+'px';n.style.top=g.pos[id].y+'px';draw()};
+   const place=()=>{if(!last)return;const dx=(last.clientX-sx-(SDX-X0))/SDZ,dy=(last.clientY-sy-(SDY-Y0))/SDZ;if(!moved&&Math.hypot(dx,dy)<4)return;moved=true;n.classList.add('dragging');
+    grp.forEach(k=>{const q=g0.get(k),el=gel.get(k);g.pos[k]={x:Math.round((q.x+dx)/10)*10,y:Math.round((q.y+dy)/10)*10};if(el){el.style.left=g.pos[k].x+'px';el.style.top=g.pos[k].y+'px'}});draw()};
    const edge=()=>{raf=0;if(!last||!moved)return;const r=wrap.getBoundingClientRect(),m=48,sp=(d)=>d<m?Math.ceil((m-d)/4):0;const vx=sp(last.clientX-r.left)-sp(r.right-last.clientX),vy=sp(last.clientY-r.top)-sp(r.bottom-last.clientY);if(vx||vy){SDX+=vx;SDY+=vy;cam();place();raf=requestAnimationFrame(edge)}};
    const mv=ev=>{last=ev;place();if(!raf)raf=requestAnimationFrame(edge)};
    const up=()=>{cancelAnimationFrame(raf);raf=0;last=null;n.removeEventListener('pointermove',mv);n.removeEventListener('pointerup',up);n.removeEventListener('pointercancel',up);n.classList.remove('dragging');if(moved){changed();placePop()}else if(sdSel!==id||!sdPop)select(id,sdPop&&sdSel===id)};
@@ -1070,6 +1074,7 @@ function sdMount(ro,mark){const d=draft;if(!d)return;const g=sdEnsure(d),cv=$('s
  /* empty space: pan; with a dot picked, unlink that dot */
  wrap.onpointerdown=e=>{if(e.button!==0||e.target.closest('.sdn,.fab'))return;
   if(sdLink){endLink();return}if(sdUnlink){endUnlink();return}
+  if(sdMulti.size){sdMulti.clear();cv.querySelectorAll('.sdn.msel').forEach(x=>x.classList.remove('msel'))}
   if(sdSel)select(null);e.preventDefault();const sx=e.clientX,sy=e.clientY,x0=SDX,y0=SDY;try{wrap.setPointerCapture(e.pointerId)}catch(_){}wrap.classList.add('panning');
   const mv=ev=>{SDX=x0+ev.clientX-sx;SDY=y0+ev.clientY-sy;cam()},up=()=>{wrap.classList.remove('panning');wrap.removeEventListener('pointermove',mv);wrap.removeEventListener('pointerup',up);wrap.removeEventListener('pointercancel',up)};
   wrap.addEventListener('pointermove',mv);wrap.addEventListener('pointerup',up);wrap.addEventListener('pointercancel',up)};
@@ -1091,6 +1096,7 @@ function sdMount(ro,mark){const d=draft;if(!d)return;const g=sdEnsure(d),cv=$('s
 function sdSetFull(on){document.body.classList.toggle('sdfull',on);try{if(on&&!document.fullscreenElement)document.documentElement.requestFullscreen?.().catch(()=>{});if(!on&&document.fullscreenElement)document.exitFullscreen?.().catch(()=>{})}catch(e){}SDFOR='';renderEditor()}
 document.addEventListener('fullscreenchange',()=>{if(!document.fullscreenElement&&document.body.classList.contains('sdfull'))sdSetFull(false)});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.body.classList.contains('sdfull')&&!sdLink&&!sdUnlink&&!e.target.closest?.('textarea,input'))sdSetFull(false)});
+if(!window.__sdMultiEsc){window.__sdMultiEsc=1;document.addEventListener('keydown',e=>{if(e.key==='Escape'&&sdMulti.size){sdMulti.clear();document.querySelectorAll('.sdn.msel').forEach(x=>x.classList.remove('msel'))}})}
 if(!window.__sdPopG){window.__sdPopG=1;const hideP=()=>{const b=document.getElementById('sdPopBox');if(b&&!b.hidden&&!document.getElementById('sdWrap')){b.hidden=true;b.innerHTML='';sdPop=false}};
  document.addEventListener('click',()=>requestAnimationFrame(hideP),true);new MutationObserver(()=>requestAnimationFrame(hideP)).observe(document.body,{childList:true,subtree:true});addEventListener('scroll',()=>window.__sdPlace&&window.__sdPlace(),true);addEventListener('resize',()=>window.__sdPlace&&window.__sdPlace());
  document.addEventListener('keydown',e=>{const b=document.getElementById('sdPopBox');if(e.key==='Escape'&&b&&!b.hidden&&!sdLink&&!sdUnlink){e.stopImmediatePropagation();b.hidden=true;b.innerHTML='';sdPop=false;document.querySelectorAll('.sdn.sel').forEach(n=>n.classList.remove('sel'));sdSel=null}},true)}
@@ -1571,7 +1577,7 @@ function showPop(id){if(linkSrc)return;clearTimeout(popHide);const x=ITEMS.get(i
    toast('Removed "'+nm+'"');renderAll()}catch(e){toast('Could not remove: '+(e?.message||e?.code))}});
  box.appendChild(pop);growFor(pop)}
 box.querySelectorAll('[data-n]').forEach(n=>{const id=n.dataset.n,item=ITEMS.has(id);
- n.onmouseenter=()=>{lit(id);if(item)showPop(id);clearTimeout(n._grow);if(!n.classList.contains('sq'))n._grow=setTimeout(()=>{if(!dragging){n.classList.add('full');box.classList.add('fullon')}},2000)};n.onfocus=()=>{lit(id);if(item)showPop(id)};n.onmouseleave=()=>{off();if(item)hidePop();clearTimeout(n._grow);n.classList.remove('full');box.classList.remove('fullon')};n.onblur=off;
+ n.onmouseenter=()=>{lit(id);clearTimeout(n._grow);if(!n.classList.contains('sq'))n._grow=setTimeout(()=>{if(!dragging){n.classList.add('full');box.classList.add('fullon')}},2000)};n.onfocus=()=>{lit(id)};n.onmouseleave=()=>{off();if(item)hidePop();clearTimeout(n._grow);n.classList.remove('full');box.classList.remove('fullon')};n.onblur=off;
  n.onclick=ev=>{if(n.dataset.dragged)return;if(EDIT&&(ev.shiftKey||ev.metaKey||ev.ctrlKey)){SEL.has(id)?SEL.delete(id):SEL.add(id);n.classList.toggle('sel',SEL.has(id));return}if(n.tagName!=='BUTTON')return;if(linkSrc){endLink();return}openModal(id)};
  /* drag a box to move it (Edit mode); it snaps to the grid and the layout is saved for everyone */
  n.onpointerdown=e=>{if(!EDIT||linkSrc||e.button!==0||hid(id))return;e.stopPropagation();const grp=(SEL.has(id)&&SEL.size>1?[...SEL]:[id]).filter(g=>pos.has(g)),q0=new Map(grp.map(g=>[g,{...pos.get(g)}])),sx=e.clientX,sy=e.clientY,minX=Math.min(...grp.map(g=>q0.get(g).x)),minY=Math.min(...grp.map(g=>q0.get(g).y));let moved=false;try{n.setPointerCapture(e.pointerId)}catch(_){}
