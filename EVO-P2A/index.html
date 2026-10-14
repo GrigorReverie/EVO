@@ -465,12 +465,16 @@ body.sdfull .toast{z-index:46}
 .unlinking .sdedges path:not(.sdhit){stroke-dasharray:6 4}.sdedges path.hov{stroke:var(--bad,#d64545);stroke-width:3}
 .dg.unlinking svg.edges path:not(.hit):not(.temp){stroke-dasharray:6 4}.dg svg.edges path.hov.del{stroke:var(--bad,#d64545)!important}
 .dg:not(.unlinking) svg.edges path.hit{pointer-events:none}
+.dropghost{position:fixed;left:0;top:0;z-index:9500;pointer-events:none;transform-origin:0 0;box-sizing:border-box;border:2px dashed var(--cyan);border-radius:10px;background:color-mix(in srgb,var(--cyan) 12%,var(--card));color:var(--title);font-size:13px;font-weight:600;padding:8px 12px;opacity:.92;box-shadow:0 6px 18px rgba(0,0,0,.15)}
+.placing,.placing *{cursor:copy!important}
 .miniok{position:fixed;z-index:9999;display:flex;align-items:center;gap:6px;background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,.18);padding:6px 6px 6px 10px;font-size:13px}
 .miniok button{width:28px;height:28px;border-radius:7px;border:1px solid var(--line);background:var(--card);cursor:pointer;font-size:15px;line-height:1;display:grid;place-items:center}
 .miniok .yes{color:#fff;background:var(--bad,#d64545);border-color:var(--bad,#d64545)}.miniok .no{color:var(--ink)}
 .sdn{position:absolute;width:230px;box-sizing:border-box;display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px;align-items:start;border:1px solid var(--line);border-left:4px solid var(--k-sop);border-radius:10px;background:var(--card);padding:8px 10px;font-size:13px;line-height:1.4;cursor:pointer;touch-action:none}
 body.editing .sdn{cursor:grab}.sdn.dragging{cursor:grabbing;box-shadow:0 8px 20px rgba(0,0,0,.15);z-index:5}
-.sdn.sel{box-shadow:0 0 0 2px var(--cyan)}.sdn.sdempty{cursor:default;border-style:dashed}
+.sdn.sel{box-shadow:0 0 0 2px var(--cyan)}
+.sdpop{position:fixed;z-index:8000;background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.2);padding:4px}.sdpop .sdpanel{border:0;margin:0}
+html:not([data-theme="dark"]) .sdn:not(.sdempty){background:color-mix(in srgb,var(--k-sop) 5%,var(--card))}.sdn.sdempty{cursor:default;border-style:dashed}
 .sdn .stn{min-width:24px;padding:0 4px;box-sizing:border-box;height:24px;border-radius:12px;background:var(--k-sop-bg);color:var(--k-sop);font-weight:600;font-size:12px;display:grid;place-items:center}
 .sdn .sdt{display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;white-space:pre-wrap;word-break:break-word;padding-top:3px}
 .sdd{position:absolute;left:50%;width:14px;height:14px;margin-left:-7px;border-radius:50%;border:2px solid var(--cyan-dk);background:var(--card);padding:0;cursor:crosshair;opacity:0;transition:opacity .1s,transform .1s;z-index:2}
@@ -973,7 +977,7 @@ function foldSections(E){[...E.children].forEach(el=>{const lab=el.firstElementC
  lab.onclick=()=>{flip();requestAnimationFrame(fitBody)};lab.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();flip()}}})}
 const ICO={full:'<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>',exit:'<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg>',add:'<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>'};
 /* ---------- SOP Diagram: the SOP's steps as boxes in order; move, link and add steps like the UX Diagram ---------- */
-let SOPTAB=S.get('sopTab','content'),SDZ=1,SDX=20,SDY=20,SDFOR='',sdSel=null,sdLink=null,sdUnlink=false;
+let SOPTAB=S.get('sopTab','content'),SDZ=1,SDX=20,SDY=20,SDFOR='',sdSel=null,sdLink=null,sdUnlink=false,sdPop=false;
 const SDW=230,sdNew=()=>'s'+Math.random().toString(36).slice(2,9);
 function sdEnsure(d){const st=stepsParse(d.body).steps;let g=d.stepDiagram&&typeof d.stepDiagram==='object'?d.stepDiagram:null;
  if(!g){const ids=st.map(sdNew);g={ids,pos:{},links:ids.slice(1).map((id,i)=>[ids[i],id]),fresh:1};d.stepDiagram=g}
@@ -999,12 +1003,12 @@ function sdRegroup(d){const g=sdEnsure(d),{f,gm}=sdGroups(g),done=new Set(),orde
  if(order.every((id,i)=>id===g.ids[i]))return;const P=stepsParse(d.body),at=new Map(g.ids.map((id,i)=>[id,i]));d.body=stepsCompose(P.text,order.map(id=>P.steps[at.get(id)]));g.ids=order}
 function sdTabs(){return `<div class="sotabs" role="tablist" aria-label="SOP view"><button type="button" role="tab" data-sot="content" aria-selected="${SOPTAB!=='diagram'}">Content</button><button type="button" role="tab" data-sot="diagram" aria-selected="${SOPTAB==='diagram'}">SOP Diagram</button></div>`}
 function sdHtml(ro){return `<div class="sdbar">${ro?'':'<button type="button" class="btn sm sec" id="sdArr" title="Put the steps back in one column, in order">Arrange in order</button>'}<span class="zm"><button type="button" class="btn sm sec" id="sdOut" aria-label="Zoom out">−</button><span id="sdPct" class="mut">100%</span><button type="button" class="btn sm sec" id="sdIn" aria-label="Zoom in">+</button><button type="button" class="btn sm sec" id="sdFit">Fit</button></span></div>
-<p class="mut sdhint">${ro?'Steps in order. Turn on Edit mode to add, move and link steps.':'Steps are numbered in order. Drag a box to move it, click a step to edit it. Click a dot, then a dot on another step to link them; click a dot, then empty space to unlink it.'}</p>
+<p class="mut sdhint">${ro?'Steps in order. Turn on Edit mode to add, move and link steps.':'Steps are numbered in order. Drag a box to move it, double-click a step to edit it. Click a dot, then a dot on another step to link them; double-click a dot, then click a line to delete it.'}</p>
 <div class="sdwrap" id="sdWrap"><button type="button" class="fab r" id="sdFull" title="${document.body.classList.contains('sdfull')?'Exit full screen':'Full screen diagram'}" aria-label="Full screen diagram">${document.body.classList.contains('sdfull')?ICO.exit:ICO.full}</button>${ro?'':`<button type="button" class="fab l" id="sdAdd" title="Add step" aria-label="Add step">${ICO.add}</button>`}<div class="sd" id="sd"><svg class="sdedges" id="sdSvg"><defs><marker id="sdArrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0L10,5L0,10z" fill="currentColor"/></marker></defs><g id="sdG"></g></svg></div></div><div id="sdEdit"></div>`}
 function sdMount(ro,mark){const d=draft;if(!d)return;const g=sdEnsure(d),cv=$('sd'),wrap=$('sdWrap');if(!cv)return;
  const steps=()=>stepsParse(d.body).steps,setSt=fn=>{const P=stepsParse(d.body);d.body=stepsCompose(P.text,fn(P.steps.slice()))};
  const changed=()=>{mark();};
- const cam=()=>{cv.style.transform=`translate(${SDX}px,${SDY}px) scale(${SDZ})`;wrap.style.backgroundSize=`${20*SDZ}px ${20*SDZ}px`;wrap.style.backgroundPosition=`${SDX}px ${SDY}px`;const p=$('sdPct');if(p)p.textContent=Math.round(SDZ*100)+'%'};
+ const cam=()=>{cv.style.transform=`translate(${SDX}px,${SDY}px) scale(${SDZ})`;requestAnimationFrame(()=>window.__sdPlace&&window.__sdPlace());wrap.style.backgroundSize=`${20*SDZ}px ${20*SDZ}px`;wrap.style.backgroundPosition=`${SDX}px ${SDY}px`;const p=$('sdPct');if(p)p.textContent=Math.round(SDZ*100)+'%'};
  const zoomAt=(z,fx,fy)=>{z=Math.min(2,Math.max(.2,z));if(fx==null){fx=wrap.clientWidth/2;fy=wrap.clientHeight/2}SDX=fx-(fx-SDX)*z/SDZ;SDY=fy-(fy-SDY)*z/SDZ;SDZ=z;cam()};
  const H=id=>cv.querySelector(`[data-sid="${id}"]`)?.offsetHeight||56;
  const bounds=()=>{let r=0,b=0,l=1e9,t=1e9;g.ids.forEach(id=>{const p=g.pos[id];l=Math.min(l,p.x);t=Math.min(t,p.y);r=Math.max(r,p.x+SDW);b=Math.max(b,p.y+H(id))});return g.ids.length?{l,t,r,b}:{l:0,t:0,r:SDW,b:60}};
@@ -1016,10 +1020,17 @@ function sdMount(ro,mark){const d=draft;if(!d)return;const g=sdEnsure(d),cv=$('s
    n.innerHTML=`<span class="stn">${LB[i]}</span><span class="sdt">${st[i]&&st[i].trim()?esc(st[i]):'<i class="mut">Empty step</i>'}</span>${ro?'':`<button type="button" class="sdd t${sdLink&&sdLink.id===id&&sdLink.side==='t'?' src':''}" data-side="t" aria-label="Link dot above step ${i+1}"></button><button type="button" class="sdd b${sdLink&&sdLink.id===id&&sdLink.side==='b'?' src':''}" data-side="b" aria-label="Link dot below step ${i+1}"></button>`}`;cv.appendChild(n)});
   if(!g.ids.length)cv.insertAdjacentHTML('beforeend',`<div class="sdn sdempty" style="left:40px;top:30px"><span></span><span class="sdt mut">${ro?'No steps yet.':'No steps yet. Press + Add step.'}</span></div>`);
   wrap.classList.toggle('linking',!!sdLink);draw();panel();bindNodes()};
- const select=id=>{sdSel=id;cv.querySelectorAll('.sdn').forEach(n=>n.classList.toggle('sel',n.dataset.sid===id));panel()};
- const panel=()=>{const P=$('sdEdit');if(!P)return;const i=g.ids.indexOf(sdSel);if(i<0){P.innerHTML='';return}const st=steps();
-  P.innerHTML=`<div class="sdpanel"><label class="l" for="sdTxt">Step ${sdLabels(g)[i]}</label>${ro?`<div class="stt">${esc(st[i]||'')}</div>`:`<textarea class="t" id="sdTxt" rows="2">${esc(st[i]||'')}</textarea><div class="actions"><button type="button" class="btn sm sec" id="sdAfter">+ Add step after</button><button type="button" class="btn sm danger" id="sdRm">Remove step</button><button type="button" class="btn sm sec" id="sdDone">Done</button></div>`}</div>`;
-  const t=$('sdTxt');if(t){const grow=()=>{t.style.height='auto';t.style.height=t.scrollHeight+'px'};grow();t.oninput=()=>{grow();const k=g.ids.indexOf(sdSel);setSt(a=>{a[k]=t.value;return a});const el=cv.querySelector(`[data-sid="${sdSel}"] .sdt`);if(el)el.innerHTML=t.value.trim()?esc(t.value):'<i class="mut">Empty step</i>';draw();changed()}}
+ const select=(id,pop)=>{sdSel=id;sdPop=!!(id&&pop);cv.querySelectorAll('.sdn').forEach(n=>n.classList.toggle('sel',n.dataset.sid===id));panel()};
+ /* the step editor is a pop-up next to the step; it opens on double-click (and for a new step) */
+ const popBox=()=>{let b=document.getElementById('sdPopBox');if(!b){b=document.createElement('div');b.id='sdPopBox';b.className='sdpop';b.setAttribute('role','dialog');b.setAttribute('aria-label','Edit step');document.body.appendChild(b);
+   b.addEventListener('pointerdown',e=>e.stopPropagation())}return b};
+ const placePop=()=>{const b=document.getElementById('sdPopBox');if(!b||b.hidden)return;const n=cv.querySelector(`[data-sid="${sdSel}"]`);if(!n){b.hidden=true;return}
+  const r=n.getBoundingClientRect(),w=Math.min(420,innerWidth-16);b.style.width=w+'px';const h=b.offsetHeight;
+  let x=Math.max(8,Math.min(r.left+r.width/2-w/2,innerWidth-w-8)),y=r.bottom+10;if(y+h>innerHeight-8)y=Math.max(8,r.top-h-10);b.style.left=x+'px';b.style.top=y+'px'};
+ window.__sdPlace=placePop;
+ const panel=()=>{const old=$('sdEdit');if(old)old.innerHTML='';const B=popBox();const i=g.ids.indexOf(sdSel);if(i<0||!sdPop){B.hidden=true;B.innerHTML='';return}B.hidden=false;const P=B;const st=steps();
+  P.innerHTML=`<div class="sdpanel"><label class="l" for="sdTxt">Step ${sdLabels(g)[i]}</label>${ro?`<div class="stt">${esc(st[i]||'')}</div>`:`<textarea class="t" id="sdTxt" rows="2">${esc(st[i]||'')}</textarea><div class="actions"><button type="button" class="btn sm sec" id="sdAfter">+ Add step after</button><button type="button" class="btn sm danger" id="sdRm">Remove step</button><button type="button" class="btn sm sec" id="sdDone">Done</button></div>`}${ro?'<div class="actions"><button type="button" class="btn sm sec" id="sdClose">Close</button></div>':''}</div>`;requestAnimationFrame(placePop);if($('sdClose'))$('sdClose').onclick=()=>select(null);
+  const t=$('sdTxt');if(t){const grow=()=>{t.style.height='auto';t.style.height=t.scrollHeight+'px';placePop()};grow();t.oninput=()=>{grow();const k=g.ids.indexOf(sdSel);setSt(a=>{a[k]=t.value;return a});const el=cv.querySelector(`[data-sid="${sdSel}"] .sdt`);if(el)el.innerHTML=t.value.trim()?esc(t.value):'<i class="mut">Empty step</i>';draw();changed()}}
   if($('sdAfter'))$('sdAfter').onclick=()=>addAt(g.ids.indexOf(sdSel)+1);
   if($('sdRm'))$('sdRm').onclick=()=>{const k=g.ids.indexOf(sdSel);sdOp(d,'rm',k);setSt(a=>{a.splice(k,1);return a});sdRegroup(d);sdSel=null;changed();build()};
   if($('sdDone'))$('sdDone').onclick=()=>{sdSel=null;if(EDIT&&dirty)save('Step edited in the SOP Diagram');else select(null)}};
@@ -1028,7 +1039,7 @@ function sdMount(ro,mark){const d=draft;if(!d)return;const g=sdEnsure(d),cv=$('s
   if(pp)g.ids.forEach(o=>{const q=g.pos[o];if(o!==prev&&Math.abs(q.x-pp.x)<SDW&&q.y>=y-20)q.y+=100});
   setSt(a=>{a.splice(k,0,'');return a});g.ids.splice(k,0,id);g.pos[id]={x:pp?pp.x:40,y};
   if(prev){const j=g.links.findIndex(l=>l[0]===prev&&l[1]===next);if(next&&j>=0)g.links.splice(j,1,[prev,id],[id,next]);else g.links.push([prev,id])}else if(next)g.links.push([id,next]);
-  sdSel=id;changed();build();const el=cv.querySelector(`[data-sid="${id}"]`);if(el){const r=wrap.getBoundingClientRect(),e=el.getBoundingClientRect();if(e.bottom>r.bottom-10||e.top<r.top)SDY-=e.top-r.top-r.height/2;cam()}$('sdTxt')?.focus()};
+  sdSel=id;sdPop=true;changed();build();const el=cv.querySelector(`[data-sid="${id}"]`);if(el){const r=wrap.getBoundingClientRect(),e=el.getBoundingClientRect();if(e.bottom>r.bottom-10||e.top<r.top)SDY-=e.top-r.top-r.height/2;cam()}$('sdTxt')?.focus()};
  const endLink=()=>{sdLink=null;wrap.classList.remove('linking');cv.querySelectorAll('.sdd.src').forEach(x=>x.classList.remove('src'))};
  const endUnlink=()=>{sdUnlink=false;wrap.classList.remove('unlinking')};
  function bindLines(){$('sdG').querySelectorAll('path.sdhit').forEach(h=>{const a=h.dataset.la,b=h.dataset.lb,vis=()=>$('sdG').querySelector(`path:not(.sdhit)[data-la="${a}"][data-lb="${b}"]`);
@@ -1036,7 +1047,8 @@ function sdMount(ro,mark){const d=draft;if(!d)return;const g=sdEnsure(d),cv=$('s
   h.onclick=async e=>{e.stopPropagation();if(!sdUnlink||ro)return;vis()?.classList.add('hov');const ok=await miniConfirm(e.clientX,e.clientY,'Delete this link?');vis()?.classList.remove('hov');if(!ok)return;
    g.links=g.links.filter(l=>!(l[0]===a&&l[1]===b));endUnlink();sdRegroup(d);changed();build();toast('Link deleted')}})}
  const bindNodes=()=>{cv.querySelectorAll('.sdn[data-sid]').forEach(n=>{const id=n.dataset.sid;
-  n.onkeydown=e=>{if(e.key==='Enter'&&e.target===n){e.preventDefault();select(id)}};
+  n.onkeydown=e=>{if(e.key==='Enter'&&e.target===n){e.preventDefault();select(id,true);$('sdTxt')?.focus()}};
+  n.ondblclick=e=>{if(e.target.closest('.sdd'))return;e.stopPropagation();select(id,true);const t=$('sdTxt');if(t){t.focus({preventScroll:true});t.setSelectionRange(t.value.length,t.value.length)}};
   n.onpointerdown=e=>{if(e.button!==0||e.target.closest('.sdd'))return;e.stopPropagation();const sx=e.clientX,sy=e.clientY,q0={...g.pos[id]};let moved=false;
    if(ro||sdLink){const up=()=>{n.removeEventListener('pointerup',up);if(!sdLink)select(id)};n.addEventListener('pointerup',up);return}
    try{n.setPointerCapture(e.pointerId)}catch(_){}
@@ -1045,7 +1057,7 @@ function sdMount(ro,mark){const d=draft;if(!d)return;const g=sdEnsure(d),cv=$('s
    const place=()=>{if(!last)return;const dx=(last.clientX-sx-(SDX-X0))/SDZ,dy=(last.clientY-sy-(SDY-Y0))/SDZ;if(!moved&&Math.hypot(dx,dy)<4)return;moved=true;n.classList.add('dragging');g.pos[id]={x:Math.round((q0.x+dx)/10)*10,y:Math.round((q0.y+dy)/10)*10};n.style.left=g.pos[id].x+'px';n.style.top=g.pos[id].y+'px';draw()};
    const edge=()=>{raf=0;if(!last||!moved)return;const r=wrap.getBoundingClientRect(),m=48,sp=(d)=>d<m?Math.ceil((m-d)/4):0;const vx=sp(last.clientX-r.left)-sp(r.right-last.clientX),vy=sp(last.clientY-r.top)-sp(r.bottom-last.clientY);if(vx||vy){SDX+=vx;SDY+=vy;cam();place();raf=requestAnimationFrame(edge)}};
    const mv=ev=>{last=ev;place();if(!raf)raf=requestAnimationFrame(edge)};
-   const up=()=>{cancelAnimationFrame(raf);raf=0;last=null;n.removeEventListener('pointermove',mv);n.removeEventListener('pointerup',up);n.removeEventListener('pointercancel',up);n.classList.remove('dragging');if(moved)changed();else select(id)};
+   const up=()=>{cancelAnimationFrame(raf);raf=0;last=null;n.removeEventListener('pointermove',mv);n.removeEventListener('pointerup',up);n.removeEventListener('pointercancel',up);n.classList.remove('dragging');if(moved){changed();placePop()}else if(sdSel!==id||!sdPop)select(id,sdPop&&sdSel===id)};
    n.addEventListener('pointermove',mv);n.addEventListener('pointerup',up);n.addEventListener('pointercancel',up)};
   n.querySelectorAll('.sdd').forEach(dot=>{dot.onpointerdown=e=>e.stopPropagation();dot.ondblclick=e=>{e.stopPropagation();endLink();sdUnlink=true;wrap.classList.add('unlinking');toast('Click a line to delete it. Click empty space or press Esc to stop.')};
    dot.onclick=e=>{e.stopPropagation();const side=dot.dataset.side;if(sdUnlink)endUnlink();
@@ -1069,13 +1081,19 @@ function sdMount(ro,mark){const d=draft;if(!d)return;const g=sdEnsure(d),cv=$('s
  wrap.addEventListener('pointermove',e=>{if(!T.has(e.pointerId))return;T.set(e.pointerId,rel(e));if(!P||T.size<2)return;e.stopPropagation();const [a,b]=[...T.values()],z=Math.min(2,Math.max(.2,P.z*Math.hypot(a.x-b.x,a.y-b.y)/P.d)),m={x:(a.x+b.x)/2,y:(a.y+b.y)/2};SDX=m.x-(P.m.x-P.x)*z/P.z;SDY=m.y-(P.m.y-P.y)*z/P.z;SDZ=z;cam()},true);
  const tEnd=e=>{T.delete(e.pointerId);if(T.size<2)P=null};wrap.addEventListener('pointerup',tEnd,true);wrap.addEventListener('pointercancel',tEnd,true);
  if($('sdIn'))$('sdIn').onclick=()=>zoomAt(SDZ*1.2);if($('sdOut'))$('sdOut').onclick=()=>zoomAt(SDZ/1.2);if($('sdFit'))$('sdFit').onclick=fit;
- if($('sdAdd'))$('sdAdd').onclick=()=>addAt(g.ids.length);
+ if($('sdAdd'))$('sdAdd').onclick=async e=>{e.stopPropagation();if(sdLink)endLink();if(sdUnlink)endUnlink();
+  const at=await placeGhost(wrap,cv,()=>SDZ,'New step',SDW,40);if(!at)return;const id=sdNew();
+  setSt(a=>{a.splice(g.ids.length,0,'');return a});g.ids.push(id);g.pos[id]={x:Math.round(at.x/10)*10,y:Math.round(at.y/10)*10};
+  sdSel=id;sdPop=true;changed();build();$('sdTxt')?.focus({preventScroll:true});toast('Step added on its own. Link it with the dots when you are ready.')};
  if($('sdFull'))$('sdFull').onclick=()=>sdSetFull(!document.body.classList.contains('sdfull'));
  if($('sdArr'))$('sdArr').onclick=()=>{let y=30;g.ids.forEach(id=>{g.pos[id]={x:40,y};y+=H(id)+44});changed();build();fit()};
  build();if(g.fresh){delete g.fresh;let y=30;g.ids.forEach(id=>{g.pos[id]={x:40,y};y+=H(id)+44});build()}if(SDFOR!==d.id){SDFOR=d.id;sdSel=null;sdLink=null;fit()}else cam()}
 function sdSetFull(on){document.body.classList.toggle('sdfull',on);try{if(on&&!document.fullscreenElement)document.documentElement.requestFullscreen?.().catch(()=>{});if(!on&&document.fullscreenElement)document.exitFullscreen?.().catch(()=>{})}catch(e){}SDFOR='';renderEditor()}
 document.addEventListener('fullscreenchange',()=>{if(!document.fullscreenElement&&document.body.classList.contains('sdfull'))sdSetFull(false)});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.body.classList.contains('sdfull')&&!sdLink&&!sdUnlink&&!e.target.closest?.('textarea,input'))sdSetFull(false)});
+if(!window.__sdPopG){window.__sdPopG=1;const hideP=()=>{const b=document.getElementById('sdPopBox');if(b&&!b.hidden&&!document.getElementById('sdWrap')){b.hidden=true;b.innerHTML='';sdPop=false}};
+ document.addEventListener('click',()=>requestAnimationFrame(hideP),true);new MutationObserver(()=>requestAnimationFrame(hideP)).observe(document.body,{childList:true,subtree:true});addEventListener('scroll',()=>window.__sdPlace&&window.__sdPlace(),true);addEventListener('resize',()=>window.__sdPlace&&window.__sdPlace());
+ document.addEventListener('keydown',e=>{const b=document.getElementById('sdPopBox');if(e.key==='Escape'&&b&&!b.hidden&&!sdLink&&!sdUnlink){e.stopImmediatePropagation();b.hidden=true;b.innerHTML='';sdPop=false;document.querySelectorAll('.sdn.sel').forEach(n=>n.classList.remove('sel'));sdSel=null}},true)}
 if(!window.__sdEsc){window.__sdEsc=1;document.addEventListener('keydown',e=>{if(e.key==='Escape'&&sdUnlink){sdUnlink=false;$('sdWrap')?.classList.remove('unlinking');e.stopImmediatePropagation();return}if(e.key==='Escape'&&sdLink){sdLink=null;$('sdWrap')?.classList.remove('linking');document.querySelectorAll('.sdd.src').forEach(x=>x.classList.remove('src'));e.stopImmediatePropagation()}},true)}
 const fitBody=()=>{const t=$('f_body');if(!t||!t.offsetParent)return;t.style.height='auto';t.style.height=(t.scrollHeight+2)+'px'};
 function renderEditor(){const E=$('editor'),x=getCur();
@@ -1376,8 +1394,8 @@ msg.textContent=notes.join(' · ')+'. Add a description and tags so SOPs can fin
 /* add a link or file straight from the UX Diagram */
 let resTopic='';
 function openResForm(sid,topic){const f=$('dgAdd');f.reset();f.hidden=false;resTopic=topic||'';$('ra_sop').innerHTML='<option value="">None, relate by tags only</option>'+list('sop').sort(byTitle).map(x=>`<option value="${esc(x.id)}">${esc(x.title)}</option>`).join('');$('ra_tl').innerHTML=allTags().map(t=>`<option value="${esc(t)}">`).join('');$('ra_msg').textContent='';const s=sid&&ITEMS.get(sid);if(s){$('ra_sop').value=sid;$('ra_tags').value=(s.tags||[]).join(', ')}f.scrollIntoView({block:'nearest',behavior:'smooth'});$('ra_title').focus()}
-async function newIn(kind,s,topic){const id=newId(kind),now=Date.now(),t=s?s.topic||'':topic||'',x={kind,url:'',title:kind==='sop'?'New SOP':'New '+KIND[kind].one.toLowerCase()+(s?' for '+s.title:''),topic:t,tags:s?[...(s.tags||[])]:[],status:'draft',body:kind==='sop'?SOP_SKELETON:'',links:[],sopId:s?s.id:'',notes:'',createdAt:now,updatedAt:now,reviewedAt:0,history:[],parents:!s&&topic&&kind!=='sop'?[topicNodeId(topic)]:[]};
-if(await write(id,x)){ITEMS.set(id,{id,...x});openItem(id);toast(s?'Linked to '+s.title+' with its tags. Fill it in, then Save.':'Added to the topic '+t+'. Fill it in, then Save.');setTimeout(()=>{const e=$('f_title');if(e){e.focus();e.select()}},40)}}
+async function newIn(kind,s,topic,quiet){const id=newId(kind),now=Date.now(),t=s?s.topic||'':topic||'',x={kind,url:'',title:kind==='sop'?'New SOP':'New '+KIND[kind].one.toLowerCase()+(s?' for '+s.title:''),topic:t,tags:s?[...(s.tags||[])]:[],status:'draft',body:kind==='sop'?SOP_SKELETON:'',links:[],sopId:s?s.id:'',notes:'',createdAt:now,updatedAt:now,reviewedAt:0,history:[],parents:!s&&topic&&kind!=='sop'?[topicNodeId(topic)]:[]};
+if(await write(id,x)){ITEMS.set(id,{id,...x});openItem(id);toast(quiet?'Not linked yet. Fill it in, then Save. Link it with the dots.':s?'Linked to '+s.title+' with its tags. Fill it in, then Save.':'Added to the topic '+t+'. Fill it in, then Save.');setTimeout(()=>{const e=$('f_title');if(e){e.focus();e.select()}},40);return id}return null}
 $('dgAddBtn').onclick=()=>{const f=$('dgAdd');if(!f.hidden){f.hidden=true;return}openResForm('')};
 (()=>{const inp=$('ra_search'),box=$('ra_res');
  const pool=()=>{const m=new Map();list('resource').filter(r=>r.status!=='retired').forEach(r=>m.set('r:'+r.id,{k:'res',r,l:r.title,u:r.url||'',from:(r.assetId?(r.url?'Link + file':'File'):'Link')+(r.fileName?' · '+r.fileName:''),hay:[r.title,r.url,r.fileName,(r.tags||[]).join(' '),r.body].join(' ')}));
@@ -1409,6 +1427,16 @@ function miniConfirm(x,y,label){return new Promise(res=>{document.querySelector(
  m.querySelector('.yes').onclick=()=>done(true);m.querySelector('.no').onclick=()=>done(false);
  setTimeout(()=>{document.addEventListener('keydown',k,true);document.addEventListener('pointerdown',out,true)},0);m.querySelector('.yes').focus()})}
 let UNLINK=false;
+/* a new box follows the cursor until you click where it goes; resolves the spot in the diagram's own coordinates, or null (Esc / click outside) */
+function placeGhost(area,canvas,zoom,label,w,h){return new Promise(res=>{document.querySelector('.dropghost')?.remove();const g=document.createElement('div');g.className='dropghost';g.style.width=w+'px';g.style.minHeight=h+'px';g.textContent=label;document.body.appendChild(g);area.classList.add('placing');
+ const mv=e=>{const z=zoom();g.style.transform=`translate(${e.clientX-w*z/2}px,${e.clientY-h*z/2}px) scale(${z})`};
+ const done=v=>{g.remove();area.classList.remove('placing');document.removeEventListener('pointermove',mv,true);document.removeEventListener('pointerdown',dn,true);document.removeEventListener('keydown',k,true);res(v)};
+ const dn=e=>{e.preventDefault();e.stopPropagation();const r=area.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom){done(null);return}
+  const c=canvas.getBoundingClientRect(),z=zoom();done({x:(e.clientX-c.left)/z-w/2,y:(e.clientY-c.top)/z-h/2})};
+ const k=e=>{if(e.key==='Escape'){e.preventDefault();e.stopImmediatePropagation();done(null)}};
+ document.addEventListener('pointermove',mv,true);document.addEventListener('pointerdown',dn,true);document.addEventListener('keydown',k,true);
+ if(placeGhost.last)mv(placeGhost.last);toast('Click where you want the new box. Esc to cancel.')})}
+document.addEventListener('pointermove',e=>{placeGhost.last=e},{passive:true,capture:true});
 let dgTag='',popHide=null,menuT=null,linkSrc=null,LAYOUT={},dragging=false,SEL=new Set(),holdT=null,justMarq=false;
 const snapG=v=>Math.round(v/20)*20;
 async function saveLayout(){if(!db)return;if(SANDBOX){SB.layout=LAYOUT;sbSave();return}try{await db.doc('layout/diagram').set({pos:LAYOUT,updatedAt:Date.now()})}catch(e){toast('Could not save the layout: '+(e?.message||e?.code))}}
@@ -1467,7 +1495,12 @@ function endLink(){linkSrc=null;const b=$('dg');b.classList.remove('linking');b.
 /* the Add menu at the top */
 $('dgNew').onclick=e=>{e.stopPropagation();const had=document.querySelector('.dgmenu.top');closeMenus();if(had)return;const r=e.currentTarget.getBoundingClientRect(),m=document.createElement('div');m.className='dgmenu top';m.style.position='fixed';m.style.top=(r.bottom+6)+'px';m.style.left=Math.max(8,Math.min(r.left,innerWidth-210))+'px';
  m.innerHTML='<div class="mh">Add to the diagram</div>'+[['topic','Topic'],['sop','SOP'],['email','Email template'],['ticket','Ticket template']].map(([k,t])=>`<button role="menuitem" data-k="${k}">${t}</button>`).join('');
- m.querySelectorAll('[data-k]').forEach(b=>b.onclick=ev=>{ev.stopPropagation();closeMenus();const k=b.dataset.k;k==='topic'?addTopic():k==='resource'?openResForm(''):newIn(k,null,'')});document.body.appendChild(m);m.querySelector('button').focus()};
+ m.querySelectorAll('[data-k]').forEach(b=>b.onclick=async ev=>{ev.stopPropagation();closeMenus();const k=b.dataset.k;if(k==='resource')return openResForm('');
+  const at=await placeGhost(document.querySelector('#v-diagram .dgwrap'),$('dg'),()=>ZOOM||1,k==='topic'?'New topic':'New '+KIND[k].one.toLowerCase(),210,36);if(!at)return;
+  const spot={x:snapG(at.x),y:snapG(at.y)};
+  if(k==='topic'){const v=await ask({title:'Add a topic',msg:'Then link SOPs or templates to it with the dots.',ok:'Add topic',input:''});if(!v)return;if(topicItem(v)){toast('That topic already exists');return}
+   const nid=await ensureTopic('vt:'+v);LAYOUT={...LAYOUT,['vt:'+v]:spot,...(nid?{[nid]:spot}:{}),[topicNodeId(v)]:spot};await saveLayout();toast('Topic "'+v+'" added. Link it with the dots.');renderAll();return}
+  const id=await newIn(k,null,'',true);if(id){LAYOUT={...LAYOUT,[id]:spot};await saveLayout();renderDiagram()}});document.body.appendChild(m);m.querySelector('button').focus()};
 function renderDiagram(){const box=$('dg');closeMenus();if(!ready){box.innerHTML='<p class="mut">Loading the library…</p>';return}
 const showRet=$('dgRet').checked,alive=x=>showRet||x.status!=='retired',has=(x,t)=>(x.tags||[]).some(u=>lowc(u)===lowc(t));
 const items=[...ITEMS.values()].filter(x=>LEVEL[x.kind]!=null&&alive(x)),ids=new Set(items.map(x=>x.id));
@@ -1494,7 +1527,7 @@ rows.forEach((r,ri)=>{if(ri===0)r.sort((a,b)=>(KO[nodeKind(a)]-KO[nodeKind(b)])|
  else{const bc=id=>{const ps=P(id).map(o=>pos.get(o.p)).filter(Boolean);return ps.length?ps.reduce((s,q)=>s+q.x+q.w/2,0)/ps.length:Infinity};const m=new Map(r.map(id=>[id,bc(id)]));r.sort((a,b)=>(m.get(a)-m.get(b))||(KO[nodeKind(a)]-KO[nodeKind(b)])||nodeTitle(a).localeCompare(nodeTitle(b)))}
  const rw=r.length*W+(r.length-1)*GAP,off=(Wt-rw)/2;r.forEach((id,i)=>pos.set(id,{x:Math.round(off+i*(W+GAP)),y:TOP+ri*(H+RG),w:W,h:H}))});
 /* boxes you dragged keep their place */
-all.forEach(id=>{const L=LAYOUT[id],q=pos.get(id);if(L&&q)pos.set(id,{...q,x:Math.max(0,L.x),y:Math.max(0,L.y)})});
+all.forEach(id=>{const L=LAYOUT[id],q=pos.get(id);if(L&&q)pos.set(id,{...q,x:L.x,y:L.y})});
 /* types ticked off in Show become small squares that sit under the box they link to and move with it */
 const hid=id=>DGK[nodeKind(id)]===false,SQ=new Map(),kidsOf=new Map();all.forEach(c=>P(c).forEach(({p})=>{if(!kidsOf.has(p))kidsOf.set(p,[]);kidsOf.get(p).push(c)}));
 const anchorOf=id=>{const seen=new Set([id]),q=[id];while(q.length){const c=q.shift();for(const n of [...P(c).map(o=>o.p),...(kidsOf.get(c)||[])]){if(seen.has(n))continue;seen.add(n);if(!hid(n))return n;q.push(n)}}return null};
@@ -1542,14 +1575,16 @@ box.querySelectorAll('[data-n]').forEach(n=>{const id=n.dataset.n,item=ITEMS.has
  n.onclick=ev=>{if(n.dataset.dragged)return;if(EDIT&&(ev.shiftKey||ev.metaKey||ev.ctrlKey)){SEL.has(id)?SEL.delete(id):SEL.add(id);n.classList.toggle('sel',SEL.has(id));return}if(n.tagName!=='BUTTON')return;if(linkSrc){endLink();return}openModal(id)};
  /* drag a box to move it (Edit mode); it snaps to the grid and the layout is saved for everyone */
  n.onpointerdown=e=>{if(!EDIT||linkSrc||e.button!==0||hid(id))return;e.stopPropagation();const grp=(SEL.has(id)&&SEL.size>1?[...SEL]:[id]).filter(g=>pos.has(g)),q0=new Map(grp.map(g=>[g,{...pos.get(g)}])),sx=e.clientX,sy=e.clientY,minX=Math.min(...grp.map(g=>q0.get(g).x)),minY=Math.min(...grp.map(g=>q0.get(g).y));let moved=false;try{n.setPointerCapture(e.pointerId)}catch(_){}
-  const els=new Map(grp.map(g=>[g,box.querySelector(`[data-n="${CSS.escape(g)}"]`)]));
-  const mv=ev=>{const dx=(ev.clientX-sx)/ZOOM,dy=(ev.clientY-sy)/ZOOM;if(!moved){if(Math.hypot(dx,dy)<5)return;moved=true;dragging=true;els.forEach(el=>el?.classList.add('dragging'));box.classList.add('drag');box.querySelector('.dgpop')?.remove();closeMenus();off()}
-   const ddx=Math.max(-minX,snapG(dx)),ddy=Math.max(-minY,snapG(dy));let maxR=0,maxB=0;
+  const els=new Map(grp.map(g=>[g,box.querySelector(`[data-n="${CSS.escape(g)}"]`)]));const PX0=PANX,PY0=PANY,W0=document.querySelector('#v-diagram .dgwrap');let lastEv=null,raf=0;
+  /* near the edge of the window the view keeps moving, so a box can be taken anywhere */
+  const edge=()=>{raf=0;if(!lastEv||!moved)return;const r=W0.getBoundingClientRect(),m=48,sp=d=>d<m?Math.ceil((m-d)/4):0;const vx=sp(lastEv.clientX-r.left)-sp(r.right-lastEv.clientX),vy=sp(lastEv.clientY-r.top)-sp(r.bottom-lastEv.clientY);if(vx||vy){PANX+=vx;PANY+=vy;applyCam();mv(lastEv,true);raf=requestAnimationFrame(edge)}};
+  const mv=(ev,fromEdge)=>{lastEv=ev;const dx=(ev.clientX-sx-(PANX-PX0))/ZOOM,dy=(ev.clientY-sy-(PANY-PY0))/ZOOM;if(!moved){if(Math.hypot(dx,dy)<5)return;moved=true;dragging=true;els.forEach(el=>el?.classList.add('dragging'));box.classList.add('drag');box.querySelector('.dgpop')?.remove();closeMenus();off()}
+   if(!fromEdge&&!raf)raf=requestAnimationFrame(edge);const ddx=snapG(dx),ddy=snapG(dy);let maxR=0,maxB=0;
    grp.forEach(g=>{const q=q0.get(g),nx=q.x+ddx,ny=q.y+ddy,el=els.get(g);pos.set(g,{...q,x:nx,y:ny});if(el){el.style.left=nx+'px';el.style.top=ny+'px'}maxR=Math.max(maxR,nx+q.w+20);maxB=Math.max(maxB,ny+q.h+30)});
    if(maxR>box.offsetWidth)box.style.width=maxR+'px';if(maxB>box.offsetHeight)box.style.height=maxB+'px';
    grp.forEach(g=>{if(!SQ.has(g))return;placeSq(g);SQ.get(g).forEach(sid=>{const el=box.querySelector(`[data-n="${CSS.escape(sid)}"]`),q=pos.get(sid);if(el){el.style.left=q.x+'px';el.style.top=q.y+'px'}})});
    const gs=new Set([...grp,...grp.flatMap(g=>SQ.get(g)||[])]);box.querySelectorAll('svg.edges path').forEach(pth=>{if(gs.has(pth.dataset.a)||gs.has(pth.dataset.b))pth.setAttribute('d',dpath({a:pth.dataset.a,b:pth.dataset.b}))})};
-  const up=()=>{n.removeEventListener('pointermove',mv);n.removeEventListener('pointerup',up);n.removeEventListener('pointercancel',up);if(!moved)return;
+  const up=()=>{cancelAnimationFrame(raf);raf=0;lastEv=null;if(PANX!==PX0||PANY!==PY0)saveCam();n.removeEventListener('pointermove',mv);n.removeEventListener('pointerup',up);n.removeEventListener('pointercancel',up);if(!moved)return;
    n.dataset.dragged='1';setTimeout(()=>{delete n.dataset.dragged},0);dragging=false;const L2={...LAYOUT};grp.forEach(g=>{const q=pos.get(g);L2[g]={x:q.x,y:q.y}});LAYOUT=L2;saveLayout();renderDiagram();if(grp.length>1)toast('Moved '+grp.length+' boxes')};
   n.addEventListener('pointermove',mv);n.addEventListener('pointerup',up);n.addEventListener('pointercancel',up)}});
 /* hold the mouse down on an empty spot for 1 second, then drag a box around several boxes to select them; drag any selected box to move them all */
