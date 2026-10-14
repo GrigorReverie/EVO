@@ -2102,7 +2102,7 @@ function renderPane(){$('evoAgTab').hidden=ST.role!=='admin';if(TAB==='agents'&&
   `
   :`<p class="mut">Your library comes from the <b>EVO P2A admin</b>. You can edit your own copy: open <b>Your copy</b> in the top bar to see your changes or send them to the admin.</p>
   <div class="evobox"><h4>Updates from the admin</h4><span id="evoVerLine" class="mut">Your library: update ${ST.lastVersion||0}${ST.lastVersionAt?' · '+fmtDate(ST.lastVersionAt):''}. Checking for newer…</span>
-   <div class="actions"><button class="btn" id="evoImpUpd">Import update file</button><button class="btn sm sec" id="evoCheck">Check for updates</button><input type="file" id="evoUpdFile" accept=".json,application/json" hidden></div></div>
+   <div class="actions"><button class="btn" id="evoVault">⤓ Get latest from the Vault</button><button class="btn sm sec" id="evoImpUpd">Import update file</button><button class="btn sm sec" id="evoCheck">Check for updates</button><input type="file" id="evoUpdFile" accept=".json,application/json" hidden></div></div>
   <div class="evobox"><h4>Send your changes to the admin</h4><span class="mut" style="font-size:12px">Open <b>Your copy</b> in the top bar and press <b>Download my edits</b>, then send the file to the admin.</span><div class="actions"><button class="btn sm sec" id="evoMine">Open Your copy</button></div></div>
   `;
   const bindAdm=()=>{[['evoTok','token'],['evoShare','shareLink'],['evoPub','publicRepo'],['evoPriv','privateRepo']].forEach(([id,k])=>{if($(id))$(id).oninput=e=>{ST.admin[k]=e.target.value.trim();save()}})};bindAdm();
@@ -2111,7 +2111,7 @@ function renderPane(){$('evoAgTab').hidden=ST.role!=='admin';if(TAB==='agents'&&
    $('evoVerify').onclick=async()=>{const m=$('evoVerMsg');m.className='mut';m.textContent='Checking…';try{m.textContent=await verifyAdmin();m.className='evook'}catch(e){m.textContent=e.message;m.className='evobad'}};
    $('evoLoadMaster').onclick=loadMaster;
   }else{
-   $('evoImpUpd').onclick=()=>$('evoUpdFile').click();$('evoUpdFile').onchange=e=>{const f=e.target.files[0];e.target.value='';if(f)importUpdate(f)};
+   $('evoVault').onclick=()=>getFromVault($('evoVault'));$('evoImpUpd').onclick=()=>$('evoUpdFile').click();$('evoUpdFile').onchange=e=>{const f=e.target.files[0];e.target.value='';if(f)importUpdate(f)};
    $('evoCheck').onclick=()=>checkUpdates(true);$('evoMine').onclick=()=>{M.hidden=true;$('sbBtn')&&$('sbBtn').click()};
    checkUpdates(false).then(v=>{const l=$('evoVerLine');if(!l)return;l.textContent='Your library: update '+(ST.lastVersion||0)+(ST.lastVersionAt?' · '+fmtDate(ST.lastVersionAt):'')+'. '+(v==null?'Could not check for newer updates.':v.version>(ST.lastVersion||0)?'Update '+v.version+' is available.':'You are up to date.')})}
   return}
@@ -2151,14 +2151,20 @@ window.addEventListener('focus',async()=>{if(K.hidden||!CONN||$('evoConnKey').va
 let LATEST=null;
 async function checkUpdates(loud){try{const r=await fetch((EVO.DATA_BASE||'')+'version.json?t='+Date.now(),{cache:'no-store'});if(!r.ok)throw 0;LATEST=await r.json()}catch(e){LATEST=null;if(loud)toast('Could not check for updates right now.');renderBanner();return null}
  if(loud)toast(LATEST.version>(ST.lastVersion||0)?'Update '+LATEST.version+' is available.':'You are up to date.');renderBanner();return LATEST}
+const MOBILE=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent||'')||(navigator.maxTouchPoints>1&&/Macintosh/.test(navigator.userAgent||''));
+const STANDALONE=()=>{try{return matchMedia('(display-mode: standalone)').matches||navigator.standalone===true}catch(e){return false}};
 function renderBanner(){const parts=[];
+ let tipDone=false;try{tipDone=localStorage.getItem('evop2a.homeTip')==='1'}catch(e){}
+ if(MOBILE&&!STANDALONE()&&!tipDone){const ios=/iPhone|iPad|iPod|Macintosh/i.test(navigator.userAgent||'');parts.push(`<span>📱 <b>Add EVO P2A to your home screen</b> so your copy of the library is kept on this phone: ${ios?'tap <b>Share</b> <span aria-hidden="true">⬆︎</span>, then <b>Add to Home Screen</b>':'tap the <b>⋮</b> menu, then <b>Add to Home screen</b>'}. Open it from the new icon from then on.</span><span class="sp"></span><button class="btn sm sec" id="evoBanHome">Got it</button>`)}
  if(ST.role==='admin'&&PEND)parts.push(`<span>🔔 <b>Latest updates are pending publication to agents.</b> ${(ST.lastVersion||0)?'Agents are still on update '+ST.lastVersion+', so':'Agents have not received any update yet, so'} what they have is not up to date.</span><span class="sp"></span><button class="btn sm" id="evoBanPush">Push to agents</button>`);
  if(ST.role!=='admin'&&LATEST&&LATEST.version>(ST.lastVersion||0)&&ST.dismissed!==LATEST.version){
-  parts.push(`<span>🔄 <b>EVO P2A update ${LATEST.version}</b> is available from the admin${LATEST.publishedAt?' ('+esc(fmtDate(LATEST.publishedAt))+')':''}.${LATEST.notes?' '+esc(LATEST.notes):''}</span><span class="sp"></span>${LATEST.getFrom?`<a class="btn sm sec" href="${esc(LATEST.getFrom)}" target="_blank" rel="noopener">Get the update file ↗</a>`:''}<button class="btn sm" id="evoBanImp">Import update file</button><button class="btn sm sec" id="evoBanLater">Later</button>`)}
+  parts.push(`<span>🔄 <b>EVO P2A update ${LATEST.version}</b> is available from the admin${LATEST.publishedAt?' ('+esc(fmtDate(LATEST.publishedAt))+')':''}.${LATEST.notes?' '+esc(LATEST.notes):''}</span><span class="sp"></span>${LATEST.vault?'<button class="btn sm" id="evoBanVault">⤓ Get it from the Vault</button>':''}${LATEST.getFrom&&!LATEST.vault?`<a class="btn sm sec" href="${esc(LATEST.getFrom)}" target="_blank" rel="noopener">Get the update file ↗</a>`:''}<button class="btn sm ${LATEST.vault?'sec':''}" id="evoBanImp">Import update file</button><button class="btn sm sec" id="evoBanLater">Later</button>`)}
  if(FOLDER&&!FOLDER_OK)parts.push(`<span>📁 Saving to your folder "${esc(FOLDER.name)}" is paused until you allow it again.</span><span class="sp"></span><button class="btn sm" id="evoBanFold">Allow</button>`);
  ban.innerHTML=parts.join('<span style="flex-basis:100%;height:0"></span>');ban.classList.toggle('on',!!parts.length);
  if($('evoBanImp')){const fi=document.createElement('input');fi.type='file';fi.accept='.json,application/json';fi.onchange=e=>{const f=e.target.files[0];if(f)importUpdate(f)};$('evoBanImp').onclick=()=>fi.click();$('evoBanLater').onclick=()=>{ST.dismissed=LATEST.version;save();renderBanner()}}
  if($('evoBanFold'))$('evoBanFold').onclick=reconnect;
+ if($('evoBanVault'))$('evoBanVault').onclick=()=>getFromVault($('evoBanVault'));
+ if($('evoBanHome'))$('evoBanHome').onclick=()=>{try{localStorage.setItem('evop2a.homeTip','1')}catch(e){}renderBanner()};
  if($('evoBanPush'))$('evoBanPush').onclick=()=>EVO.openSettings('sync')}
 
 /* ---------- admin: notice when the master has changes agents don't have yet ---------- */
@@ -2169,6 +2175,11 @@ async function checkPending(){if(ST.role!=='admin'){if(PEND){PEND=false;renderBa
   const p=fp!==(ST.pushedFp||'[]');if(p!==PEND){PEND=p;renderBanner()}}catch(e){}}
 setInterval(checkPending,4000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkPending()});setTimeout(checkPending,600);
 EVO.checkPending=checkPending;
+/* ---------- the Vault: agents get the latest library with one tap ---------- */
+async function getFromVault(btn){const t=btn&&btn.textContent;if(btn){btn.disabled=true;btn.textContent='Opening the Vault…'}
+ try{const u=await EVO.vault.fetchLatest();if(!u)return;if((u.version||0)<=(ST.lastVersion||0)&&!confirm('You already have update '+(ST.lastVersion||0)+'. The Vault has update '+(u.version||0)+'. Load it again anyway?'))return;await importUpdateObj(u)}
+ catch(e){toast(e.message)}finally{if(btn){btn.disabled=false;btn.textContent=t}}}
+EVO.getFromVault=getFromVault;
 /* ---------- update files ---------- */
 const b64=async blob=>{const buf=new Uint8Array(await blob.arrayBuffer());let s='';for(let i=0;i<buf.length;i+=0x8000)s+=String.fromCharCode.apply(null,buf.subarray(i,i+0x8000));return btoa(s)};
 const unb64=(s,type)=>{const bin=atob(s),a=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)a[i]=bin.charCodeAt(i);return new Blob([a],{type:type||''})};
@@ -2176,7 +2187,8 @@ async function buildUpdate(version,notes,onlyApproved){const lib=await EVO.db.li
  const keep=new Set(items.map(x=>x.id)),files={};for(const x of items)if(x.assetId){const b=await EVO.files.blob(x.assetId);if(b)files[x.assetId]={name:x.fileName||'file',type:x.fileType||b.type||'',data:await b64(b)}}
  const teamKeys={};Object.entries(ST.ai.share||{}).forEach(([k,on])=>{if(on&&ST.ai.keys[k])teamKeys[k]=ST.ai.keys[k]});
  return {source:'EVO P2A update',version,publishedAt:Date.now(),notes:notes||'',teamKeys,items,learned:lib.learned.filter(l=>!onlyApproved||keep.has(l.sopId)||!l.sopId),layout:lib.layout,files}}
-async function importUpdate(file){let u;try{u=JSON.parse(await file.text())}catch(e){toast('That file could not be read.');return}
+async function importUpdate(file){let u;try{u=JSON.parse(await file.text())}catch(e){toast('That file could not be read.');return}return importUpdateObj(u)}
+async function importUpdateObj(u){
  if(!u||u.source!=='EVO P2A update'||!Array.isArray(u.items)){toast('That is not an EVO P2A update file.');return}
  const cur=await EVO.db.library(),curIds=new Map(cur.items.map(x=>[x.id,x])),newIds=new Set(u.items.map(x=>x.id));
  let add=0,chg=0,rm=0;u.items.forEach(x=>{const o=curIds.get(x.id);if(!o)add++;else if((o.updatedAt||0)!==(x.updatedAt||0)||o.body!==x.body||o.title!==x.title)chg++});cur.items.forEach(x=>{if(!newIds.has(x.id))rm++});
@@ -2221,12 +2233,14 @@ async function pushUpdate(toGitHub){const m=$('evoPushMsg'),btns=['evoPush','evo
    await putFile(ST.admin.privateRepo,app+'/library.json',master,'EVO P2A master library, update '+ver);
    m.textContent='Saving a copy in Library Version History…';HIST_NOTE=await saveHistory(master,ver);
    await putFile(ST.admin.privateRepo,app+'/updates/update-'+ver+'.json',txt,'EVO P2A update '+ver+(notes?': '+notes:''));
+   m.textContent='Saving update '+ver+' to the Vault…';
+   await putFile(ST.admin.publicRepo,app+'/vault.json',await EVO.vault.lock(txt,{version:ver,publishedAt:upd.publishedAt}),'EVO P2A Vault: update '+ver);
    m.textContent='Telling agents about update '+ver+'…';
-   await putFile(ST.admin.publicRepo,app+'/version.json',JSON.stringify({version:ver,publishedAt:upd.publishedAt,notes,getFrom:ST.admin.shareLink||''},null,2)+'\n','EVO P2A update '+ver);
+   await putFile(ST.admin.publicRepo,app+'/version.json',JSON.stringify({version:ver,publishedAt:upd.publishedAt,notes,vault:true,getFrom:ST.admin.shareLink||''},null,2)+'\n','EVO P2A update '+ver);
   }
   ST.lastVersion=ver;ST.lastVersionAt=upd.publishedAt;if(toGitHub&&only)ST.pushedFp=await libPrint();save();renderRole();checkPending();
   await EVO.download('EVO-P2A-update-'+ver+'.json',txt);
-  m.className='evook';m.textContent=toGitHub?'Update '+ver+' pushed. Agents see it within a few minutes. Share the downloaded file with them. '+HIST_NOTE:'Update file '+ver+' downloaded.'}
+  m.className='evook';const miss=EVO.vault.missing();m.textContent=toGitHub?'Update '+ver+' pushed to the Vault. Agents can tap "Get latest from the Vault" in a minute or two. '+HIST_NOTE+(miss.length?' '+miss.length+' agent'+(miss.length===1?'':'s')+' ('+miss.join(', ')+') cannot open the Vault yet: in Settings → Agents, press Change password for them (their current password is fine), then Publish sign-in list.':''):'Update file '+ver+' downloaded.'}
  catch(e){m.className='evobad';m.textContent=e.message}finally{btns.forEach(b=>b&&(b.disabled=false))}}
 /* ---------- Library Version History: a full copy of every published library, on GitHub and in the connected folder ---------- */
 var HIST_NOTE='';const HIST_DIR='Library Version History';
@@ -2354,6 +2368,33 @@ html.evo-locked body>*:not(#evoGate):not(.toast){visibility:hidden}
 let ACCESS=null; // null = could not load; [] = open (nobody added yet)
 async function loadAccess(){try{const r=await fetch((EVO.DATA_BASE||'')+'agents.json?t='+Date.now(),{cache:'no-store'});if(r.status===404){ACCESS=[];LS.set('accessCache',[]);return ACCESS}if(!r.ok)throw 0;const j=await r.json();ACCESS=Array.isArray(j.agents)?j.agents:[];LS.set('accessCache',ACCESS)}catch(e){ACCESS=LS.get('accessCache',null)}return ACCESS}
 const session=()=>LS.get('session',null);
+/* ---------- the Vault: the latest published library, encrypted, next to the app; each agent's password unlocks the key ---------- */
+const b64e=u8=>{let x='';for(let i=0;i<u8.length;i+=0x8000)x+=String.fromCharCode.apply(null,u8.subarray(i,i+0x8000));return btoa(x)};
+const b64d=t=>{const b=atob(t),a=new Uint8Array(b.length);for(let i=0;i<b.length;i++)a[i]=b.charCodeAt(i);return a};
+const vkKey=h=>crypto.subtle.importKey('raw',unhex(h),{name:'AES-GCM'},false,['encrypt','decrypt']);
+/* admin: the one Vault key, kept in this browser and in the private repo with the agents list */
+async function adminVK(){let v=LS.get('vaultKey','');if(v)return v;
+ const raw=await EVO.gh.gh('/repos/'+ST.admin.privateRepo+'/contents/'+ST.admin.appPath+'/agents-roster.json',{raw:true,allow404:true});
+ if(raw){try{const o=JSON.parse(raw);if(o.vaultKey){LS.set('vaultKey',o.vaultKey);return o.vaultKey}}catch(e){}}
+ v=hex(crypto.getRandomValues(new Uint8Array(32)));LS.set('vaultKey',v);return v}
+EVO.vault={
+ /* admin, on Push: lock the update for the Vault */
+ async lock(txt,meta){const vk=await adminVK(),iv=crypto.getRandomValues(new Uint8Array(12)),ct=await crypto.subtle.encrypt({name:'AES-GCM',iv},await vkKey(vk),new TextEncoder().encode(txt));
+  return JSON.stringify({source:'EVO P2A vault',...meta,iv:hex(iv),ct:b64e(new Uint8Array(ct))})},
+ missing:()=>ROSTER.filter(a=>!a.v).map(a=>a.name),
+ /* agent: get the latest library from the Vault */
+ async fetchLatest(){let r;try{r=await fetch((EVO.DATA_BASE||'')+'vault.json?t='+Date.now(),{cache:'no-store'})}catch(e){throw new Error('Could not reach the Vault. Check your connection.')}
+  if(r.status===404)throw new Error('The Vault is empty. The admin has not published a library to it yet.');if(!r.ok)throw new Error('Could not open the Vault right now ('+r.status+').');
+  const o=await r.json();if(o.source!=='EVO P2A vault')throw new Error('The Vault file is not right.');
+  let vk=LS.get('vk','')||(ST.role==='admin'?LS.get('vaultKey',''):'');
+  const open=async k=>{try{return JSON.parse(new TextDecoder().decode(await crypto.subtle.decrypt({name:'AES-GCM',iv:unhex(o.iv)},await vkKey(k),b64d(o.ct))))}catch(e){return null}};
+  let u=vk?await open(vk):null;
+  if(!u){const me=session(),A=await loadAccess()||[],a=me&&A.find(x=>x.key===me.key);
+   if(!a||!a.v)throw new Error(ST.role==='admin'?'Push an update first: that saves the library to the Vault.':'Your sign-in does not open the Vault yet. Ask the admin to update your password in Settings → Agents (it can stay the same).');
+   const pw=prompt('Type your EVO P2A password to open the Vault. You only need to do this once on this device.');if(!pw)return null;
+   const w=await unseal(pw,a.salt,a.v);if(!w||!w.vk)throw new Error('That password is not right.');LS.set('vk',w.vk);u=await open(w.vk);
+   if(!u)throw new Error('The Vault was locked with a newer key. Ask the admin to push the update again.')}
+  return u}};
 
 /* ---------- sign-in gate ---------- */
 function gate(msg){document.documentElement.classList.add('evo-locked');let g=$('evoGate');if(!g){g=document.createElement('div');g.id='evoGate';g.setAttribute('role','dialog');g.setAttribute('aria-modal','true');g.setAttribute('aria-labelledby','evoGateT');document.body.appendChild(g)}
@@ -2377,7 +2418,7 @@ function gate(msg){document.documentElement.classList.add('evo-locked');let g=$(
   try{const A=ACCESS||await loadAccess()||[],k=await nameKey(n),a=A.find(x=>x.key===k);
    if(!A.length){m.textContent='No agents have been added yet. Ask your EVO P2A admin.';$('evoGB').disabled=false;return}
    if(!a||await pwHash(p,a.salt)!==a.hash){m.textContent='Name or password is not right.';$('evoGB').disabled=false;return}
-   const who=a.n?await unseal(p,a.salt,a.n):null;LS.set('session',{key:k,name:(who&&who.name)||n.trim().replace(/\s+/g,' '),title:(who&&who.title)||'',role:a.role==='admin'?'admin':'agent',hash:a.hash,at:Date.now()});await signedIn(true)}
+   const who=a.n?await unseal(p,a.salt,a.n):null;if(a.v){const w=await unseal(p,a.salt,a.v);if(w&&w.vk)LS.set('vk',w.vk)}LS.set('session',{key:k,name:(who&&who.name)||n.trim().replace(/\s+/g,' '),title:(who&&who.title)||'',role:a.role==='admin'?'admin':'agent',hash:a.hash,at:Date.now()});await signedIn(true)}
   catch(err){m.textContent='Could not check right now. Try again.';$('evoGB').disabled=false}}}
 async function gh0(t,path){const r=await fetch('https://api.github.com'+path,{headers:{'Authorization':'Bearer '+t,'Accept':'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28'}});return r}
 async function adminCheck(t){if(!t)throw new Error('Paste the token.');let r;try{r=await gh0(t,'/repos/'+ST.admin.privateRepo)}catch(e){const x=new Error('Could not reach GitHub. Check your connection.');x.net=true;throw x}
@@ -2411,17 +2452,18 @@ async function start(){const s=session();
 setInterval(async()=>{const s=session();if(!s||s.admin)return;const A=await loadAccess();if(A&&A.length&&!A.find(x=>x.key===s.key))location.reload()},10*60*1000);
 
 /* ---------- admin: the Agents page ---------- */
-let ROSTER=LS.get('roster',[]),DIRTY=LS.get('rosterDirty',false),SHOWPW=null,BUSY=false;
+let ROSTER=LS.get('roster',[]),DIRTY=LS.get('rosterDirty',false),SHOWPW=null,BUSY=false,EDITPW=-1;
 const saveRoster=d=>{LS.set('roster',ROSTER);if(d!==undefined){DIRTY=d;LS.set('rosterDirty',d)}};
 EVO.renderAgents=P=>{const pub=ROSTER.length?`${ROSTER.length} ${ROSTER.length===1?'person':'people'}`:'nobody yet';const admins=ROSTER.filter(a=>a.role==='admin').length;
  P.innerHTML=`<p class="mut">Add the agents who can sign in to EVO P2A, with a name and a password. Removing someone signs them out and clears the library from their browser the next time their app checks (on opening, or within 10 minutes).</p>
- ${SHOWPW?`<div class="evobox"><h4>Password for ${esc(SHOWPW.name)}</h4><span class="mut" style="font-size:12px">Copy it now and give it to them privately. It is not stored anywhere and can't be shown again; you can always set a new one.</span><div class="evopw">${esc(SHOWPW.pw)}</div><div class="actions"><button class="btn sm sec" id="evoPwCopy">Copy</button><button class="btn sm sec" id="evoPwDone">Done</button></div></div>`:''}
+ ${SHOWPW?`<div class="evobox"><h4>Password for ${esc(SHOWPW.name)}</h4><span class="mut" style="font-size:12px">Copy it now and give it to them privately. They sign in and open the Vault with it. It is not stored anywhere and can't be shown again; you can change it any time. Press Publish sign-in list for it to take effect.</span><div class="evopw">${esc(SHOWPW.pw)}</div><div class="actions"><button class="btn sm sec" id="evoPwCopy">Copy</button><button class="btn sm sec" id="evoPwDone">Done</button></div></div>`:''}
  <div class="evobox"><h4>Add an agent</h4><div class="evorow"><div><label class="l" for="evoAN">Name</label><input class="t" id="evoAN" placeholder="e.g. Sam Lee" autocomplete="off"></div><div><label class="l" for="evoAT">Title (optional)</label><input class="t" id="evoAT" placeholder="e.g. Member Services Agent" autocomplete="off"></div></div>
-  <div class="evorow"><div><label class="l" for="evoAP">Password</label><div class="tplpick"><input class="t" id="evoAP" autocomplete="new-password" placeholder="At least 8 characters"><button class="btn sm sec" id="evoAG" type="button">Make one</button></div></div><div style="display:flex;align-items:flex-end"><label class="mut"><input type="checkbox" id="evoAA"> Admin (can push updates and manage agents)</label></div></div>
+  <div class="evorow"><div><label class="l" for="evoAP">Password <span class="mut" style="text-transform:none;letter-spacing:0;font-weight:400">· also opens the Vault</span></label><div class="tplpick"><input class="t" id="evoAP" autocomplete="new-password" placeholder="At least 8 characters"><button class="btn sm sec" id="evoAG" type="button">Make one</button></div></div><div style="display:flex;align-items:flex-end"><label class="mut"><input type="checkbox" id="evoAA"> Admin (can push updates and manage agents)</label></div></div>
   <div class="actions"><button class="btn" id="evoAdd">Add</button><span class="mut" id="evoAM"></span></div></div>
  <div class="evobox"><h4>People who can sign in · ${esc(pub)}</h4>
-  <ul class="evoag">${ROSTER.map((a,i)=>`<li><div><span class="nm">${esc(a.name)}</span>${a.role==='admin'?'<span class="role">Admin</span>':''}<div class="sub">${esc(a.title||'')}${a.title?' · ':''}added ${new Date(a.addedAt).toLocaleDateString()}${a.pwAt&&a.pwAt!==a.addedAt?' · password changed '+new Date(a.pwAt).toLocaleDateString():''}</div></div>
-   <div class="ac"><button class="btn sm sec" data-pw="${i}">New password</button><button class="btn sm danger" data-rm="${i}">Remove</button></div></li>`).join('')||'<li class="mut" style="display:block;border-style:dashed">Nobody yet. Until you add someone and publish, anyone with the link can use the app. Add yourself as Admin first.</li>'}</ul>
+  <ul class="evoag">${ROSTER.map((a,i)=>`<li><div><span class="nm">${esc(a.name)}</span>${a.role==='admin'?'<span class="role">Admin</span>':''}<div class="sub">${esc(a.title||'')}${a.title?' · ':''}added ${new Date(a.addedAt).toLocaleDateString()}${a.pwAt&&a.pwAt!==a.addedAt?' · password changed '+new Date(a.pwAt).toLocaleDateString():''}${a.v?'':' · <b style="color:var(--warn)">open Change password once so they can use the Vault (you can type their current password)</b>'}</div></div>
+   <div class="ac"><button class="btn sm sec" data-pw="${i}">Change password</button><button class="btn sm danger" data-rm="${i}">Remove</button></div>
+   ${EDITPW===i?`<div class="evopwed" style="flex-basis:100%;display:flex;flex-direction:column;gap:6px;margin-top:6px"><label class="l" for="evoCP">New password for ${esc(a.name)}</label><div class="tplpick"><input class="t" id="evoCP" autocomplete="new-password" placeholder="At least 8 characters" data-nodict="1"><button class="btn sm sec" id="evoCPG" type="button">Make one</button></div><span class="mut" style="font-size:12px">This is the password they sign in with and open the Vault with. The old one stops working once you publish the sign-in list.</span><div class="actions"><button class="btn sm" id="evoCPS">Save password</button><button class="btn sm sec" id="evoCPX">Cancel</button><span class="mut" id="evoCPM"></span></div></div>`:''}</li>`).join('')||'<li class="mut" style="display:block;border-style:dashed">Nobody yet. Until you add someone and publish, anyone with the link can use the app. Add yourself as Admin first.</li>'}</ul>
   ${ROSTER.length&&!admins?'<div class="warn">Add yourself as Admin before publishing, or you will be locked out of the admin tools.</div>':''}
   <div class="actions"><button class="btn" id="evoAPub" ${BUSY?'disabled':''}>Publish sign-in list</button><button class="btn sm sec" id="evoALoad">Load list from private repo</button><span id="evoAPM" class="${DIRTY?'evodirty':'mut'}">${DIRTY?'Changes not published yet. Nothing changes for agents until you publish.':'Published.'}</span></div>
   <span class="mut" style="font-size:12px">Publishing writes the names (with titles) to your private repo and a sign-in list with no names or passwords in it to the public app. It takes about a minute to reach everyone.</span></div>`;
@@ -2430,12 +2472,20 @@ EVO.renderAgents=P=>{const pub=ROSTER.length?`${ROSTER.length} ${ROSTER.length==
  $('evoAdd').onclick=async()=>{const n=$('evoAN').value.trim().replace(/\s+/g,' '),t=$('evoAT').value.trim(),p=$('evoAP').value;
   if(!n){m.textContent='Type a name.';return}if(p.length<8){m.textContent='The password needs at least 8 characters.';return}
   const k=await nameKey(n);if(ROSTER.some(a=>a.key===k)){m.textContent=n+' is already on the list. Use New password instead.';return}
-  const salt=newSalt(),now=Date.now();ROSTER.push({name:n,title:t,key:k,salt,hash:await pwHash(p,salt),n:await seal(p,salt,{name:n,title:t}),role:$('evoAA').checked?'admin':'agent',addedAt:now,pwAt:now});
+  const salt=newSalt(),now=Date.now();let vk;try{vk=await adminVK()}catch(e){m.textContent='Could not reach your private repo for the Vault key: '+e.message;return}
+  ROSTER.push({name:n,title:t,key:k,salt,hash:await pwHash(p,salt),n:await seal(p,salt,{name:n,title:t}),v:await seal(p,salt,{vk}),role:$('evoAA').checked?'admin':'agent',addedAt:now,pwAt:now});
   ROSTER.sort((a,b)=>a.name.localeCompare(b.name));saveRoster(true);SHOWPW={name:n,pw:p};EVO.rerenderSettings()};
  if($('evoPwCopy'))$('evoPwCopy').onclick=async e=>{try{await navigator.clipboard.writeText(SHOWPW.pw);e.target.textContent='Copied'}catch(_){}};
  if($('evoPwDone'))$('evoPwDone').onclick=()=>{SHOWPW=null;EVO.rerenderSettings()};
- P.querySelectorAll('[data-pw]').forEach(b=>b.onclick=async()=>{const a=ROSTER[+b.dataset.pw];if(!confirm('Make a new password for '+a.name+'? Their old one stops working once you publish.'))return;
-  const p=genPw(),salt=newSalt();a.salt=salt;a.hash=await pwHash(p,salt);a.n=await seal(p,salt,{name:a.name,title:a.title||''});a.pwAt=Date.now();saveRoster(true);SHOWPW={name:a.name,pw:p};EVO.rerenderSettings()});
+ P.querySelectorAll('[data-pw]').forEach(b=>b.onclick=()=>{const i=+b.dataset.pw;EDITPW=EDITPW===i?-1:i;SHOWPW=null;EVO.rerenderSettings();setTimeout(()=>$('evoCP')?.focus(),30)});
+ if($('evoCP')){const i=EDITPW,a=ROSTER[i],cm=$('evoCPM');
+  $('evoCPG').onclick=()=>{$('evoCP').value=genPw();$('evoCP').focus()};$('evoCPX').onclick=()=>{EDITPW=-1;EVO.rerenderSettings()};
+  $('evoCP').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();$('evoCPS').click()}else if(e.key==='Escape'){$('evoCPX').click()}};
+  $('evoCPS').onclick=async()=>{const p=$('evoCP').value;if(p.length<8){cm.textContent='The password needs at least 8 characters.';return}
+   if(a.v&&await pwHash(p,a.salt)===a.hash){cm.textContent='That is already their password.';return}
+   cm.textContent='Saving…';let vk;try{vk=await adminVK()}catch(e){cm.textContent='Could not reach your private repo for the Vault key: '+e.message;return}
+   const salt=newSalt();a.salt=salt;a.hash=await pwHash(p,salt);a.n=await seal(p,salt,{name:a.name,title:a.title||''});a.v=await seal(p,salt,{vk});a.pwAt=Date.now();
+   saveRoster(true);EDITPW=-1;SHOWPW={name:a.name,pw:p};EVO.rerenderSettings()}}
  P.querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{const a=ROSTER[+b.dataset.rm],me=session();
   if(!confirm('Remove '+a.name+'? Once you publish, they are signed out and the library is cleared from their browser.'+(me&&me.key===a.key?'\n\nThis is you: you will be signed out too.':'')))return;
   ROSTER.splice(+b.dataset.rm,1);saveRoster(true);EVO.rerenderSettings()});
@@ -2443,8 +2493,8 @@ EVO.renderAgents=P=>{const pub=ROSTER.length?`${ROSTER.length} ${ROSTER.length==
 async function publish(){const pm=$('evoAPM');if(ROSTER.length&&!ROSTER.some(a=>a.role==='admin')){pm.className='evobad';pm.textContent='Add at least one Admin first.';return}
  BUSY=true;$('evoAPub').disabled=true;pm.className='mut';pm.textContent='Publishing…';
  try{const G=EVO.gh,app=ST.admin.appPath;
-  await G.putFile(ST.admin.privateRepo,app+'/agents-roster.json',JSON.stringify({source:'EVO P2A agents',savedAt:Date.now(),agents:ROSTER},null,1),'EVO P2A agents: '+ROSTER.length);
-  await G.putFile(ST.admin.publicRepo,app+'/agents.json',JSON.stringify({updatedAt:Date.now(),agents:ROSTER.map(a=>({key:a.key,salt:a.salt,hash:a.hash,role:a.role,...(a.n?{n:a.n}:{})}))})+'\n','EVO P2A sign-in list');
+  await G.putFile(ST.admin.privateRepo,app+'/agents-roster.json',JSON.stringify({source:'EVO P2A agents',savedAt:Date.now(),vaultKey:await adminVK(),agents:ROSTER},null,1),'EVO P2A agents: '+ROSTER.length);
+  await G.putFile(ST.admin.publicRepo,app+'/agents.json',JSON.stringify({updatedAt:Date.now(),agents:ROSTER.map(a=>({key:a.key,salt:a.salt,hash:a.hash,role:a.role,...(a.n?{n:a.n}:{}),...(a.v?{v:a.v}:{})}))})+'\n','EVO P2A sign-in list');
   saveRoster(false);pm.className='evook';pm.textContent='Published. It reaches everyone in about a minute.';
   /* keep this browser signed in as the admin who just published */
   const me=session();if(me){const a=ROSTER.find(x=>x.key===me.key);if(a&&a.hash!==me.hash){me.hash=a.hash;LS.set('session',me)}}
@@ -2453,7 +2503,7 @@ async function publish(){const pm=$('evoAPM');if(ROSTER.length&&!ROSTER.some(a=>
 async function loadRoster(){const pm=$('evoAPM');pm.className='mut';pm.textContent='Loading…';
  try{const raw=await EVO.gh.gh('/repos/'+ST.admin.privateRepo+'/contents/'+ST.admin.appPath+'/agents-roster.json',{raw:true});const o=JSON.parse(raw);if(o.source!=='EVO P2A agents')throw new Error('That is not an EVO P2A agents list.');
   if(ROSTER.length&&!confirm('Replace the list in this browser with the one saved '+new Date(o.savedAt).toLocaleString()+'?'))return void(pm.textContent='');
-  ROSTER=o.agents||[];saveRoster(false);EVO.rerenderSettings()}catch(e){pm.className='evobad';pm.textContent=e.message}}
+  ROSTER=o.agents||[];if(o.vaultKey)LS.set('vaultKey',o.vaultKey);saveRoster(false);EVO.rerenderSettings()}catch(e){pm.className='evobad';pm.textContent=e.message}}
 
 {{document.documentElement.classList.add('evo-locked');const g=document.createElement('div');g.id='evoGate';g.innerHTML='<p class="mut">Loading EVO P2A…</p>';document.body.appendChild(g)}}
 start();
