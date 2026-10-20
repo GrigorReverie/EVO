@@ -146,6 +146,11 @@ label.l{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.
 .score.hi{background:var(--okbg);color:var(--ok)}.score.mid{background:var(--warnbg);color:var(--warn)}.score.lo{background:var(--badbg);color:var(--bad)}
 .issues{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
 .issues li{display:grid;grid-template-columns:8px minmax(0,1fr);gap:9px;align-items:start;font-size:13px}
+.fixhd{display:flex;gap:8px;align-items:flex-start;justify-content:space-between}
+.fixes{display:flex;flex-direction:column;gap:6px;margin-top:8px}.fixes .fixopt{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:start;border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--card);font-size:13px}
+.fixopt ul{margin:4px 0 0;padding-left:18px;font-size:12px;color:var(--ink)}.fixes.fixdone{display:block;color:var(--ok);font-weight:600;font-size:13px}
+.attact{display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.lnkbtn{background:none;border:0;padding:0;font:inherit;color:var(--cyan-dk);text-decoration:underline;cursor:pointer}
 .issues .sev{margin-top:6px}
 .hist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px;font-size:13px}
 .hist li{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
@@ -871,9 +876,13 @@ function renderOverview(){
 $('tiles').innerHTML=['sop','email','ticket','resource'].map(k=>{const L=list(k),n=L.length,c=s=>L.filter(x=>x.status===s).length,a=c('approved'),r=c('review'),d=c('draft'),w=v=>n?(v/n*100).toFixed(1):0;
  return `<button class="card tile" data-go="${k}"><span class="kind">${KIND[k].many}</span><span class="big">${n}</span><span class="bar" aria-hidden="true"><i class="a" style="width:${w(a)}%"></i><i class="r" style="width:${w(r)}%"></i><i class="d" style="width:${w(d)}%"></i></span><span class="legend"><span>${a} approved</span><span>${r} in review</span><span>${d} draft</span></span></button>`}).join('');
 $('tiles').querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{view=b.dataset.go;S.set('tab',view);renderAll()});
-const A=attention();
-$('att').innerHTML=!ready?'<li class="mut">Loading the library…</li>':!ITEMS.size?`<li><span></span><div class="empty"><h2>The library is empty</h2><p class="mut">Turn on Edit mode, then import a Rovo document or add your first SOP.</p>${EDIT?'':'<button class="btn" id="goEdit">Turn on Edit mode</button>'}</div><span></span></li>`:A.length?A.slice(0,40).map((a,i)=>`<li><span class="sev ${a.lv}"></span><div><div class="t1">${esc(a.x.title||'Untitled')}</div><div class="t2">${esc(a.t)} · ${esc(a.d)}</div></div><button class="btn sm sec" data-open="${esc(a.x.id)}">Open</button></li>`).join(''):'<li class="mut">Nothing needs attention. Everything active is approved, linked and reviewed in the last 90 days.</li>';
+const A=attention(),AV=A.filter(a=>!ATTDIS[attKey(a)]),nDis=A.length-AV.length;
+$('att').innerHTML=!ready?'<li class="mut">Loading the library…</li>':!ITEMS.size?`<li><span></span><div class="empty"><h2>The library is empty</h2><p class="mut">Turn on Edit mode, then import a Rovo document or add your first SOP.</p>${EDIT?'':'<button class="btn" id="goEdit">Turn on Edit mode</button>'}</div><span></span></li>`:AV.length?AV.slice(0,40).map((a,i)=>{const k=attKey(a),F=ATTFIX.get(k)||{};return `<li><span class="sev ${a.lv}"></span><div><div class="t1">${esc(a.x.title||'Untitled')}</div><div class="t2">${esc(a.t)} · ${esc(a.d)}</div>${fixHtml(F,k)}</div><span class="attact">${F.options||F.busy||F.done?'':`<button class="btn sm ed-only" data-afix="${i}" title="Get 3 proposed ways to fix this">3 fixes</button>`}<button class="btn sm sec" data-open="${esc(a.x.id)}">Open</button><button class="rmx" data-adis="${i}" title="Dismiss this point" aria-label="Dismiss this point">×</button></span></li>`}).join('')+(nDis?`<li class="mut" style="display:block;font-size:12px">${nDis} dismissed · <button class="lnkbtn" id="attUndis">show them again</button></li>`:''):'<li class="mut">'+(nDis?`Nothing else needs attention (${nDis} dismissed · <button class="lnkbtn" id="attUndis">show them again</button>).`:'Nothing needs attention. Everything active is approved, linked and reviewed in the last 90 days.')+'</li>';
 $('att').querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>openItem(b.dataset.open));
+$('att').querySelectorAll('[data-afix]').forEach(b=>b.onclick=()=>attFixes(AV[+b.dataset.afix]));
+$('att').querySelectorAll('[data-adis]').forEach(b=>b.onclick=()=>{const a=AV[+b.dataset.adis];ATTDIS={...ATTDIS,[attKey(a)]:1};S.set('attDismiss',ATTDIS);renderOverview()});
+$('att').querySelectorAll('[data-fuse]').forEach(b=>b.onclick=()=>{const v=b.dataset.fuse,j=v.lastIndexOf('|');b.disabled=true;useFix(ATTFIX,v.slice(0,j),+v.slice(j+1),renderOverview)});
+if($('attUndis'))$('attUndis').onclick=()=>{ATTDIS={};S.set('attDismiss',ATTDIS);renderOverview()};
 if($('goEdit'))$('goEdit').onclick=()=>setEdit(true);
 renderLibAi()}
 let modalId=null,closeArm=false;
@@ -1279,18 +1288,57 @@ if($('aiSaveAns'))$('aiSaveAns').onclick=async()=>{const A=answered();if(!A.leng
 if($('aiReopt'))$('aiReopt').onclick=async()=>{const A=answered();if(!A.length){toast('Type at least one answer first');return}if(await setClar(mergeClar(draft.clarifications,A))){renderEditor();optimize()}}}
 async function setClar(list){const id=draft.id;if(!EDIT){toast('Turn on Edit mode first');return false}if(await patch(id,{clarifications:list,updatedAt:Date.now()})){ITEMS.set(id,{...ITEMS.get(id),clarifications:list});draft.clarifications=list;return true}return false}
 
+
+/* ---------- proposed fixes: 3 options per finding, applied with one click (one Undo step), or dismissed ---------- */
+const FIX_SHAPE=`{"options":[{"title":"under 8 words","detail":"what it does and why, under 25 words","actions":[ACTION]}]} with exactly 3 options that take different approaches.
+ACTION is one of (use only ids from the lists):
+{"do":"add_tags","id":"item id","tags":["tag"]}
+{"do":"link","template":"email or ticket template id","sop":"SOP id"}
+{"do":"set_topic","id":"item id","topic":"topic name"}
+{"do":"set_status","id":"item id","status":"draft|review|approved|retired"}
+{"do":"rename","id":"item id","title":"new title"}
+{"do":"new_sop","title":"title of a new draft SOP","topic":"topic"}
+{"do":"open","id":"item id"} (use only when a person must rewrite or check the text; put it last)`;
+const libCtx=()=>{const all=[...ITEMS.values()].filter(x=>x.status!=='retired'&&KIND[x.kind]&&x.kind!=='topic');
+ return 'LIBRARY (id | kind | status | title | topic | tags | linked sop)\n'+all.map(x=>`${x.id} | ${x.kind} | ${x.status} | ${x.title} | ${x.topic||'-'} | ${(x.tags||[]).join(', ')||'-'} | ${sopOf(x)?.title||'-'}`).join('\n').slice(0,24000)};
+const cleanOpts=o=>(Array.isArray(o)?o:[]).slice(0,3).map(z=>({title:String(z.title||'Option').slice(0,80),detail:String(z.detail||'').slice(0,240),actions:(Array.isArray(z.actions)?z.actions:[]).filter(a=>a&&typeof a==='object'&&a.do).slice(0,8)})).filter(z=>z.actions.length);
+const actLabel=a=>{const t=id=>ITEMS.get(id)?.title||'?';return a.do==='add_tags'?'Add tags '+(a.tags||[]).map(x=>'#'+x).join(' ')+' to "'+t(a.id)+'"':a.do==='link'?'Link "'+t(a.template)+'" to SOP "'+t(a.sop)+'"':a.do==='set_topic'?'Put "'+t(a.id)+'" under topic '+a.topic:a.do==='set_status'?'Mark "'+t(a.id)+'" '+stLabel(a.status):a.do==='rename'?'Rename "'+t(a.id)+'" to "'+a.title+'"':a.do==='new_sop'?'Create a draft SOP "'+a.title+'"':a.do==='open'?'Open "'+t(a.id)+'" to edit':''};
+async function runActs(acts){if(!EDIT){toast('Turn on Edit mode first');return false}let n=0,open=null;const now=()=>Date.now();
+ for(const a of acts){const x=a.id?ITEMS.get(a.id):null;
+  try{if(a.do==='add_tags'&&x){const tags=normTags([...(x.tags||[]),...(a.tags||[])]);if(await patch(x.id,{tags,updatedAt:now()})){ITEMS.set(x.id,{...x,tags});n++}}
+   else if(a.do==='link'){const t=ITEMS.get(a.template),so=ITEMS.get(a.sop);if(t&&so&&isTpl(t)&&so.kind==='sop'){await addLink(so.id,t.id);n++}}
+   else if(a.do==='set_topic'&&x&&a.topic){if(await patch(x.id,{topic:String(a.topic),updatedAt:now()})){ITEMS.set(x.id,{...x,topic:String(a.topic)});n++}}
+   else if(a.do==='set_status'&&x&&STATUS.some(z=>z[0]===a.status)){const u={status:a.status,updatedAt:now()};if(a.status==='approved')u.reviewedAt=now();if(await patch(x.id,u)){ITEMS.set(x.id,{...x,...u});n++}}
+   else if(a.do==='rename'&&x&&String(a.title||'').trim()){const title=String(a.title).trim();if(await patch(x.id,{title,updatedAt:now()})){ITEMS.set(x.id,{...x,title});n++}}
+   else if(a.do==='new_sop'&&String(a.title||'').trim()){const id=newId('sop'),t=now(),d={kind:'sop',url:'',title:String(a.title).trim(),topic:String(a.topic||''),tags:[],status:'draft',body:SOP_SKELETON,links:[],sopId:'',notes:'Suggested by the AI library review',createdAt:t,updatedAt:t,reviewedAt:0,history:[],parents:[]};if(await write(id,d)){ITEMS.set(id,{id,...d});n++;open=open||id}}
+   else if(a.do==='open'&&x)open=open||x.id}catch(e){}}
+ renderAll();if(open)setTimeout(()=>openItem(open),60);return {n,open}}
+const fixHtml=(F,key)=>F.busy?'<div class="fixes mut">Thinking of 3 ways to fix this…</div>':F.err?`<div class="fixes"><span class="errb" style="display:block">${esc(F.err)}</span></div>`:F.done?`<div class="fixes fixdone">✓ ${esc(F.done)}${F.undo?' · <span class="mut">Undo is in the top bar</span>':''}</div>`:F.options?`<div class="fixes">${F.options.length?F.options.map((o,i)=>`<div class="fixopt"><div><b>${i+1}. ${esc(o.title)}</b>${o.detail?`<div class="mut">${esc(o.detail)}</div>`:''}<ul>${o.actions.map(a=>actLabel(a)).filter(Boolean).map(t=>`<li>${esc(t)}</li>`).join('')}</ul></div><button class="btn sm ed-only" data-fuse="${esc(key)}|${i}">Use this</button></div>`).join(''):'<span class="mut">No fixes came back. Open the item instead.</span>'}</div>`:'';
+async function useFix(store,key,i,after){const F=store.get(key),o=F&&F.options&&F.options[i];if(!o)return;const res=await runActs(o.actions);if(!res)return;
+ store.set(key,{done:'Done: '+o.title+(res.open?' (opened for you to finish)':''),undo:res.n>0});after();toast(res.n?'Applied: '+o.title:'Opened for you to finish')}
+/* Needs attention: fixes per row, and dismiss */
+const ATTFIX=new Map();let ATTDIS=S.get('attDismiss',{});
+const attKey=a=>a.x.id+'|'+a.t;
+async function attFixes(a){const k=attKey(a),s0=await getSample();if(!s0){ATTFIX.set(k,{err:'AI is not available in this view.'});return renderOverview()}
+ ATTFIX.set(k,{busy:true});renderOverview();const x=a.x;
+ try{const r=await s0.json(`You help keep a support content library for Evo Car Share tidy. It feeds an assistant (P2A) that matches emails to SOPs, reply templates and ticket templates.\n\nPROBLEM: "${a.t}" (${a.d})\nITEM: ${x.id} | ${x.kind} | ${x.status} | ${x.title} | topic: ${x.topic||'-'} | tags: ${(x.tags||[]).join(', ')||'-'} | linked sop: ${sopOf(x)?.title||'-'}\nTEXT: ${String(x.body||'').replace(/\s+/g,' ').slice(0,900)}\n\n${libCtx()}\n\nPropose 3 different practical ways to fix this problem for this item. Prefer tags already used in the library. Do not invent policy.\n\nReturn ONLY JSON: ${FIX_SHAPE}`,{modelTier:'default'});
+  ATTFIX.set(k,{options:cleanOpts(r.options)})}catch(e){ATTFIX.set(k,{err:e?.code==='not_granted'?'AI access was declined.':'Could not get fixes: '+(e?.message||'unknown error')})}renderOverview()}
+
 /* ---------- AI library review (whole library, titles and summaries only) ---------- */
 $('aiLib').onclick=async()=>{const all=[...ITEMS.values()].filter(x=>x.status!=='retired');if(!all.length){toast('Add something to the library first');return}
 const s=await getSample();if(!s){libAi={err:'AI is not available in this view.'};return renderLibAi()}
 libAi={busy:true};renderLibAi();
 const lines=all.map(x=>`${x.id} | ${x.kind} | ${x.status} | ${x.title} | topic: ${x.topic||'-'} | sop: ${sopOf(x)?.title||'-'} | ${String(x.body||'').replace(/\s+/g,' ').slice(0,260)}`).join('\n');
-try{const r=await s.json(`Review this support content library for Evo Car Share. It feeds an assistant (P2A) that matches emails to SOPs, reply templates and ticket templates. Find overlapping or duplicate items, SOPs that conflict, topics members often ask about that have no SOP judging from what exists, templates that seem attached to the wrong SOP, and naming that would confuse matching. Be concrete; do not invent facts.\n\nITEMS (id | kind | status | title | topic | linked sop | start of text)\n${clip(lines,30000)}\n\nReturn ONLY JSON: {"findings":[{"level":"high|medium|low","text":"finding and suggested fix, under 30 words","ids":["item ids involved"]}]} with at most 8 findings, most important first.`,{modelTier:'default'});
-libAi={findings:Array.isArray(r.findings)?r.findings.slice(0,8):[]}}catch(e){libAi={err:e?.code==='not_granted'?'AI access was declined.':'Could not review: '+(e?.message||'unknown error')}}renderLibAi()};
+try{const r=await s.json(`Review this support content library for Evo Car Share. It feeds an assistant (P2A) that matches emails to SOPs, reply templates and ticket templates. Find overlapping or duplicate items, SOPs that conflict, topics members often ask about that have no SOP judging from what exists, templates that seem attached to the wrong SOP, and naming that would confuse matching. Be concrete; do not invent facts.\n\nITEMS (id | kind | status | title | topic | linked sop | start of text)\n${clip(lines,30000)}\n\nFor each finding give exactly 3 options that take different approaches to fixing it.\n\nReturn ONLY JSON: {"findings":[{"level":"high|medium|low","text":"the finding, under 30 words","ids":["item ids involved"],"options":[OPTION,OPTION,OPTION]}]} with at most 8 findings, most important first. OPTION is shaped like one entry of "options" here: ${FIX_SHAPE}`,{modelTier:'default'});
+libAi={findings:Array.isArray(r.findings)?r.findings.slice(0,8).map(f=>({...f,options:cleanOpts(f.options)})):[]}}catch(e){libAi={err:e?.code==='not_granted'?'AI access was declined.':'Could not review: '+(e?.message||'unknown error')}}renderLibAi()};
 function renderLibAi(){const b=$('libAi');if(!libAi){b.hidden=true;return}b.hidden=false;
 if(libAi.busy){b.innerHTML='<div class="ai"><h4>Library review</h4><p class="mut">Looking across every SOP and template…</p></div>';return}
 if(libAi.err){b.innerHTML=`<div class="errb">${esc(libAi.err)}</div>`;return}
-b.innerHTML=`<div class="ai"><h4>Library review <span class="r" style="margin-left:auto"><button class="btn sm sec" id="libAiClose">Dismiss</button></span></h4><ul class="issues">${libAi.findings.map(f=>`<li><span class="sev ${['high','medium','low'].includes(f.level)?f.level:'low'}"></span><span>${esc(f.text)} ${(f.ids||[]).filter(id=>ITEMS.has(id)).map(id=>`<button class="chip" data-open="${esc(id)}">${esc(ITEMS.get(id).title)}</button>`).join(' ')}</span></li>`).join('')||'<li class="mut">No overlaps, conflicts or gaps found.</li>'}</ul></div>`;
-b.querySelectorAll('[data-open]').forEach(x=>x.onclick=()=>openItem(x.dataset.open));$('libAiClose').onclick=()=>{libAi=null;renderLibAi()}}
+const LF=libAi.findings.map((f,i)=>({f,i})).filter(o=>!o.f.dismissed);
+b.innerHTML=`<div class="ai"><h4>Library review <span class="r" style="margin-left:auto"><button class="btn sm sec" id="libAiClose">Close review</button></span></h4><ul class="issues">${LF.map(({f,i})=>{const F=f.done?{done:f.done,undo:f.undo}:{options:f.options};return `<li><span class="sev ${['high','medium','low'].includes(f.level)?f.level:'low'}"></span><div><div class="fixhd"><span>${esc(f.text)} ${(f.ids||[]).filter(id=>ITEMS.has(id)).map(id=>`<button class="chip" data-open="${esc(id)}">${esc(ITEMS.get(id).title)}</button>`).join(' ')}</span>${f.done?'':`<button class="rmx" data-ldis="${i}" title="Dismiss this point" aria-label="Dismiss this point">×</button>`}</div>${fixHtml(F,'L'+i)}</div></li>`}).join('')||'<li class="mut">'+(libAi.findings.length?'All points handled or dismissed.':'No overlaps, conflicts or gaps found.')+'</li>'}</ul></div>`;
+b.querySelectorAll('[data-open]').forEach(x=>x.onclick=()=>openItem(x.dataset.open));$('libAiClose').onclick=()=>{libAi=null;renderLibAi()};
+b.querySelectorAll('[data-ldis]').forEach(x=>x.onclick=()=>{libAi.findings[+x.dataset.ldis].dismissed=true;renderLibAi()});
+b.querySelectorAll('[data-fuse]').forEach(x=>x.onclick=async()=>{const [k,j]=x.dataset.fuse.split('|'),i=+k.slice(1),f=libAi.findings[i],o=f.options[+j];x.disabled=true;const res=await runActs(o.actions);if(!res){x.disabled=false;return}f.done='Done: '+o.title+(res.open?' (opened for you to finish)':'');f.undo=res.n>0;renderLibAi();toast(res.n?'Applied: '+o.title:'Opened for you to finish')})}
 
 /* ---------- export for P2A ---------- */
 let dl=null;const getDl=()=>dl||(dl=window.claude?.use?window.claude.use('downloads'):Promise.resolve(null));
