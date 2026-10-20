@@ -22,7 +22,15 @@ body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--font);font-weight
 button,input,textarea,select{font-family:inherit}
 :focus-visible{outline:2px solid rgba(91,194,231,.6);outline-offset:2px}
 
-header{background:var(--nav);color:#fff;padding:10px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+header{background:var(--nav);color:#fff;padding:10px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;position:relative}
+.umenu{position:absolute;right:12px;top:calc(100% - 2px);z-index:60;min-width:230px;max-width:calc(100vw - 24px);background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 32px rgba(0,0,0,.25);padding:6px;display:flex;flex-direction:column;gap:2px}
+.umenu[hidden]{display:none}.umenu [hidden]{display:none!important}
+.umenu .hbtn,.umenu .tgl{display:flex;align-items:center;gap:9px;width:100%;box-sizing:border-box;border:0;border-radius:8px;background:transparent;color:var(--ink);padding:8px 10px;font:inherit;font-size:13px;font-weight:500;text-transform:none;letter-spacing:0;text-align:left}
+.umenu .hbtn:hover,.umenu .tgl:hover{background:var(--accbg);color:var(--title)}
+.umenu .tgl .trk{background:var(--line)}.umenu .tgl[aria-pressed=true] .trk{background:var(--cyan)}.umenu .tgl .knb{background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,.15)}
+.umenu .umh{padding:8px 10px 6px;font-size:12px;color:var(--mut);border-bottom:1px solid var(--line);margin-bottom:4px;line-height:1.4}.umenu .umh b{color:var(--title);font-size:13px}
+.umenu .hbtn b{color:inherit;font-size:inherit}
+#evoWho[aria-expanded=true]{border-color:var(--cyan);color:var(--cyan)}
 h1{font-size:16px;margin:0 auto 0 0;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#fff;display:flex;align-items:center;gap:8px}
 h1::before{content:"";width:9px;height:9px;border-radius:2px;background:var(--cyan);box-shadow:0 0 0 2px rgba(91,194,231,.25);transform:rotate(45deg)}
 .stat{font-size:11px;color:var(--nav-mut);text-transform:uppercase;letter-spacing:.07em;font-weight:600;display:flex;gap:6px;align-items:baseline}
@@ -533,15 +541,20 @@ html:not([data-theme="dark"]) .sdn:not(.sdempty){background:color-mix(in srgb,va
   <h1>Evo P2A</h1>
   <span class="appsw" role="tablist" aria-label="App"><button role="tab" data-app="p2a" aria-selected="true">Problem2Action</button><button role="tab" data-app="arch" aria-selected="false">Architecture</button></span>
   <span class="hsp"></span>
-  <button class="hbtn" id="sbBtn" hidden title="Your own copy of the library: see your changes, send them for review or reset">Your copy · <b id="sbN">0</b> changes</button>
-  <button class="hbtn" id="linkBtn" hidden title="Copy the link to share with agents">Copy link</button>
   <button class="hbtn gone" id="rvBtn" hidden title="Changes agents sent you to accept or decline">Review <b id="rvN">0</b></button>
   <span class="stat gone" title="Approved items Problem2Action uses right now">Live in P2A <b id="hReady">0</b></span>
   <span class="stat gone">In review <b id="hReview">0</b></span>
   <span class="undo arch-only ed-only"><button class="hbtn" id="undoBtn" disabled title="Nothing to undo">↶ Undo</button><button class="hbtn" id="redoBtn" disabled title="Nothing to redo">↷ Redo</button></span>
   <button class="hbtn gone" id="exportAll" title="Download every approved SOP and template as one JSON file, as a backup">Export JSON</button>
-  <button class="tgl arch-only" id="editBtn" aria-pressed="false"><span class="trk"><span class="knb"></span></span>Edit mode</button>
-  <button class="tgl" id="themeBtn" aria-pressed="false"><span class="trk"><span class="knb"></span></span>Dark mode</button>
+  <button class="hbtn" id="evoWho" aria-haspopup="true" aria-expanded="false" aria-controls="userMenu" title="Menu: settings, edit mode, dark mode and more">☰ Menu <span aria-hidden="true">▾</span></button>
+  <div class="umenu" id="userMenu" role="group" aria-label="Menu" hidden>
+    <div class="umh" id="umHead" hidden></div>
+    <button class="tgl arch-only" id="editBtn" aria-pressed="false"><span class="trk"><span class="knb"></span></span>Edit mode</button>
+    <button class="tgl" id="themeBtn" aria-pressed="false"><span class="trk"><span class="knb"></span></span>Dark mode</button>
+    <button class="hbtn" id="linkBtn" hidden title="Copy the link to share with agents">Copy link</button>
+    <button class="hbtn" id="sbBtn" hidden title="Your own copy of the library: see your changes, send them for review or reset">Your copy · <b id="sbN">0</b> changes</button>
+    <button class="hbtn" id="umOut" hidden>Sign out</button>
+  </div>
 </header>
 <nav class="tabs" role="tablist" id="tabs">
   <button role="tab" data-tab="overview" aria-selected="true">Overview</button>
@@ -1869,6 +1882,12 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeMenus();if(lin
 /* ---------- toggles ---------- */
 function setEdit(v){EDIT=v;S.set('edit',v);syncLinkBtn();document.body.classList.toggle('editing',v);$('editBtn').setAttribute('aria-pressed',String(v));if(!v&&dirty){draft=clone(ITEMS.get(draft.id));dirty=false}armRm=false;renderAll()}
 $('editBtn').onclick=()=>setEdit(!EDIT);
+/* one menu for the signed-in person: settings, edit mode, dark mode, copy link, your copy */
+{const w=$('evoWho'),m=$('userMenu');const shut=()=>{m.hidden=true;w.setAttribute('aria-expanded','false')};
+ w.addEventListener('click',e=>{e.stopPropagation();m.hidden=!m.hidden;w.setAttribute('aria-expanded',String(!m.hidden))});
+ document.addEventListener('click',e=>{if(!m.hidden&&!m.contains(e.target)&&e.target!==w&&!w.contains(e.target))shut()});
+ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!m.hidden){shut();w.focus()}});
+ m.addEventListener('click',e=>{const b=e.target.closest('button');if(b&&!b.classList.contains('tgl'))shut()});window.EVO_MENU={shut}}
 const mq=window.matchMedia?matchMedia('(prefers-color-scheme: dark)'):null;let THEME=S.get('theme',null);
 function applyTheme(){if(THEME)document.documentElement.setAttribute('data-theme',THEME);const dark=THEME?THEME==='dark':!!(mq&&mq.matches);$('themeBtn').setAttribute('aria-pressed',String(dark));toP2A({t:'theme',v:THEME})}
 $('themeBtn').onclick=()=>{const dark=$('themeBtn').getAttribute('aria-pressed')==='true';THEME=dark?'light':'dark';S.set('theme',THEME);applyTheme()};
@@ -2261,8 +2280,8 @@ const css=document.createElement('style');css.textContent=`
 /* ---------- header button, banner ---------- */
 const hdr=document.querySelector('header');
 const sb=document.createElement('button');sb.className='hbtn';sb.id='evoSetBtn';sb.textContent='⚙ Settings';sb.title='AI, library updates and saving to a folder';
-hdr.insertBefore(sb,$('themeBtn'));
-const rb=document.createElement('span');rb.className='stat';rb.id='evoRole';hdr.insertBefore(rb,sb);
+const um=$('userMenu');um.insertBefore(sb,$('editBtn'));
+const rb=document.createElement('span');rb.className='stat';rb.id='evoRole';hdr.insertBefore(rb,$('evoWho'));
 const ban=document.createElement('div');ban.id='evoBanner';ban.setAttribute('role','status');hdr.after(ban);
 function renderRole(){rb.innerHTML=ST.role==='admin'?'Admin':'Agent · v<b>'+(ST.lastVersion||0)+'</b>';rb.title=ST.role==='admin'?'You are the EVO P2A admin: you edit the master library and push updates':'Your library is on update '+(ST.lastVersion||0)+' from the admin'}
 renderRole();
@@ -2648,9 +2667,10 @@ async function signedIn(fresh){const s=session();if(!s)return;const g=$('evoGate
 async function removedHere(){/* access was taken away: clear this browser's copy of the library and edits */
  try{await EVO.db.restore({items:{},learned:{},proposals:{},docs:{}})}catch(e){}try{localStorage.removeItem('evoarch.sandbox')}catch(e){}LS.del('session');ST.lastVersion=0;ST.role='agent';EVO.saveSettings()}
 function unlock(){document.documentElement.classList.remove('evo-locked');const g=$('evoGate');if(g)g.hidden=true}
-function renderWho(){const s=session();let b=$('evoWho');if(!s){b&&b.remove();return}
- if(!b){b=document.createElement('button');b.className='hbtn';b.id='evoWho';const set=$('evoSetBtn');set.parentNode.insertBefore(b,set)}
- b.innerHTML='<span aria-hidden="true">👤</span> '+esc(s.name);b.title='Signed in as '+s.name+(s.title?' · '+s.title:'')+'. Click to sign out.';b.setAttribute('aria-label',s.name+', click to sign out');b.onclick=()=>{if(!confirm('Sign out, '+s.name+'?'+(s.admin?'\n\nYour GitHub token is removed from this browser; you will paste it again next time.':'')))return;if(s.admin){ST.admin.token='';EVO.saveSettings()}LS.del('session');location.reload()}}
+function renderWho(){const s=session();const b=$('evoWho'),h=$('umHead'),o=$('umOut');if(!s){b.innerHTML='☰ Menu <span aria-hidden="true">▾</span>';if(h)h.hidden=true;if(o)o.hidden=true;return}
+ b.innerHTML='<span aria-hidden="true">👤</span> '+esc(s.name)+' <span aria-hidden="true">▾</span>';b.title='Signed in as '+s.name+(s.title?' · '+s.title:'')+'. Open the menu.';b.setAttribute('aria-label',s.name+', open the menu');
+ h.hidden=false;h.innerHTML='Signed in as<br><b>'+esc(s.name)+'</b>'+(s.title?' · '+esc(s.title):'')+(s.admin?' · Admin':'');
+ o.hidden=false;o.onclick=()=>{if(!confirm('Sign out, '+s.name+'?'+(s.admin?'\n\nYour GitHub token is removed from this browser; you will paste it again next time.':'')))return;if(s.admin){ST.admin.token='';EVO.saveSettings()}LS.del('session');location.reload()}}
 async function start(){const s=session();
  if(!s)return gate();
  if(s.admin){/* admin: the GitHub token is checked again each time the app opens */
