@@ -21,3 +21,10 @@ Tools for the Evo member support team. Live at **https://grigorreverie.github.io
 - `EVO-P2A-Rules/index.html`: forwards old links to `EVO-P2A/`.
 
 Don't edit `version.json` or `agents.json` by hand; the app manages them.
+
+## Learning from agent logs (no AI at use time)
+
+- Agents can save messages (personal details removed) from P2A with ＋ Log and send the file to the admin.
+- The admin accepts them in Architecture, then uses **Find patterns** (no AI) or **Learn with AI** (one request) to turn them into trigger words, details to pull out, draft SOPs and templates, each with 3 options.
+- SOPs can define **details to pull out** (trip number, order id) with a pattern; they fill placeholders in replies and ticket notes.
+- When nothing matches, agents get a general checklist and a warm general reply. Ticket notes can be Markdown. Agents can add a personal line to replies.
