@@ -1921,7 +1921,7 @@ for(const f of files){try{const raw=await readText(f),fmr=takeFront(raw),fm=fmr[
   await upsert(kind,{title:sec.title,body,tags:normTags([...fmTags,...pkgTags(tg),...((sop&&sop.tags)||[])]),...(sop?{sopId:sop.id}:{})},x=>x.kind===kind&&x.title.trim().toLowerCase()===sec.title.toLowerCase(),f.name);n++}
   notes.push(f.name+': '+n+' '+KIND[kind].one.toLowerCase()+(n===1?'':'s'))}}
 catch(e){notes.push(e.message||(f.name+': could not be read. Export it as Word (.docx) or Markdown and import it again.'))}}
-msg.textContent=(notes.length>3?'Imported '+notes.length+' files':notes.join(' · '))+'. Imported items are marked In review.';renderAll()}
+msg.textContent=notes.join(' · ')+'. Imported items are marked In review.';renderAll()}
 
 /* ---------- links and files (uploads go to the page's file store) ---------- */
 let assetsP=null;const getAssets=()=>assetsP||(assetsP=window.claude?.use?window.claude.use('assets'):Promise.resolve(null));
@@ -1939,7 +1939,7 @@ const d={kind:'resource',title:'',topic:'',tags:[],status:'review',body:'',links
 if(!d.title)d.title=file?file.name.replace(/\.[^.]+$/,''):(d.url||'Untitled');if(await write(id,d)){ITEMS.set(id,{id,...d});return id}throw new Error('Could not save it. Check your connection and try again.')}
 async function uploadResources(files){const msg=$('impKindMsg');msg.hidden=false;const notes=[];msg.textContent='Uploading '+files.length+' file'+(files.length===1?'':'s')+'…';
 for(const f of files){try{await createResource({notes:'Uploaded '+new Date().toLocaleDateString()},f);notes.push(f.name+' added')}catch(e){notes.push(e.message)}}
-msg.textContent=(notes.length>3?'Imported '+notes.length+' files':notes.join(' · '))+'. Add a description and tags so SOPs can find them.';renderAll()}
+msg.textContent=notes.join(' · ')+'. Add a description and tags so SOPs can find them.';renderAll()}
 /* add a link or file straight from the UX Diagram */
 let resTopic='';
 function openResForm(sid,topic){const f=$('dgAdd');f.reset();f.hidden=false;resTopic=topic||'';$('ra_sop').innerHTML='<option value="">None, relate by tags only</option>'+list('sop').sort(byTitle).map(x=>`<option value="${esc(x.id)}">${esc(x.title)}</option>`).join('');$('ra_tl').innerHTML=allTags().map(t=>`<option value="${esc(t)}">`).join('');$('ra_msg').textContent='';const s=sid&&ITEMS.get(sid);if(s){$('ra_sop').value=sid;$('ra_tags').value=(s.tags||[]).join(', ')}f.scrollIntoView({block:'nearest',behavior:'smooth'});$('ra_title').focus()}
