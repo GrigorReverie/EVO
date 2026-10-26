@@ -3017,6 +3017,10 @@ async function pwHash(pw,saltHex){const k=await crypto.subtle.importKey('raw',ne
  return hex(await crypto.subtle.deriveBits({name:'PBKDF2',hash:'SHA-256',salt:unhex(saltHex),iterations:ITER},k,256))}
 async function nameKeyFromPw(pw,saltHex){const k=await crypto.subtle.importKey('raw',new TextEncoder().encode(String(pw)),'PBKDF2',false,['deriveKey']);
  return crypto.subtle.deriveKey({name:'PBKDF2',hash:'SHA-256',salt:new TextEncoder().encode('evo-p2a-name:'+saltHex),iterations:ITER},k,{name:'AES-GCM',length:256},false,['encrypt','decrypt'])}
+/* the same key as nameKeyFromPw, kept as bits in the admin's private list so the Vault key can be changed without everyone's password */
+async function wrapBits(pw,saltHex){const k=await crypto.subtle.importKey('raw',new TextEncoder().encode(String(pw)),'PBKDF2',false,['deriveBits']);
+ return hex(await crypto.subtle.deriveBits({name:'PBKDF2',hash:'SHA-256',salt:new TextEncoder().encode('evo-p2a-name:'+saltHex),iterations:ITER},k,256))}
+async function sealW(wHex,obj){const key=await crypto.subtle.importKey('raw',unhex(wHex),{name:'AES-GCM'},false,['encrypt']),iv=crypto.getRandomValues(new Uint8Array(12)),ct=await crypto.subtle.encrypt({name:'AES-GCM',iv},key,new TextEncoder().encode(JSON.stringify(obj)));return {iv:hex(iv),ct:hex(ct)}}
 async function seal(pw,saltHex,obj){const iv=crypto.getRandomValues(new Uint8Array(12)),ct=await crypto.subtle.encrypt({name:'AES-GCM',iv},await nameKeyFromPw(pw,saltHex),new TextEncoder().encode(JSON.stringify(obj)));return {iv:hex(iv),ct:hex(ct)}}
 async function unseal(pw,saltHex,box){try{const pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:unhex(box.iv)},await nameKeyFromPw(pw,saltHex),unhex(box.ct));return JSON.parse(new TextDecoder().decode(pt))}catch(e){return null}}
 const newSalt=()=>hex(crypto.getRandomValues(new Uint8Array(16)));
@@ -3052,10 +3056,11 @@ async function adminVK(){let v=LS.get('vaultKey','');if(v)return v;
  const raw=await EVO.gh.gh('/repos/'+ST.admin.privateRepo+'/contents/'+ST.admin.appPath+'/agents-roster.json',{raw:true,allow404:true});
  if(raw){try{const o=JSON.parse(raw);if(o.vaultKey){LS.set('vaultKey',o.vaultKey);return o.vaultKey}}catch(e){}}
  v=hex(crypto.getRandomValues(new Uint8Array(32)));LS.set('vaultKey',v);return v}
+async function lockWith(vk,txt,meta){const iv=crypto.getRandomValues(new Uint8Array(12)),ct=await crypto.subtle.encrypt({name:'AES-GCM',iv},await vkKey(vk),new TextEncoder().encode(txt));
+  return JSON.stringify({source:'EVO P2A vault',...meta,iv:hex(iv),ct:b64e(new Uint8Array(ct))})}
 EVO.vault={
  /* admin, on Push: lock the update for the Vault */
- async lock(txt,meta){const vk=await adminVK(),iv=crypto.getRandomValues(new Uint8Array(12)),ct=await crypto.subtle.encrypt({name:'AES-GCM',iv},await vkKey(vk),new TextEncoder().encode(txt));
-  return JSON.stringify({source:'EVO P2A vault',...meta,iv:hex(iv),ct:b64e(new Uint8Array(ct))})},
+ async lock(txt,meta){return lockWith(await adminVK(),txt,meta)},
  missing:()=>ROSTER.filter(a=>!a.v).map(a=>a.name),
  /* agent: get the latest library from the Vault */
  async fetchLatest(){let r;try{r=await fetch((EVO.DATA_BASE||'')+'vault.json?t='+Date.now(),{cache:'no-store'})}catch(e){throw new Error('Could not reach the Vault. Check your connection.')}
@@ -3107,7 +3112,7 @@ async function signedIn(fresh){const s=session();if(!s)return;const g=$('evoGate
  const want=s.role==='admin'?'admin':'agent';if(ST.role!==want){ST.role=want;EVO.saveSettings();location.reload();return}
  renderWho();if(fresh)toast('Signed in as '+s.name)}
 async function removedHere(){/* access was taken away: clear this browser's copy of the library and edits */
- try{await EVO.db.restore({items:{},learned:{},proposals:{},docs:{}})}catch(e){}try{localStorage.removeItem('evoarch.sandbox')}catch(e){}LS.del('session');ST.lastVersion=0;ST.role='agent';EVO.saveSettings()}
+ try{await EVO.db.restore({items:{},learned:{},proposals:{},docs:{}})}catch(e){}try{localStorage.removeItem('evoarch.sandbox')}catch(e){}LS.del('session');LS.del('vk');ST.lastVersion=0;ST.role='agent';EVO.saveSettings()}
 function unlock(){document.documentElement.classList.remove('evo-locked');const g=$('evoGate');if(g)g.hidden=true}
 function renderWho(){const s=session();const b=$('evoWho'),h=$('umHead'),o=$('umOut');if(!s){b.innerHTML='☰ Menu <span aria-hidden="true">▾</span>';if(h)h.hidden=true;if(o)o.hidden=true;return}
  b.innerHTML='<span aria-hidden="true">👤</span> '+esc(s.name)+' <span aria-hidden="true">▾</span>';b.title='Signed in as '+s.name+(s.title?' · '+s.title:'')+'. Open the menu.';b.setAttribute('aria-label',s.name+', open the menu');
@@ -3149,7 +3154,7 @@ EVO.renderAgents=P=>{const pub=ROSTER.length?`${ROSTER.length} ${ROSTER.length==
   if(!n){m.textContent='Type a name.';return}if(p.length<8){m.textContent='The password needs at least 8 characters.';return}
   const k=await nameKey(n);if(ROSTER.some(a=>a.key===k)){m.textContent=n+' is already on the list. Use New password instead.';return}
   const salt=newSalt(),now=Date.now();let vk;try{vk=await adminVK()}catch(e){m.textContent='Could not reach your private repo for the Vault key: '+e.message;return}
-  ROSTER.push({name:n,title:t,key:k,salt,hash:await pwHash(p,salt),n:await seal(p,salt,{name:n,title:t}),v:await seal(p,salt,{vk}),role:$('evoAA').checked?'admin':'agent',addedAt:now,pwAt:now});
+  ROSTER.push({name:n,title:t,key:k,salt,hash:await pwHash(p,salt),w:await wrapBits(p,salt),n:await seal(p,salt,{name:n,title:t}),v:await seal(p,salt,{vk}),role:$('evoAA').checked?'admin':'agent',addedAt:now,pwAt:now});
   ROSTER.sort((a,b)=>a.name.localeCompare(b.name));saveRoster(true);SHOWPW={name:n,pw:p};EVO.rerenderSettings()};
  if($('evoPwCopy'))$('evoPwCopy').onclick=async e=>{try{await navigator.clipboard.writeText(SHOWPW.pw);e.target.textContent='Copied'}catch(_){}};
  if($('evoPwDone'))$('evoPwDone').onclick=()=>{SHOWPW=null;EVO.rerenderSettings()};
@@ -3160,18 +3165,26 @@ EVO.renderAgents=P=>{const pub=ROSTER.length?`${ROSTER.length} ${ROSTER.length==
   $('evoCPS').onclick=async()=>{const p=$('evoCP').value;if(p.length<8){cm.textContent='The password needs at least 8 characters.';return}
    if(a.v&&await pwHash(p,a.salt)===a.hash){cm.textContent='That is already their password.';return}
    cm.textContent='Saving…';let vk;try{vk=await adminVK()}catch(e){cm.textContent='Could not reach your private repo for the Vault key: '+e.message;return}
-   const salt=newSalt();a.salt=salt;a.hash=await pwHash(p,salt);a.n=await seal(p,salt,{name:a.name,title:a.title||''});a.v=await seal(p,salt,{vk});a.pwAt=Date.now();
+   const salt=newSalt();a.salt=salt;a.hash=await pwHash(p,salt);a.w=await wrapBits(p,salt);a.n=await seal(p,salt,{name:a.name,title:a.title||''});a.v=await seal(p,salt,{vk});a.pwAt=Date.now();
    saveRoster(true);EDITPW=-1;SHOWPW={name:a.name,pw:p};EVO.rerenderSettings()}}
  P.querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{const a=ROSTER[+b.dataset.rm],me=session();
-  if(!confirm('Remove '+a.name+'? Once you publish, they are signed out and the library is cleared from their browser.'+(me&&me.key===a.key?'\n\nThis is you: you will be signed out too.':'')))return;
-  ROSTER.splice(+b.dataset.rm,1);saveRoster(true);EVO.rerenderSettings()});
+  if(!confirm('Remove '+a.name+'? Once you publish, they are signed out, the library is cleared from their browser, and the Vault gets a new key so they cannot open future updates.'+(me&&me.key===a.key?'\n\nThis is you: you will be signed out too.':'')))return;
+  ROSTER.splice(+b.dataset.rm,1);if(!LS.get('rotate',null))LS.set('rotate',true);saveRoster(true);EVO.rerenderSettings()});
  $('evoAPub').onclick=publish;$('evoALoad').onclick=loadRoster};
 async function publish(){const pm=$('evoAPM');if(ROSTER.length&&!ROSTER.some(a=>a.role==='admin')){pm.className='evobad';pm.textContent='Add at least one Admin first.';return}
  BUSY=true;$('evoAPub').disabled=true;pm.className='mut';pm.textContent='Publishing…';
  try{const G=EVO.gh,app=ST.admin.appPath;
-  await G.putFile(ST.admin.privateRepo,app+'/agents-roster.json',JSON.stringify({source:'EVO P2A agents',savedAt:Date.now(),vaultKey:await adminVK(),agents:ROSTER},null,1),'EVO P2A agents: '+ROSTER.length);
+  /* someone was removed: give the Vault a new key, re-wrap it for everyone left, and re-lock the current Vault with it */
+  let rot=LS.get('rotate',null);if(rot===true){rot={from:await adminVK(),to:hex(crypto.getRandomValues(new Uint8Array(32)))};LS.set('rotate',rot)}
+  if(rot){pm.textContent='Changing the Vault key…';for(const a of ROSTER){if(a.w)a.v=await sealW(a.w,{vk:rot.to});else delete a.v}saveRoster(true)}
+  await G.putFile(ST.admin.privateRepo,app+'/agents-roster.json',JSON.stringify({source:'EVO P2A agents',savedAt:Date.now(),vaultKey:rot?rot.to:await adminVK(),agents:ROSTER},null,1),'EVO P2A agents: '+ROSTER.length);
+  if(rot){let o=null;try{const r=await fetch((EVO.DATA_BASE||'')+'vault.json?t='+Date.now(),{cache:'no-store'});if(r.ok)o=await r.json()}catch(e){}
+   if(o&&o.source==='EVO P2A vault'){let txt=null;for(const k of [rot.from,rot.to]){try{txt=new TextDecoder().decode(await crypto.subtle.decrypt({name:'AES-GCM',iv:unhex(o.iv)},await vkKey(k),b64d(o.ct)));break}catch(e){}}
+    if(txt==null)throw new Error('Could not re-lock the Vault: it was not locked with your key. Push an update from Library & updates, then publish this list again.');
+    const meta={...o};delete meta.iv;delete meta.ct;delete meta.source;await G.putFile(ST.admin.publicRepo,app+'/vault.json',await lockWith(rot.to,txt,meta),'EVO P2A Vault: new key')}}
   await G.putFile(ST.admin.publicRepo,app+'/agents.json',JSON.stringify({updatedAt:Date.now(),agents:ROSTER.map(a=>({key:a.key,salt:a.salt,hash:a.hash,role:a.role,...(a.n?{n:a.n}:{}),...(a.v?{v:a.v}:{})}))})+'\n','EVO P2A sign-in list');
-  saveRoster(false);pm.className='evook';pm.textContent='Published. It reaches everyone in about a minute.';
+  if(rot){LS.set('vaultKey',rot.to);LS.del('rotate')}
+  saveRoster(false);pm.className='evook';const miss=ROSTER.filter(a=>!a.v).map(a=>a.name);pm.textContent='Published. It reaches everyone in about a minute.'+(rot?' The Vault has a new key, so people you removed cannot open future updates. Everyone left types their password once on their next Vault update.':'')+(rot&&miss.length?' '+miss.join(', ')+' cannot open the Vault until you press Change password for them (their current password is fine) and publish again.':'');
   /* keep this browser signed in as the admin who just published */
   const me=session();if(me){const a=ROSTER.find(x=>x.key===me.key);if(a&&a.hash!==me.hash){me.hash=a.hash;LS.set('session',me)}}
  }catch(e){pm.className='evobad';pm.textContent=e.message+(ST.admin.token?'':' Add your GitHub token in Library & updates.')}
