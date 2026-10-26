@@ -2328,7 +2328,7 @@ $('editBtn').onclick=()=>setEdit(!EDIT);
  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!m.hidden){shut();w.focus()}});
  m.addEventListener('click',e=>{const b=e.target.closest('button');if(b&&!b.classList.contains('tgl'))shut()});window.EVO_MENU={shut}}
 const mq=window.matchMedia?matchMedia('(prefers-color-scheme: dark)'):null;let THEME=S.get('theme',null);
-function applyTheme(){if(THEME)document.documentElement.setAttribute('data-theme',THEME);const dark=THEME?THEME==='dark':!!(mq&&mq.matches);$('themeBtn').setAttribute('aria-pressed',String(dark));toP2A({t:'theme',v:THEME})}
+function applyTheme(){if(THEME)document.documentElement.setAttribute('data-theme',THEME);const dark=THEME?THEME==='dark':!!(mq&&mq.matches);$('themeBtn').setAttribute('aria-pressed',String(dark));toP2A({t:'theme',v:THEME});try{toCap({t:'theme',v:THEME})}catch(e){}}
 $('themeBtn').onclick=()=>{const dark=$('themeBtn').getAttribute('aria-pressed')==='true';THEME=dark?'light':'dark';S.set('theme',THEME);applyTheme()};
 window.addEventListener('beforeunload',e=>{if(dirty){e.preventDefault();e.returnValue=''}});
 
@@ -2340,7 +2340,7 @@ function toP2A(m){if(p2aReady&&fr.contentWindow)fr.contentWindow.postMessage(m,w
 function pushLib(){clearTimeout(pushT);pushT=setTimeout(()=>{if(!ready)return;const up=Math.max(0,...[...ITEMS.values()].map(x=>x.updatedAt||0));toP2A({t:'lib',lib:libFor(),updated:up,learned:[...LEARNED.values()]})},250)}
 function fitFrame(){const top=document.querySelector('header').getBoundingClientRect().bottom;fr.style.height=capFr.style.height=Math.max(560,innerHeight-top)+'px'}
 function setApp(a){if(a==='build'){a='arch';view='build';S.set('tab',view)}if(a==='cap'&&!(OWNER&&CAP_SRC))a='arch';APP=a==='arch'?'arch':a==='cap'?'cap':'p2a';S.set('app',APP);if(typeof syncLinkBtn==='function'&&$('linkBtn'))syncLinkBtn();document.body.classList.toggle('app-p2a',APP==='p2a');document.body.classList.toggle('app-cap',APP==='cap');document.querySelectorAll('[data-app]').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.app===APP)));
- if(APP==='cap'){if(!capFr.srcdoc)capFr.srcdoc=new TextDecoder().decode(Uint8Array.from(atob(CAP_SRC),c=>c.charCodeAt(0)));fitFrame()}
+ if(APP==='cap'){if(!capFr.srcdoc){capFr.onload=()=>toCap({t:'theme',v:THEME});capFr.srcdoc=new TextDecoder().decode(Uint8Array.from(atob(CAP_SRC),c=>c.charCodeAt(0)))}fitFrame()}
  else if(APP==='p2a'){if(!fr.srcdoc){const bytes=Uint8Array.from(atob(P2A_SRC),c=>c.charCodeAt(0));fr.srcdoc=new TextDecoder().decode(bytes)}fitFrame()}else renderAll()}
 document.querySelectorAll('[data-app]').forEach(b=>b.onclick=()=>{if(b.dataset.app!=='arch'&&dirty){toast('Save or discard your changes first');return}setApp(b.dataset.app)});
 addEventListener('resize',fitFrame);
