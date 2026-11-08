@@ -4,7 +4,8 @@ Tools for the Evo member support team. Live at **https://grigorreverie.github.io
 
 | Project | Folder | Link |
 |---|---|---|
-| EVO P2A | `EVO-P2A/` | https://grigorreverie.github.io/EVO/EVO-P2A/ |
+| EVO P2A (live) | `EVO-P2A/` | https://grigorreverie.github.io/EVO/EVO-P2A/ |
+| EVO P2A Preview | `EVO-P2A-Preview/` | https://grigorreverie.github.io/EVO/EVO-P2A-Preview/ |
 
 ## EVO P2A
 - **Sign in first.** Agents sign in with the name and password the admin gave them (Settings → Agents). The admin uses **Admin sign in** with a GitHub token that can write to the private `EVO-admin` repo.
@@ -18,6 +19,7 @@ Tools for the Evo member support team. Live at **https://grigorreverie.github.io
 - `EVO-P2A/version.json`: which library update is newest. Written by the admin's **Push update** button.
 - `EVO-P2A/vault.json`: the latest library, encrypted. Written by **Push update**.
 - `EVO-P2A/agents.json`: the sign-in list. Only scrambled values; no names or passwords. Written by **Publish sign-in list**.
+- `EVO-P2A-Preview/index.html`: the next version (P2A 2.8), for trying out before it goes live. It has no data files of its own: it reads the sign-in list, Vault and library version from `EVO-P2A/`, so agents sign in the same way and see the same SOPs.
 - `EVO-P2A-Rules/index.html`: forwards old links to `EVO-P2A/`.
 
 Don't edit `version.json` or `agents.json` by hand; the app manages them.
