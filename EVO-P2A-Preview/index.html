@@ -1022,7 +1022,7 @@ const row=x=>k==='sop'?`<li class="acc-row ${x.id===cur?'open':''}"><button clas
 $('items').innerHTML=!ready?'<li class="mut">Loading…</li>':shown.length?[...groups.keys()].sort((a,b)=>/^No |^Not /.test(a)-/^No |^Not /.test(b)||a.localeCompare(b)).map(g=>(k==='sop'?`<li class="grp-h">${esc(g)}</li>`:`<li class="grp-h"><button class="grp-t" data-grp="${esc(g)}" aria-expanded="${!isColl(k,g)}"><span class="chev" aria-hidden="true">${isColl(k,g)?'▸':'▾'}</span>${esc(g)}<span class="n">${groups.get(g).length}</span></button><button type="button" class="rmx ed-only" data-rmgrp="${esc(g)}" title="Remove everything in this group" aria-label="Remove all in ${esc(g)}">×</button></li>`)+(k==='sop'?groups.get(g).map(row).join(''):(isColl(k,g)?'':groups.get(g).map(row).join('')))).join(''):`<li class="mut" style="padding:8px">${L.length?'Nothing matches.':'No '+KIND[k].many.toLowerCase()+' yet.'+(EDIT?' Use + Add or import a Rovo document on the Overview.':' Turn on Edit mode to add one.')}</li>`;
 $('items').querySelectorAll('[data-grp]').forEach(b=>b.onclick=()=>{const key=k+'|'+b.dataset.grp,c=S.get('coll',{});c[key]=!c[key];S.set('coll',c);renderList()});
 $('items').querySelectorAll('[data-rmgrp]').forEach(b=>b.onclick=async e=>{e.stopPropagation();if(dirty)return confirmLeave();const g=b.dataset.rmgrp,L2=groups.get(g)||[];if(!L2.length)return;
- const ok=await ask({title:'Remove all '+L2.length+' in "'+g+'"?',msg:'This removes these '+KIND[k].many.toLowerCase()+': '+L2.map(x=>x.title||'Untitled').join(', ')+'. '+(k==='resource'?'':'The SOP itself is kept. ')+'You can undo this with Undo in the header.',ok:'Remove '+L2.length,danger:true});if(!ok)return;
+ const ok=await ask({title:'Remove "'+g+'"?',ok:'Remove',danger:true});if(!ok)return;
  for(const x of L2){if(!(await del(x.id)))continue;if(x.assetId)dropAsset(x.assetId);for(const y of childrenOf(x.id)){const u={parents:(y.parents||[]).filter(q=>q!==x.id)};if(y.sopId===x.id)u.sopId='';await patch(y.id,u)}ITEMS.delete(x.id);if(sel[k]===x.id){sel[k]=null;S.set('sel',sel);draft=null}}
  toast('Removed '+L2.length+' from "'+g+'"');renderAll()});
 $('items').querySelectorAll('[data-rmres]').forEach(b=>b.onclick=e=>{e.stopPropagation();if(dirty&&draft?.id===b.dataset.rmres)return confirmLeave();const x=ITEMS.get(b.dataset.rmres);if(x)removeItem(x)});
@@ -2208,7 +2208,7 @@ function ask({title,msg,ok='OK',danger=false,input=null}){return new Promise(res
  okb.onclick=()=>done(input!=null?inp.value.trim():true);$('dlgNo').onclick=()=>done(false);d.onmousedown=e=>{if(e.target===d)done(false)};inp.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();okb.click()}}})}
 const childrenOf=id=>[...ITEMS.values()].filter(y=>y.sopId===id||(y.parents||[]).includes(id));
 async function removeItem(x){const kids=childrenOf(x.id);
- const ok=await ask({title:'Remove '+KIND[x.kind].one.toLowerCase()+' "'+x.title+'"?',msg:(kids.length?kids.length+' linked item'+(kids.length===1?'':'s')+' will be kept but unlinked. ':'')+'You can undo this with Undo in the header (last 3 changes).',ok:'Remove',danger:true});if(!ok)return;
+ const ok=await ask({title:'Remove "'+(x.title||'Untitled')+'"?',ok:'Remove',danger:true});if(!ok)return;
  if(!(await del(x.id)))return;if(x.assetId)dropAsset(x.assetId);
  for(const y of kids){const u={parents:(y.parents||[]).filter(p=>p!==x.id)};if(y.sopId===x.id)u.sopId='';await patch(y.id,u);ITEMS.set(y.id,{...y,...u})}
  if(x.kind==='topic')for(const y of [...ITEMS.values()].filter(z=>lowc(z.topic||'')===lowc(x.title))){await patch(y.id,{topic:''});ITEMS.set(y.id,{...y,topic:''})}
@@ -2218,7 +2218,7 @@ async function renameTopic(nid){const old=nodeTitle(nid),v=await ask({title:'Ren
  for(const x of [...ITEMS.values()]){const u={};if(lowc(x.topic||'')===lowc(old))u.topic=v;if((x.parents||[]).some(p=>lowc(p)===lowc('vt:'+old)))u.parents=x.parents.map(p=>lowc(p)===lowc('vt:'+old)?'vt:'+v:p);if(Object.keys(u).length){await patch(x.id,{...u,updatedAt:Date.now()});ITEMS.set(x.id,{...x,...u})}}
  toast('Renamed to "'+v+'"');renderAll()}
 async function removeTopic(nid){const name=nodeTitle(nid),L=[...ITEMS.values()].filter(y=>y.id!==nid&&(lowc(y.topic||'')===lowc(name)||(y.parents||[]).some(p=>p===nid||lowc(p)===lowc('vt:'+name))));
- const ok=await ask({title:'Remove topic "'+name+'"?',msg:'The '+L.length+' item'+(L.length===1?'':'s')+' under it are kept and unlinked from it. Nothing else is deleted, and you can undo this.',ok:'Remove topic',danger:true});if(!ok)return;
+ const ok=await ask({title:'Remove "'+name+'"?',ok:'Remove',danger:true});if(!ok)return;
  for(const x of L){const u={parents:(x.parents||[]).filter(p=>p!==nid&&lowc(p)!==lowc('vt:'+name))};if(lowc(x.topic||'')===lowc(name))u.topic='';await patch(x.id,{...u,updatedAt:Date.now()});ITEMS.set(x.id,{...x,...u})}
  if(!nid.startsWith('vt:')){await del(nid);ITEMS.delete(nid)}toast('Topic removed');renderAll()}
 async function ensureTopic(nid){if(!nid.startsWith('vt:'))return nid;const name=nid.slice(3),ex=topicItem(name);if(ex)return ex.id;const id=newId('topic'),now=Date.now(),d={kind:'topic',title:name,topic:'',tags:[],status:'approved',body:'',links:[],sopId:'',parents:[],notes:'',createdAt:now,updatedAt:now,reviewedAt:now,history:[]};if(await write(id,d)){ITEMS.set(id,{id,...d});return id}return null}
@@ -2318,7 +2318,7 @@ function showPop(id){if(linkSrc)return;clearTimeout(popHide);const x=ITEMS.get(i
  pop.querySelectorAll('[data-dl]').forEach(b=>b.onclick=()=>downloadAsset(ITEMS.get(b.dataset.dl)));
  pop.querySelector('[data-add]')?.addEventListener('click',()=>{pop.remove();openResForm(s.id)});
  pop.querySelectorAll('[data-rm]').forEach(b=>b.onclick=async()=>{const o=LL[+b.dataset.rm],nm=o.r?o.r.title:(o.l.l||o.l.u);pop.remove();
-  const ok=await ask({title:'Remove "'+nm+'"?',msg:o.r?'This removes the link or file from the library. You can undo it.':'This removes the link from the SOP "'+o.sop.title+'". You can undo it.',ok:'Remove',danger:true});if(!ok)return;
+  const ok=await ask({title:'Remove "'+nm+'"?',ok:'Remove',danger:true});if(!ok)return;
   try{if(o.r){if(!(await del(o.r.id)))return;if(o.r.assetId)dropAsset(o.r.assetId);ITEMS.delete(o.r.id)}
    else{const cur=ITEMS.get(o.sop.id),links=(cur.links||[]).filter(l=>l.u!==o.l.u);if(await patch(o.sop.id,{links,updatedAt:Date.now()})){ITEMS.set(o.sop.id,{...cur,links});if(draft&&draft.id===o.sop.id&&!dirty)draft.links=links}}
    toast('Removed "'+nm+'"');renderAll()}catch(e){toast('Could not remove: '+(e?.message||e?.code)+'. Try again.')}});
