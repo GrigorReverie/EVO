@@ -3208,6 +3208,26 @@ let P217OBS=[];
  let q=0;const later=()=>{cancelAnimationFrame(q);q=requestAnimationFrame(()=>{o1.disconnect();o2.disconnect();try{decorate()}catch(e){console.warn('p217',e)}o1.observe(G,{childList:true});o2.observe(cv,{childList:true})})};
  const o1=new MutationObserver(later),o2=new MutationObserver(later);P217OBS=[o1,o2];later();return r}}
 </script>
+<style id="p219-css">
+.confx.p219 .ch{cursor:pointer}
+.p219t{all:unset;box-sizing:border-box;width:20px;height:20px;display:inline-grid;place-items:center;cursor:pointer;color:var(--mut);font-size:12px;border-radius:4px;transition:transform .12s}
+.p219t:focus-visible{outline:2px solid var(--link,#0A6490);outline-offset:1px}
+.confx.p219.open .p219t{transform:rotate(90deg)}
+.confx.p219:not(.open){gap:0;padding-block:8px}
+.confx.p219:not(.open)>*:not(.ch){display:none}
+.confx.p219:not(.open) .ch>*:not(b):not(.pct):not(.p219t){display:none}
+@media (prefers-reduced-motion:reduce){.p219t{transition:none}}
+</style>
+<script id="p219">
+/* ---------- P2A 2.19: the confidence section collapses to one line with the % ---------- */
+{const _cf=confHtml;confHtml=function(x,ro){let h=_cf.apply(this,arguments);try{
+ let open=false;try{open=!!S.get('p219open',false)}catch(e){}
+ if(/class="cq"|class="errb"/.test(h))open=true;
+ h=h.replace('<div class="confx" id="confx">','<div class="confx p219'+(open?' open':'')+'" id="confx">')
+    .replace('<div class="ch">','<div class="ch"><button type="button" class="p219t" aria-expanded="'+open+'" aria-controls="confx" aria-label="Show or hide the details">▸</button>')}catch(e){console.warn('p219',e)}return h}}
+document.addEventListener('click',e=>{const ch=e.target.closest&&e.target.closest('.confx.p219 .ch');if(!ch)return;if(e.target.closest('.qhelp'))return;
+ const bx=ch.closest('.confx'),open=!bx.classList.contains('open');bx.classList.toggle('open',open);const b=bx.querySelector('.p219t');if(b)b.setAttribute('aria-expanded',String(open));try{S.set('p219open',open)}catch(x){}});
+</script>
 <script>
 /* EVO P2A standalone: Settings (AI, library and sync, folder), the chat-tab AI flow, update notices and admin push. */
 (function(){
