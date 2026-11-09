@@ -2613,6 +2613,22 @@ const IGN=['id','updatedAt','history'];
 const strip=o=>{const c=clone(o||{});IGN.forEach(k=>delete c[k]);return c};
 const sameItem=(a,b)=>JSON.stringify(sortK(strip(a)))===JSON.stringify(sortK(strip(b)));
 function merged(){const m=new Map(BASE);if(SANDBOX)for(const [id,c] of Object.entries(SB.changes||{})){if(c.status==='accepted')continue;if(c.op==='delete')m.delete(id);else if(c.data)m.set(id,{...c.data,id})}return m}
+
+/* P2A 2.12: no step codes, for anyone */
+const P212_CODE=/\b[A-Z]{2,8}(?:-[A-Z0-9]{1,10}){1,5}-\d{1,3}[a-z]?\b/g;
+function p212Clean(t){if(typeof t!=='string'||!/[A-Z]{2,8}(?:-[A-Z0-9]{1,10}){1,5}-\d/.test(t))return t;const map={};
+ t.split('\n').forEach(l=>{const m=l.match(/^\s*(\d+(?:\.\d+)*)\.?\s.*\(([A-Z]{2,8}(?:-[A-Z0-9]{1,10}){1,5}-\d{1,3}[a-z]?)\)\s*$/);if(m)map[m[2]]=m[1]});
+ return t.replace(/[ \t]*\(\s*([A-Z]{2,8}(?:-[A-Z0-9]{1,10}){1,5}-\d{1,3}[a-z]?)\s*\)/g,'')
+  .replace(/\b(at|in|from|after|before|to|see)\s+(?:step\s+)?([A-Z]{2,8}(?:-[A-Z0-9]{1,10}){1,5}-\d{1,3}[a-z]?)\b/gi,(a,w,c)=>map[c]?w+' step '+map[c]:a)
+  .replace(/(?:,|;)?[ \t]*\b(?:step[ \t]+)?([A-Z]{2,8}(?:-[A-Z0-9]{1,10}){1,5}-\d{1,3}[a-z]?)\b/g,(a,c)=>map[c]?' step '+map[c]:'')
+  .replace(/[ \t]+(?:and|or)(?=[ \t]*(?:[.,;:]|$))/gm,'').replace(/[ \t]+([.,;:])/g,'$1').replace(/[ \t]{2,}/g,' ').replace(/[ \t]+$/gm,'')}
+const p212Item=x=>{if(x&&typeof x.body==='string'){const b=p212Clean(x.body);if(b!==x.body)return {...x,body:b}}return x};
+{const _m=merged;merged=function(){const m=_m.apply(this,arguments);for(const [id,x] of m)m.set(id,p212Item(x));return m}}
+{const _w=write;write=function(id,data){return _w.call(this,id,p212Item(data))}}
+{const _p=patch;patch=function(id,data){return _p.call(this,id,p212Item(data))}}
+try{if(typeof BASE!=='undefined'&&BASE&&BASE.size){ITEMS=merged();renderAll()}}catch(e){}
+
+
 function mergedL(){const m=new Map(BASEL);if(SANDBOX)for(const [id,d] of Object.entries(SB.learned||{}))m.set(id,{...d,id});return m}
 function setChange(id,after){const base=BASE.get(id),prev=(SB.changes||{})[id],ch={...SB.changes};
  if(after==null){if(!base)delete ch[id];else ch[id]={op:'delete',kind:base.kind,title:base.title,at:Date.now(),baseAt:base.updatedAt||0,status:'draft'}}
@@ -2777,6 +2793,134 @@ function renderBuild(){const V=$('v-build');if(!V)return;const st=BSTEPS[B.i]||B
  if($('b_saveR'))$('b_saveR').onclick=()=>doSave('review');if($('b_saveD'))$('b_saveD').onclick=()=>doSave('draft');if($('b_update'))$('b_update').onclick=()=>doSave();
  if($('b_open'))$('b_open').onclick=()=>{const id=B.savedId;setApp('arch');view='sop';S.set('tab',view);sel.sop=id;S.set('sel',sel);draft=null;renderAll()};
  if($('b_new'))$('b_new').onclick=async()=>{const ok=await ask({title:'Start a new SOP?',msg:B.savedId?'The SOP you saved stays in the library. The builder clears for a new one.':'What you have entered here and not saved will be cleared.',ok:'Start new',danger:!B.savedId});if(!ok)return;B=blank();bSave();renderBuild()}}
+
+/* ---------- P2A 2.13: SOP Builder on one page, in the same format as imported SOPs ----------
+   Six sections, each one thing the agent needs: When it applies, Steps, Watch out for, Escalate, Templates, Follow-up and close. */
+const P213_NEW={v213:1,triggers:'',stepTpl:[],rules:'',watch:'',escWhen:'',escDay:'',escNight:'',escInclude:'',escTell:'',followup:'',closes:'',ticketNote:'',texts:[],escFrom:''};
+function p213Fix(){for(const [k,v] of Object.entries(P213_NEW))if(B[k]===undefined)B[k]=Array.isArray(v)?[]:v;
+ if(!B.v213m){/* an SOP started in the old Builder keeps what was typed */
+  if(String(B.who||'').trim()&&!B.when.includes(B.who.trim()))B.when=(B.when.trim()+(B.when.trim()?'\n':'')+'Applies to: '+B.who.trim()).trim();
+  if(String(B.exceptions||'').trim()&&!B.rules.trim())B.rules=B.exceptions.trim();
+  if(String(B.escalate||'').trim()&&!B.escWhen.trim())B.escWhen=B.escalate.trim();
+  B.v213m=1;bSave()}
+ while(B.stepTpl.length<B.steps.length)B.stepTpl.push('')}
+const P213_SEC=[['when','When it applies'],['steps','Steps'],['watch','Watch out for'],['esc','Escalate'],['tpl','Templates'],['close','Follow-up and close']];
+const p213Lines=t=>String(t||'').split('\n').map(x=>x.replace(/^\s*[-•*]\s*/,'').trim()).filter(Boolean);
+const p213Words=t=>String(t||'').trim().split(/\s+/).filter(Boolean).length;
+const p213Tpls=()=>{const live=x=>x.status!=='retired';return{email:list('email').filter(x=>live(x)&&x.channel!=='text').sort(byTitle),text:list('email').filter(x=>live(x)&&x.channel==='text').sort(byTitle),ticket:list('ticket').filter(live).sort(byTitle)}};
+const p213Done=k=>({when:!!(B.title.trim()&&B.when.trim()),steps:B.steps.some(x=>String(x).trim()),watch:!!B.watch.trim(),esc:!!(B.escWhen.trim()&&(B.escDay.trim()||B.escNight.trim())),tpl:B.emails.length+B.texts.length+B.tickets.length>0,close:!!B.closes.trim()})[k];
+function bBody(){p213Fix();const st=B.steps.map((x,i)=>({t:String(x||'').trim(),tp:B.stepTpl[i]})).filter(x=>x.t);const T=id=>{const x=ITEMS.get(id);return x?x.title:''};
+ const L=[];const add=(h,v)=>{v=String(v||'').trim();if(v)L.push(h+(v.includes('\n')?'\n'+v:' '+v))};
+ add('When to use:',B.when);
+ L.push('Steps:\n'+st.map((x,i)=>(i+1)+'. '+x.t.replace(/[.\s]*$/,'.')+(x.tp&&T(x.tp)?' (template: '+T(x.tp)+')':'')).join('\n'));
+ const R=p213Lines(B.rules);if(R.length)L.push('Rules:\n'+R.map(r=>'- '+r).join('\n'));
+ const W=p213Lines(B.watch);if(W.length)L.push('Watch out for:\n'+W.map(r=>'- '+r).join('\n'));
+ const E=[B.escDay.trim()&&'- Business hours: '+B.escDay.trim(),B.escNight.trim()&&'- After hours: '+B.escNight.trim(),B.escInclude.trim()&&'- When escalating include: '+B.escInclude.trim(),B.escTell.trim()&&'- Tell the member meanwhile: '+B.escTell.trim()].filter(Boolean);
+ if(B.escWhen.trim()||E.length)L.push('Escalate when: '+(B.escWhen.trim()||'see below')+(E.length?'\n'+E.join('\n'):''));
+ add('Follow-up:',B.followup);add('Case closes when:',B.closes);add('Ticket note must record:',B.ticketNote);
+ return L.join('\n\n')+'\n'}
+async function p213Ai(field){const s2=await getSample();if(!s2){bMsg='AI is not available in this view.';return renderBuild()}
+ const steps=B.steps.map((x,i)=>(i+1)+'. '+x).join('\n');
+ const P={triggers:`List 5 to 15 words or short phrases an Evo Car Share member would actually write or say when this procedure applies (their words, not internal tool names). Comma separated.\n\nPROCEDURE: ${B.title}\nWHEN IT APPLIES: ${B.when}\nSTEPS:\n${steps}\n\nReturn ONLY JSON: {"text":"word, word, …"}`,
+  watch:`Turn these notes into "Watch out for" reminders for call centre agents. Each line: the mistake in under 15 words, then " Instead: " and what to do in under 15 words. Keep every fact, name and number; add nothing that was not said. One per line.\n\nNOTES:\n${B.watch}\n\nReturn ONLY JSON: {"text":"line\\nline"}`,
+  rules:`Turn these notes into rules for an SOP. One per line, each "At step N: IF [exact condition] THEN [action]", 25 words or fewer, using the step numbers below. Keep every number and name; add nothing that was not said.\n\nSTEPS:\n${steps}\n\nNOTES:\n${B.rules}\n\nReturn ONLY JSON: {"text":"line\\nline"}`,
+  when:`Rewrite this as the "When to use" line of an SOP for Evo Car Share agents: one or two plain sentences saying the situation or what the member asks, and who it does not apply to if said. Keep every fact; add nothing.\n\nNOTES:\n${B.when}\n\nReturn ONLY JSON: {"text":"…"}`}[field];
+ if(field!=='triggers'&&!String(B[field]||'').trim()){bMsg='Say or type something first.';return renderBuild()}
+ bBusy=true;bMsg='';renderBuild();
+ try{const r=await s2.json(P,{modelTier:'quick'});if(r&&r.text)B[field]=String(r.text).trim();bSave()}catch(e){bMsg=e?.code==='not_granted'?'AI access was declined. Allow it when asked, then try again.':'Could not do that: '+(e?.message||'unknown error')+'. Try again.'}
+ bBusy=false;renderBuild()}
+function renderBuild(){const V=$('v-build');if(!V)return;p213Fix();
+ const TP=p213Tpls(),allT=[...TP.email.map(x=>[x,'Email']),...TP.text.map(x=>[x,'Text']),...TP.ticket.map(x=>[x,'Ticket'])];
+ const mic=f=>`<button type="button" class="btn sm sec mic" data-mic="${f}" title="Dictate"><i></i>Dictate</button>`;
+ const ai=(f,l)=>`<button type="button" class="btn sm sec" data-p213ai="${f}" ${bBusy?'disabled':''}>${bBusy?'Working…':'✨ '+l}</button>`;
+ const box=(f,ph,rows)=>`<textarea class="t" id="b_${f}" rows="${rows||2}" placeholder="${esc(ph)}">${esc(B[f]||'')}</textarea>`;
+ const inp=(f,ph)=>`<input class="t" id="b_${f}" value="${esc(B[f]||'')}" placeholder="${esc(ph)}">`;
+ const lab=(f,t,hint)=>`<label class="l" for="b_${f}">${t}${hint?` <span class="p213h">${hint}</span>`:''}</label>`;
+ const dict=f=>`<div class="dictip" id="dict_${f}" hidden>🎤 Dictation types into the box. ${DICT()}</div>`;
+ const pick=(kind,L,sel)=>`<div class="bpick">${L.map(x=>`<label><input type="checkbox" data-p213t="${kind}" value="${esc(x.id)}" ${sel.includes(x.id)?'checked':''}>${esc(x.title)}</label>`).join('')||'<span class="mut">None yet.</span>'}</div>
+  <details class="p213new" data-kind="${kind}"><summary>+ New ${kind} template</summary><input class="t" data-p213n="title" placeholder="Template name"><textarea class="t" data-p213n="body" rows="${kind==='text'?2:4}" placeholder="${kind==='ticket'?'- Member asked:\n- Checked:\n- Action taken:\n- Pending:':kind==='text'?'Under 300 characters.':'Hello [FIRST_NAME],\n\n…\n\nThank you'}"></textarea><button type="button" class="btn sm" data-p213mk="${kind}">Add and tick it</button></details>`;
+ const stepN=B.steps.filter(x=>String(x).trim()).length;
+ const sec={
+ when:`${lab('title','SOP name')}${inp('title','e.g. Approving a BC driving record')}
+  <div class="p213row">${'<div>'+lab('topic','Topic')+`<input class="t" id="b_topic" list="b_topics" value="${esc(B.topic)}" placeholder="e.g. Registration"><datalist id="b_topics">${[...new Set([...ITEMS.values()].map(y=>y.topic).filter(Boolean))].map(t=>`<option value="${esc(t)}">`).join('')}</datalist></div>`}<div>${lab('tags','Tags','comma separated')}<input class="t" id="b_tags" list="b_tl" value="${esc(B.tags)}" placeholder="e.g. Driving records, BC DL"><datalist id="b_tl">${allTags().map(t=>`<option value="${esc(t)}">`).join('')}</datalist></div></div>
+  ${list('sop').some(x=>x.title.trim().toLowerCase()===B.title.trim().toLowerCase()&&B.title.trim()&&x.id!==B.savedId)?'<div class="warn">An SOP with this name already exists. Pick a different name to keep them apart.</div>':''}
+  ${lab('when','When it applies','the situation, or what the member asks; say who it is not for')}${box('when','e.g. A new member’s ICBC driving record is in the Approved section and ready to check. Not for out-of-province licences.',2)}<div class="btools">${mic('when')}${ai('when','Tidy')}</div>${dict('when')}
+  ${lab('triggers','Trigger words','what members say; P2A finds the SOP by these')}${inp('triggers','e.g. driving record, ICBC, approve my account, licence check')}<div class="btools">${ai('triggers','Suggest from what you wrote')}</div>`,
+ steps:`<div class="onestep">${lab('onestep','Step '+(stepN+1)+' · say or type one step','short: a reminder, not training')}<textarea class="t" id="b_onestep" rows="2" placeholder="e.g. Check the record is in the Approved section and under 3 months old.">${esc(B.onestep||'')}</textarea>
+  <div class="btools">${mic('onestep')}<button type="button" class="btn sm" id="b_endstep">✓ Add step</button><span class="mut">Enter adds it. Start with "Only if …:" for a step that only happens sometimes.</span></div>${dict('onestep')}</div>
+  <ol class="blist p213steps">${B.steps.map((x,i)=>`<li><span class="stn">${i+1}</span><div class="p213sc"><textarea class="t" rows="1" data-bstep="${i}" aria-label="Step ${i+1}">${esc(x)}</textarea>${p213Words(x)>25?'<span class="p213long">Long for a reminder ('+p213Words(x)+' words). Split it, or move the detail to Watch out for.</span>':''}<select class="t p213st" data-bstpl="${i}" aria-label="Template for step ${i+1}"><option value="">No template for this step</option>${allT.map(([t,k])=>`<option value="${esc(t.id)}" ${B.stepTpl[i]===t.id?'selected':''}>${k}: ${esc(t.title)}</option>`).join('')}</select></div><span class="sta"><button type="button" data-bsu="${i}" ${i?'':'disabled'} aria-label="Move up">▲</button><button type="button" data-bsd="${i}" ${i<B.steps.length-1?'':'disabled'} aria-label="Move down">▼</button><button type="button" class="strm" data-bsx="${i}" aria-label="Remove step">×</button></span></li>`).join('')||'<li class="mut" style="display:block;border-style:dashed">No steps yet.</li>'}</ol>
+  <details class="p213more"><summary>Or narrate the whole process at once</summary>${box('stepsRaw','Narrate it in your own words…',4)}<div class="btools">${mic('stepsRaw')}<button type="button" class="btn sm sec" data-tidy="steps" data-label="Steps" ${bBusy?'disabled':''}>${bBusy?'Working…':'✨ Turn into steps'}</button></div>${dict('stepsRaw')}</details>
+  ${lab('rules','Rules that change a step','one per line: At step 3: IF … THEN …')}${box('rules','e.g. At step 3: IF the record is older than 3 months THEN reject and ask for a new one.',3)}<div class="btools">${mic('rules')}${ai('rules','Tidy into IF / THEN')}</div>${dict('rules')}
+  <details class="p213more" ${B.links.length?'open':''}><summary>Tool links (${B.links.filter(l=>l.u).length})</summary><ul class="blist lk">${B.links.map((l,i)=>`<li><input class="t" data-bl="${i}" data-f="l" value="${esc(l.l)}" placeholder="Name" aria-label="Link name"><input class="t" data-bl="${i}" data-f="u" value="${esc(l.u)}" placeholder="https://…" aria-label="Link address"><span class="sta"><button type="button" class="strm" data-blx="${i}" aria-label="Remove link">×</button></span></li>`).join('')}</ul><div class="btools"><button type="button" class="btn sm sec" id="b_addlink">+ Add link</button><span class="tplpick" style="flex:1 1 260px"><input class="t" id="b_lsearch" placeholder="or search links already in the library" autocomplete="off"><span class="tplres" id="b_lres" hidden></span></span></div></details>`,
+ watch:`${lab('watch','Watch out for','the mistakes agents make here, one per line; agents read these in two seconds')}${box('watch','e.g. Applying the sign-up fee by hand. Instead: the overnight batch charges it.',4)}<div class="btools">${mic('watch')}${ai('watch','Tidy into short lines')}</div>${dict('watch')}`,
+ esc:`${lab('escWhen','Escalate when')}${box('escWhen','e.g. You are unsure an infraction counts, or the record is outside the Approved section.',2)}<div class="btools">${mic('escWhen')}</div>${dict('escWhen')}
+  ${B.escFrom?`<div class="p213note">Route filled from your last ${esc(B.escFrom)} SOP. Change it if this one is different.</div>`:''}
+  <div class="p213row"><div>${lab('escDay','Business hours: who and how')}${inp('escDay','e.g. 8:30–4:00 Mon–Fri: Teams message to the TL or admin team')}</div><div>${lab('escNight','After hours: who and how')}${inp('escNight','e.g. Expedited Approval request form')}</div></div>
+  ${lab('escInclude','When escalating include')}${inp('escInclude','e.g. member full name, phone, licence number, the reason')}
+  ${lab('escTell','Tell the member meanwhile')}${inp('escTell','e.g. Your application is with our registration team; we will review it today or tomorrow.')}`,
+ tpl:`<p class="mut" style="margin:0">Tick the templates this SOP uses. You can also tie one to a step in Steps.</p>
+  <div class="p213tg"><div>${lab('','Email')}${pick('email',TP.email,B.emails)}</div><div>${lab('','Text')}${pick('text',TP.text,B.texts)}</div><div>${lab('','Ticket')}${pick('ticket',TP.ticket,B.tickets)}</div></div>`,
+ close:`${lab('followup','Follow-up','what the member is told next, and when')}${box('followup','e.g. Once approved, tell the member they can drive right away in the app.',2)}<div class="btools">${mic('followup')}</div>${dict('followup')}
+  ${lab('closes','Case closes when')}${inp('closes','e.g. Services set to Approved, dashboard saved as Approved, ticket Resolved')}
+  ${lab('ticketNote','Ticket note must record')}${inp('ticketNote','e.g. record verified, licence number, promo code or BCAA credit applied')}`};
+ const miss=P213_SEC.filter(([k])=>!p213Done(k)).map(([,t])=>t);
+ V.innerHTML=`<div class="bback"><button type="button" class="btn sm sec" id="b_toSops">← Back to SOPs</button></div><div class="bld p213"><nav class="card" aria-label="SOP sections" style="padding:10px"><ul class="bnav">${P213_SEC.map(([k,t],i)=>`<li><button type="button" data-p213go="${k}" class="${p213Done(k)?'done':''}"><span class="bn">${p213Done(k)?'✓':i+1}</span>${t}</button></li>`).join('')}</ul></nav>
+ <div class="p213col"><div class="card p213head"><span class="kicker">SOP Builder${B.title?' · '+esc(B.title):''}</span><p class="mut" style="margin:4px 0 0">Six things the agent needs, on one page. Everything is saved in this browser as you type.</p></div>
+ ${P213_SEC.map(([k,t],i)=>`<section class="card bstep p213s" id="p213_${k}"><h2><span class="bn">${p213Done(k)?'✓':i+1}</span>${t}</h2>${sec[k]}</section>`).join('')}
+ <section class="card bstep p213s"><details><summary class="l" style="cursor:pointer">What the SOP will say (preview)</summary><div class="bprev">${esc(bBody())}</div></details></section>
+ <div class="card p213bar">${miss.length?`<span class="p213miss">Still empty: ${esc(miss.join(', '))}</span>`:'<span class="p213ok">✓ All six parts filled</span>'}<button class="btn sm danger" id="b_new">Start a new SOP</button><span class="sp"></span><span class="mut p213msg" title="${esc(bMsg)}">${esc(bMsg)}</span>${B.savedId&&ITEMS.has(B.savedId)?`<button class="btn sec" id="b_open">Open in Architecture</button><button class="btn" id="b_update">Update the saved SOP</button>`:`<button class="btn sec" id="b_saveD" ${B.title.trim()?'':'disabled'}>Save as Draft</button><button class="btn" id="b_saveR" ${B.title.trim()?'':'disabled'}>Save as In review</button>`}</div></div></div>`;
+ /* wiring */
+ $('b_toSops').onclick=()=>{view='sop';S.set('tab',view);renderAll()};
+ V.querySelectorAll('[data-p213go]').forEach(b=>b.onclick=()=>{const el=$('p213_'+b.dataset.p213go);if(el){el.scrollIntoView({behavior:'smooth',block:'start'});const f=el.querySelector('input,textarea');f&&setTimeout(()=>f.focus({preventScroll:true}),350)}});
+ const soft=()=>p213Status();
+ ['title','topic','tags','confluence','when','triggers','stepsRaw','onestep','rules','watch','escWhen','escDay','escNight','escInclude','escTell','followup','closes','ticketNote'].forEach(f=>{const el=$('b_'+f);if(el)el.oninput=()=>{B[f]=el.value;if(/^esc(Day|Night|Include|Tell)$/.test(f))B.escFrom='';bSave();soft()}});
+ if($('b_topic'))$('b_topic').onchange=()=>{if(!p213EscFill())return;['escDay','escNight','escInclude','escTell'].forEach(f=>{const el=$('b_'+f);if(el)el.value=B[f]});const sec=$('p213_esc');if(sec&&!sec.querySelector('.p213note')){const n=document.createElement('div');n.className='p213note';n.textContent='Route filled from your last '+B.escFrom+' SOP. Change it if this one is different.';const r=sec.querySelector('.p213row');r&&r.before(n)}p213Status()};
+ V.querySelectorAll('[data-p213ai]').forEach(b=>b.onclick=()=>p213Ai(b.dataset.p213ai));
+ V.querySelectorAll('[data-tidy]').forEach(b=>b.onclick=()=>bTidy(b.dataset.tidy,b.dataset.label));
+ V.querySelectorAll('[data-mic]').forEach(b=>b.onclick=()=>{const f=b.dataset.mic,box=$('b_'+f),box0=box,tip=$('dict_'+f);if(box){box.focus();try{box.setSelectionRange(box.value.length,box.value.length)}catch(e){}}
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition,fallback=()=>{if(tip)tip.hidden=false;b.classList.remove('on')};
+  if(bRec){try{bRec.stop()}catch(e){}bRec=null;bRecF='';b.classList.remove('on');return}
+  if(!SR||!box)return fallback();try{const r=new SR();r.lang='en-CA';r.continuous=true;r.interimResults=false;
+   r.onresult=ev=>{const box=$('b_'+f)||box0;let t='';for(let i=ev.resultIndex;i<ev.results.length;i++)if(ev.results[i].isFinal)t+=ev.results[i][0].transcript;if(t){box.value=(box.value&&!/\s$/.test(box.value)?box.value+' ':box.value)+t.trim();B[f]=box.value;bSave()}};
+   r.onerror=()=>{bRec=null;bRecF='';fallback()};r.onend=()=>{if(bRec!==r)return;bRec=null;bRecF='';V.querySelector('[data-mic].on')?.classList.remove('on')};r.start();bRec=r;bRecF=f;b.classList.add('on')}catch(e){fallback()}});
+ if(bRec&&bRecF)V.querySelector(`[data-mic="${bRecF}"]`)?.classList.add('on');
+ const grow=t=>{t.style.height='auto';t.style.height=t.scrollHeight+'px'};
+ V.querySelectorAll('[data-bstep]').forEach(t=>{grow(t);t.oninput=()=>{grow(t);B.steps[+t.dataset.bstep]=t.value;bSave()};t.onchange=()=>{const y=scrollY;renderBuild();scrollTo(0,y)}});
+ V.querySelectorAll('[data-bstpl]').forEach(s=>s.onchange=()=>{B.stepTpl[+s.dataset.bstpl]=s.value;bSave()});
+ const mv=(i,d)=>{const j=i+d;if(j<0||j>=B.steps.length)return;[B.steps[i],B.steps[j]]=[B.steps[j],B.steps[i]];[B.stepTpl[i],B.stepTpl[j]]=[B.stepTpl[j]||'',B.stepTpl[i]||''];bSave();const y=scrollY;renderBuild();scrollTo(0,y)};
+ V.querySelectorAll('[data-bsu]').forEach(b=>b.onclick=()=>mv(+b.dataset.bsu,-1));V.querySelectorAll('[data-bsd]').forEach(b=>b.onclick=()=>mv(+b.dataset.bsd,1));
+ V.querySelectorAll('[data-bsx]').forEach(b=>b.onclick=()=>{const i=+b.dataset.bsx;B.steps.splice(i,1);B.stepTpl.splice(i,1);bSave();const y=scrollY;renderBuild();scrollTo(0,y)});
+ const endStep=()=>{const el=$('b_onestep');const v=String(el?.value||'').trim();if(!v){el?.focus();return}B.steps=[...B.steps.filter(x=>String(x).trim()),v];B.stepTpl=B.stepTpl.slice(0,B.steps.length-1);B.stepTpl.push('');B.onestep='';bSave();const y=scrollY;renderBuild();scrollTo(0,y);$('b_onestep')?.focus({preventScroll:true})};
+ $('b_endstep').onclick=endStep;$('b_onestep').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();endStep()}});
+ V.querySelectorAll('[data-bl]').forEach(i=>i.oninput=()=>{B.links[+i.dataset.bl][i.dataset.f]=i.value.trim();bSave()});
+ V.querySelectorAll('[data-blx]').forEach(b=>b.onclick=()=>{B.links.splice(+b.dataset.blx,1);bSave();renderBuild()});
+ $('b_addlink').onclick=()=>{B.links.push({l:'',u:''});bSave();renderBuild();const a=V.querySelectorAll('[data-f=l]');a[a.length-1]?.focus()};
+ {const inp=$('b_lsearch'),bx=$('b_lres');const pool=()=>{const m=new Map();list('resource').filter(r=>r.url&&r.status!=='retired').forEach(r=>m.set(r.url,{l:r.title,u:r.url}));list('sop').forEach(o=>(o.links||[]).forEach(l=>{if(l.u&&!m.has(l.u))m.set(l.u,{l:l.l||l.u,u:l.u})}));return [...m.values()].filter(o=>!B.links.some(l=>l.u===o.u))};
+  const show=()=>{const q=inp.value.trim().toLowerCase(),c=pool().filter(o=>!q||(o.l+' '+o.u).toLowerCase().includes(q)).slice(0,8);bx.hidden=false;bx.innerHTML=c.map((o,i)=>`<button type="button" data-lp="${i}"><b>${esc(o.l)}</b><span>${esc(o.u.length>60?o.u.slice(0,60)+'…':o.u)}</span></button>`).join('')||'<div class="mut" style="padding:6px 10px">No match.</div>';bx.querySelectorAll('[data-lp]').forEach(b=>b.onmousedown=ev=>{ev.preventDefault();B.links.push(c[+b.dataset.lp]);bSave();renderBuild()})};
+  inp.onfocus=show;inp.oninput=show;inp.onblur=()=>setTimeout(()=>{bx.hidden=true},150)}
+ const key={email:'emails',text:'texts',ticket:'tickets'};
+ V.querySelectorAll('[data-p213t]').forEach(c=>c.onchange=()=>{const k=key[c.dataset.p213t];B[k]=c.checked?[...new Set([...B[k],c.value])]:B[k].filter(x=>x!==c.value);bSave();const y=scrollY;renderBuild();scrollTo(0,y)});
+ V.querySelectorAll('[data-p213mk]').forEach(b=>b.onclick=async()=>{const kind=b.dataset.p213mk,d=b.closest('details'),title=d.querySelector('[data-p213n=title]').value.trim(),body=d.querySelector('[data-p213n=body]').value.trim();
+  if(!title){d.querySelector('[data-p213n=title]').focus();return}const now=Date.now(),k=kind==='ticket'?'ticket':'email',id=newId(k);
+  const x={kind:k,url:'',title,topic:B.topic.trim(),tags:[],status:'review',body,links:[],sopId:'',parents:[],notes:'Made in the SOP Builder',createdAt:now,updatedAt:now,reviewedAt:0,history:[],...(k==='email'?{channel:kind==='text'?'text':'email'}:{})};
+  if(!(await write(id,x)))return;ITEMS.set(id,{id,...x});B[key[kind]]=[...B[key[kind]],id];bMsg='Added '+kind+' template "'+title+'".';bSave();const y=scrollY;renderBuild();scrollTo(0,y)});
+ const doSave=async status=>{const now=Date.now(),id=B.savedId&&ITEMS.has(B.savedId)?B.savedId:newId('sop'),old=ITEMS.get(id);
+  const triggers=[...new Set(String(B.triggers).split(/[,\n]/).map(x=>x.trim()).filter(Boolean))].slice(0,40);
+  const d={...(old?(({id:_,...r})=>r)(old):{createdAt:now,reviewedAt:0,history:[],sopId:'',parents:[],clarifications:[]}),kind:'sop',v2:true,url:'',title:B.title.trim()||'Untitled SOP',topic:B.topic.trim(),tags:normTags(String(B.tags).split(',')),confluence:String(B.confluence||'').trim(),status:status||old?.status||'review',body:bBody(),triggers,links:B.links.filter(l=>l.u).map(l=>({l:l.l||l.u,u:l.u})),tools:[],notes:old?.notes||'Built with the SOP Builder',updatedAt:now};
+  if(!(await write(id,d)))return;ITEMS.set(id,{id,...d});await linksToRes(ITEMS.get(id));
+  for(const tid of [...new Set([...B.emails,...B.texts,...B.tickets,...B.stepTpl.filter(Boolean)])]){const t=ITEMS.get(tid);if(!t)continue;const u=!t.sopId?{sopId:id}:t.sopId===id||(t.parents||[]).includes(id)?null:{parents:[...(t.parents||[]),id]};if(u){u.updatedAt=now;if(await patch(tid,u))ITEMS.set(tid,{...t,...u})}}
+  if(B.topic.trim()&&(B.escDay.trim()||B.escNight.trim())){const m=S.get('p213esc',{});m[B.topic.trim().toLowerCase()]={topic:B.topic.trim(),escDay:B.escDay,escNight:B.escNight,escInclude:B.escInclude,escTell:B.escTell};S.set('p213esc',m)}
+  B.savedId=id;bSave();bMsg=(old?'Updated':'Saved')+' "'+d.title+'"'+(SANDBOX?' (your copy; send it from "Your copy")':'')+'.';renderBuild();renderHeader()};
+ if($('b_saveR'))$('b_saveR').onclick=()=>doSave('review');if($('b_saveD'))$('b_saveD').onclick=()=>doSave('draft');if($('b_update'))$('b_update').onclick=()=>doSave();
+ if($('b_open'))$('b_open').onclick=()=>{const id=B.savedId;setApp('arch');view='sop';S.set('tab',view);sel.sop=id;S.set('sel',sel);draft=null;renderAll()};
+ $('b_new').onclick=async()=>{const ok=await ask({title:'Start a new SOP?',ok:'Start new',danger:!B.savedId});if(!ok)return;B=Object.assign({},{i:0,title:'',topic:'',tags:'',confluence:'',when:'',who:'',stepsRaw:'',steps:[],escalate:'',exceptions:'',links:[],todo:[],emails:[],tickets:[],savedId:''},JSON.parse(JSON.stringify(P213_NEW)),{v213m:1});bSave();renderBuild();scrollTo({top:0})}}
+/* the escalation route of the last SOP saved in the same topic fills in, so it is typed once per topic */
+function p213EscFill(){const t=B.topic.trim().toLowerCase(),m=S.get('p213esc',{})[t];if(!m||B.escDay.trim()||B.escNight.trim()||B.escInclude.trim()||B.escTell.trim())return false;B.escDay=m.escDay||'';B.escNight=m.escNight||'';B.escInclude=m.escInclude||'';B.escTell=m.escTell||'';B.escFrom=m.topic;bSave();return true}
+
+/* ticks and "Still empty" update as you type, without redrawing the page */
+function p213Status(){const V=$('v-build');if(!V)return;P213_SEC.forEach(([k],i)=>{const d=p213Done(k);V.querySelectorAll(`[data-p213go="${k}"]`).forEach(b=>{b.classList.toggle('done',d);const n=b.querySelector('.bn');if(n)n.textContent=d?'✓':i+1});const h=V.querySelector(`#p213_${k} h2 .bn`);if(h)h.textContent=d?'✓':i+1});
+ const miss=P213_SEC.filter(([k])=>!p213Done(k)).map(([,t])=>t),bar=V.querySelector('.p213bar');if(bar){const m=bar.querySelector('.p213miss,.p213ok');if(m){m.className=miss.length?'p213miss':'p213ok';m.textContent=miss.length?'Still empty: '+miss.join(', '):'✓ All six parts filled'}}
+ const ok=!!B.title.trim();['b_saveR','b_saveD'].forEach(id=>{if($(id))$(id).disabled=!ok});const pv=V.querySelector('.bprev');if(pv)pv.textContent=bBody()}
 
 function renderAll(){if(view==='doing'&&!OWNER&&ready){view='overview';S.set('tab',view)}renderHeader();renderTabs();if(view==='doing')renderDoing();else if(view==='overview')renderOverview();else if(view==='diagram')renderDiagram();else if(view==='build')renderBuild();else{renderList();renderEditor()}if(modalId){if(!dirty){closeArm=false;$('modalClose').textContent='Close'}renderEditor()}}
 applyTheme();document.body.classList.toggle('editing',EDIT);$('editBtn').setAttribute('aria-pressed',String(EDIT));renderAll();setApp(APP);
@@ -3599,4 +3743,26 @@ const css=document.createElement('style');css.textContent=`.rlbox{border:1px sol
 
 </script>
 
+<style id="p213-css">
+.p213 .p213col{display:flex;flex-direction:column;gap:12px;min-width:0}
+.p213 nav.card{position:sticky;top:12px}
+.p213s h2{display:flex;align-items:center;gap:10px;font-size:18px!important}
+.p213s h2 .bn,.p213 .bnav .bn{display:inline-flex;align-items:center;justify-content:center;min-width:24px;height:24px;border-radius:50%;background:var(--accbg);color:var(--title);font-size:12px;font-weight:650}
+.p213 .bnav button.done .bn{background:var(--okbg,#e3f5ea);color:var(--ok,#1e7a45)}
+.p213s{scroll-margin-top:12px}
+.p213s .l{margin-top:4px}
+.p213h{font-weight:400;text-transform:none;letter-spacing:0;color:var(--mut);font-size:12px}
+.p213row{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.p213tg{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.p213steps li{align-items:flex-start}
+.p213sc{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.p213st{font-size:12px!important;padding:4px 8px!important;height:auto!important;color:var(--mut)}
+.p213long{font-size:12px;color:var(--warn,#9a6200)}
+.p213more summary,.p213new summary{cursor:pointer;font-size:13px;color:var(--link);font-weight:600;padding:4px 0}
+.p213new{margin-top:6px}.p213new[open]{display:flex;flex-direction:column;gap:6px}
+.p213note{font-size:13px;color:var(--mut);background:var(--accbg);border-radius:8px;padding:6px 10px}
+.p213bar{position:sticky;bottom:8px;display:flex!important;flex-direction:row!important;flex-wrap:wrap;align-items:center;gap:8px;z-index:5;box-shadow:0 6px 20px rgba(0,0,0,.12)}
+.p213bar .sp{flex:1}.p213bar{flex-wrap:nowrap!important}.p213bar .btn{white-space:nowrap;flex:none}@media(max-width:760px){.p213bar{flex-wrap:wrap!important}.p213msg{display:none}}.p213msg{max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px}
+.p213miss{font-size:13px;color:var(--warn,#9a6200)}.p213ok{font-size:13px;color:var(--ok,#1e7a45);font-weight:600}
+</style>
 </body></html>
