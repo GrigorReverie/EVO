@@ -2992,6 +2992,7 @@ function renderPane(){$('evoAgTab').hidden=ST.role!=='admin';if(TAB==='agents'&&
    <div class="actions"><button class="btn" id="evoPush">Push update to all</button><button class="btn sec" id="evoExp">Download update file only</button><span class="mut" id="evoPushMsg"></span></div>
    <span class="mut" style="font-size:12px">Push saves the master in your private repo, flags the new update for everyone and downloads the update file. Put that file where agents can get it${ST.admin.shareLink?' (your share link below)':', for example a SharePoint or Teams folder'}.</span></div>
   <div class="evobox"><h4>Library Version History</h4><span class="mut" style="font-size:12px">Each push saves the full library as "Full Library _ mmddyy" (then _v2, _v3… the same day) in your private repo and in your connected folder, both in a "Library Version History" folder. Restore one to bring it back here, then push to send it to agents.</span><div id="evoHist"></div><div class="actions"><button class="btn sm sec" id="evoHistR">Refresh</button></div></div>
+  <div class="evobox" id="evoVBox"><h4>What's in the Vault</h4><span class="mut" style="font-size:12px">These are the SOPs and templates agents get when they tap <b>Get latest from the Vault</b>. Tick any you want to take out and press Remove. Agents get the change as a new update, and it takes them out of their copy too.</span><div id="evoVList"></div><div class="actions"><button class="btn sm sec" id="evoVOpen">Show what's in the Vault</button><button class="btn sm sec" id="evoVAll" hidden>Tick all</button><button class="btn sm" id="evoVRm" hidden disabled>Remove from the Vault</button><span class="mut" id="evoVMsg"></span></div></div>
   <div class="evobox"><h4>Agent edits</h4><span class="mut" style="font-size:12px">Agents send you their changes as a file. Open <b>Review</b> in the top bar, then <b>Import an edits file</b> to accept or decline each one.</span></div>
   <div class="evobox"><h4>GitHub connection</h4>
    <div class="evorow"><div><label class="l" for="evoTok">GitHub token</label><input class="t" id="evoTok" type="password" autocomplete="off" value="${esc(ST.admin.token)}" placeholder="github_pat_…"></div><div><label class="l" for="evoShare">Where agents get the update file</label><input class="t" id="evoShare" value="${esc(ST.admin.shareLink)}" placeholder="SharePoint or Teams folder link"></div></div>
@@ -3008,7 +3009,7 @@ function renderPane(){$('evoAgTab').hidden=ST.role!=='admin';if(TAB==='agents'&&
   if(ad){
    $('evoPush').onclick=async()=>{await pushUpdate(true);renderHistory()};$('evoHistR').onclick=renderHistory;if(ST.admin.token)renderHistory();else $('evoHist').innerHTML='<span class="mut">Sign in with your GitHub token to see versions.</span>';$('evoExp').onclick=()=>pushUpdate(false);
    $('evoVerify').onclick=async()=>{const m=$('evoVerMsg');m.className='mut';m.textContent='Checking…';try{m.textContent=await verifyAdmin();m.className='evook'}catch(e){m.textContent=e.message;m.className='evobad'}};
-   $('evoLoadMaster').onclick=loadMaster;
+   $('evoLoadMaster').onclick=loadMaster;bindVault();
   }else{
    $('evoVault').onclick=()=>getFromVault($('evoVault'));$('evoImpUpd').onclick=()=>$('evoUpdFile').click();$('evoUpdFile').onchange=e=>{const f=e.target.files[0];e.target.value='';if(f)importUpdate(f)};
    $('evoCheck').onclick=()=>checkUpdates(true);$('evoMine').onclick=()=>{M.hidden=true;$('sbBtn')&&$('sbBtn').click()};
@@ -3079,6 +3080,37 @@ async function getFromVault(btn){const t=btn&&btn.textContent;if(btn){btn.disabl
  try{const u=await EVO.vault.fetchLatest();if(!u)return;if((u.version||0)<=(ST.lastVersion||0)&&!confirm('You already have update '+(ST.lastVersion||0)+'. The Vault has update '+(u.version||0)+'. Load it again anyway?'))return;await importUpdateObj(u)}
  catch(e){toast(e.message)}finally{if(btn){btn.disabled=false;btn.textContent=t}}}
 EVO.getFromVault=getFromVault;
+/* ---------- admin: see what is in the Vault and take things out ---------- */
+const KIND={sop:'SOP',email:'Email template',ticket:'Ticket template',text:'Text template',link:'Link',resource:'Resource',todo:'To-do',topic:'Topic'};
+let VAULT=null;
+function bindVault(){const L=$('evoVList'),msg=$('evoVMsg'),rm=$('evoVRm'),all=$('evoVAll');
+ const ticked=()=>[...L.querySelectorAll('input[data-vid]:checked')].map(i=>i.dataset.vid);
+ const sync=()=>{const n=ticked().length;rm.disabled=!n;rm.textContent=n?'Remove '+n+' from the Vault':'Remove from the Vault';all.textContent=n&&n===L.querySelectorAll('input[data-vid]').length?'Untick all':'Tick all'};
+ const show=()=>{const u=VAULT;if(!u){L.innerHTML='<p class="mut" style="margin:8px 0">The Vault is empty. Agents get nothing from it.</p>';rm.hidden=all.hidden=true;return}
+  const items=[...u.items].sort((a,b)=>(a.kind===b.kind?0:a.kind==='sop'?-1:b.kind==='sop'?1:String(a.kind).localeCompare(String(b.kind)))||String(a.title||'').localeCompare(String(b.title||'')));
+  const sops=items.filter(x=>x.kind==='sop').length;
+  L.innerHTML='<p style="margin:8px 0 6px;font-size:13px"><b>Update '+esc(u.version||0)+'</b>'+(u.publishedAt?', pushed '+esc(fmtDate(u.publishedAt)):'')+': '+sops+' SOP'+(sops===1?'':'s')+' and '+(items.length-sops)+' other item'+(items.length-sops===1?'':'s')+'.</p>'
+   +'<div style="max-height:320px;overflow:auto;border:1px solid var(--line);border-radius:10px">'+items.map(x=>'<label style="display:flex;gap:10px;align-items:center;padding:6px 10px;border-bottom:1px solid var(--line);font-size:13px;cursor:pointer"><input type="checkbox" data-vid="'+esc(x.id)+'"><span style="flex:1;min-width:0">'+esc(x.title||'(no title)')+'</span><span class="mut" style="font-size:12px;white-space:nowrap">'+esc(KIND[x.kind]||x.kind||'')+(x.status&&x.status!=='approved'?' · '+esc(x.status):'')+'</span></label>').join('')+'</div>';
+  rm.hidden=all.hidden=!items.length;L.querySelectorAll('input[data-vid]').forEach(i=>i.onchange=sync);sync()};
+ $('evoVOpen').onclick=async e=>{const b=e.currentTarget;b.disabled=true;msg.className='mut';msg.textContent='Opening the Vault…';
+  try{VAULT=await EVO.vault.adminOpen();msg.textContent='';show();b.textContent='Refresh'}catch(er){msg.className='evobad';msg.textContent=er.message}finally{b.disabled=false}};
+ all.onclick=()=>{const bx=[...L.querySelectorAll('input[data-vid]')],on=!bx.every(i=>i.checked);bx.forEach(i=>i.checked=on);sync()};
+ rm.onclick=async()=>{const ids=new Set(ticked());if(!ids.size||!VAULT)return;const u=VAULT,gone=u.items.filter(x=>ids.has(x.id));
+  if(rm.dataset.sure!=='1'){rm.dataset.sure='1';rm.textContent='Sure? Remove '+ids.size;setTimeout(()=>{delete rm.dataset.sure;sync()},4000);return}
+  delete rm.dataset.sure;rm.disabled=true;msg.className='mut';
+  try{const app=ST.admin.appPath;msg.textContent='Checking the latest update…';let cur=null;try{const raw=await gh('/repos/'+ST.admin.publicRepo+'/contents/'+app+'/version.json',{raw:true,allow404:true});cur=raw?JSON.parse(raw):null}catch(e){}
+   const ver=Math.max(cur&&cur.version||0,u.version||0,ST.lastVersion||0)+1;
+   const items=u.items.filter(x=>!ids.has(x.id)),used=new Set(items.map(x=>x.assetId).filter(Boolean)),files={};Object.entries(u.files||{}).forEach(([k,f])=>{if(used.has(k))files[k]=f});
+   const notes='Removed from the Vault: '+gone.map(x=>x.title||'(no title)').join(', ');
+   const upd={...u,version:ver,publishedAt:Date.now(),notes:notes.length>300?notes.slice(0,297)+'…':notes,items,learned:(u.learned||[]).filter(l=>!l.sopId||!ids.has(l.sopId)),files},txt=JSON.stringify(upd);
+   msg.textContent='Saving update '+ver+' to the Vault…';
+   await putFile(ST.admin.publicRepo,app+'/vault.json',await EVO.vault.lock(txt,{version:ver,publishedAt:upd.publishedAt}),'EVO P2A Vault: update '+ver+' (removed '+gone.length+')');
+   try{await putFile(ST.admin.privateRepo,app+'/updates/update-'+ver+'.json',txt,'EVO P2A update '+ver+': removed '+gone.length+' from the Vault')}catch(e){}
+   msg.textContent='Telling agents about update '+ver+'…';
+   await putFile(ST.admin.publicRepo,app+'/version.json',JSON.stringify({version:ver,publishedAt:upd.publishedAt,notes:upd.notes,vault:true,getFrom:ST.admin.shareLink||''},null,2)+'\n','EVO P2A update '+ver);
+   ST.lastVersion=ver;ST.lastVersionAt=upd.publishedAt;save();VAULT=upd;show();
+   msg.className='evook';msg.textContent='Removed '+gone.length+'. Agents get update '+ver+' in a minute or two, and it takes these out of their copy. Your own library still has them: if they are still approved there, the next "Push update to all" puts them back, so unapprove or delete them in Architecture first.'}
+  catch(er){msg.className='evobad';msg.textContent=er.message;sync()}}}
 /* ---------- update files ---------- */
 const b64=async blob=>{const buf=new Uint8Array(await blob.arrayBuffer());let s='';for(let i=0;i<buf.length;i+=0x8000)s+=String.fromCharCode.apply(null,buf.subarray(i,i+0x8000));return btoa(s)};
 const unb64=(s,type)=>{const bin=atob(s),a=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)a[i]=bin.charCodeAt(i);return new Blob([a],{type:type||''})};
@@ -3283,6 +3315,12 @@ async function adminVK(){let v=LS.get('vaultKey','');if(v)return v;
 async function lockWith(vk,txt,meta){const iv=crypto.getRandomValues(new Uint8Array(12)),ct=await crypto.subtle.encrypt({name:'AES-GCM',iv},await vkKey(vk),new TextEncoder().encode(txt));
   return JSON.stringify({source:'EVO P2A vault',...meta,iv:hex(iv),ct:b64e(new Uint8Array(ct))})}
 EVO.vault={
+ /* admin: open the Vault with the admin key to see what agents get */
+ async adminOpen(){let r;try{r=await fetch((EVO.DATA_BASE||'')+'vault.json?t='+Date.now(),{cache:'no-store'})}catch(e){throw new Error('Could not reach the Vault. Check your connection.')}
+  if(r.status===404)return null;if(!r.ok)throw new Error('Could not open the Vault right now ('+r.status+').');
+  const o=await r.json();if(o.source!=='EVO P2A vault')throw new Error('The Vault file is not right.');
+  try{return JSON.parse(new TextDecoder().decode(await crypto.subtle.decrypt({name:'AES-GCM',iv:unhex(o.iv)},await vkKey(await adminVK()),b64d(o.ct))))}
+  catch(e){throw new Error('Your admin key does not open this Vault. Press "Load master from private repo" or sign in again as admin, then try again.')}},
  /* admin, on Push: lock the update for the Vault */
  async lock(txt,meta){return lockWith(await adminVK(),txt,meta)},
  missing:()=>ROSTER.filter(a=>!a.v).map(a=>a.name),
