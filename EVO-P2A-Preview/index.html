@@ -1512,18 +1512,43 @@ If it is not written anywhere, mark Not in Confluence and leave ANSWER empty. Ne
 
 OPEN POINTS:
 ${pts.map((p,i)=>(i+1)+'. '+p).join('\n')}`}
-function rvParse(txt,pts){const T=String(txt||'').replace(/\r/g,'');const parts=T.split(/^\s*(?=\**\s*\d{1,2}\s*[.)]\s)/m).filter(b=>/\S/.test(b));const out=[];
- for(const b of parts){const n=+((b.match(/^\s*\**\s*(\d{1,2})\s*[.)]/)||[])[1]||0);if(!n)continue;
-  const g=re=>{const m=b.match(re);return m?m[1].replace(/\*\*/g,'').trim():''};
-  const point=g(/POINT[ \t]*:[ \t]*\**[ \t]*([^\n]*)/i)||pts[n-1]||'',ans=g(/ANSWER[ \t]*:[ \t]*\**[ \t]*([\s\S]*?)(?=\n\s*\**\s*(?:SOURCE|CONFIDENCE)\s*:|$)/i),src=g(/SOURCE[ \t]*:[ \t]*\**[ \t]*([^\n]*)/i),cf=g(/CONFIDENCE[ \t]*:[ \t]*\**[ \t]*([^\n]*)/i).toLowerCase();
-  const st=/not in|not found|none/.test(cf)?'missing':/conflict/.test(cf)?'conflict':ans?'found':'missing';
-  out.push({n,q:pts[n-1]||point,point,a:ans,src,st})}
+function rvParse(txt,pts){
+ /* P2A 2.11: read Rovo's reply in whatever shape it comes: bold, headings, bullets, "Point 1", tables, or no numbers at all */
+ let T=String(txt||'').replace(/\r/g,'').replace(/\\([.)\-*_#|])/g,'$1').replace(/ /g,' ');
+ const L=T.split('\n').map(l=>l.replace(/\*\*|__|`/g,'').replace(/^\s*(?:#{1,6}|>)\s*/,'').replace(/^\s*[-*•–]\s+(?=\S)/,'').replace(/[ \t]+$/,''));
+ const st=(cf,ans)=>/not in|not found|none|missing|no answer/.test(cf)?'missing':/conflict/.test(cf)?'conflict':ans&&!/^(n\/?a|none|-|—|empty)$/i.test(ans)?'found':'missing';
+ const clean=v=>{const t=String(v||'').replace(/^\[|\]$/g,'').trim();return /^(?:-+|—|–|n\/?a|none|empty)$/i.test(t)?'':t};
+ const out=[];
+ /* a table: | # | Point | Answer | Source | Confidence | */
+ const tl=L.filter(l=>/^\s*\|.*\|\s*$/.test(l));
+ if(tl.length>=2){const cells=l=>l.trim().replace(/^\||\|$/g,'').split('|').map(c=>c.trim());const H=cells(tl[0]).map(h=>h.toLowerCase());const ci=k=>H.findIndex(h=>h.includes(k));
+  const iA=ci('answer');if(iA>=0){const iP=ci('point')>=0?ci('point'):ci('question'),iS=ci('source'),iC=ci('confidence'),iN=H.findIndex(h=>/^(#|no\.?|n|number)$/.test(h));let seq=0;
+   tl.slice(1).forEach(l=>{const c=cells(l);if(c.every(x=>/^:?-{2,}:?$/.test(x)||!x))return;seq++;const n=+(iN>=0?(c[iN]||'').replace(/\D/g,''):0)||+((c[0]||'').match(/^\d{1,2}$/)||[])[0]||seq;
+    const a=clean(c[iA]),cf=(iC>=0?c[iC]:'').toLowerCase(),point=iP>=0?clean(c[iP]):'';out.push({n,q:pts[n-1]||point,point:point||pts[n-1]||'',a,src:iS>=0?clean(c[iS]):'',st:st(cf,a)})});
+   if(out.length)return out}}
+ /* blocks: start at "1." "1)" "1:" "Point 1" "Q1", or at each POINT: line when there are no numbers */
+ const numRe=/^\s*(?:(?:point|item|question|q)\s*#?\s*)?(\d{1,2})\s*(?:[.):\-–]|\s(?=point|answer))\s*/i;
+ const starts=[];L.forEach((l,i)=>{const m=l.match(numRe);if(m&&+m[1]>=1&&+m[1]<=99)starts.push({i,n:+m[1]})});
+ let blocks=[];
+ const labelled=s=>/\b(?:ANSWER|CONFIDENCE)(?:[ \t]+level)?\s*[:\-–]/i.test(s);let loose=[];
+ if(starts.length){for(let k=0;k<starts.length;k++){const a=starts[k],b=starts[k+1];const lines=L.slice(a.i,b?b.i:L.length);lines[0]=lines[0].replace(numRe,'');blocks.push({n:a.n,t:lines.join('\n')})}
+  loose=blocks.filter(b=>!labelled(b.t)&&b.n<=pts.length&&b.t.trim());blocks=blocks.filter(b=>labelled(b.t))}
+ if(!blocks.length){const ps=[];L.forEach((l,i)=>{if(/^\s*POINT\s*[:\-–]/i.test(l))ps.push(i)});
+  if(!ps.length)L.forEach((l,i)=>{if(/^\s*ANSWER\s*[:\-–]/i.test(l))ps.push(i)});
+  blocks=ps.map((p,k)=>({n:k+1,t:L.slice(p,ps[k+1]??L.length).join('\n')})).filter(b=>labelled(b.t))}
+ const LAB='(?:POINT|ANSWER|SOURCES?|CONFIDENCE)(?:[ \\t]+(?:level|page|pages|title))?';
+ /* numbered answers without the labels: show them to Grigor with Rovo's words ready to save */
+ if(!blocks.length&&loose.length)return loose.map(b=>{const a=clean(b.t.replace(/\n+/g,' '));return{n:b.n,q:pts[b.n-1],point:pts[b.n-1],a,src:'',st:'check',mine:a}});
+ for(const b of blocks){const g=lab=>{const m=b.t.match(new RegExp('(?:^|\\n)\\s*'+lab+'(?:[ \\t]+(?:level|page|pages|title))?\\s*[:\\-–][ \\t]*([\\s\\S]*?)(?=\\n\\s*'+LAB+'\\s*[:\\-–]|$)','i'));return m?clean(m[1].replace(/\n+/g,' ')):''};
+  let point=g('POINT');if(!point){const first=b.t.split('\n')[0];if(!new RegExp('^\\s*'+LAB+'\\s*[:\\-–]','i').test(first))point=clean(first)}
+  const a=g('ANSWER'),src=g('SOURCES?'),cf=g('CONFIDENCE').toLowerCase(),n=b.n;
+  out.push({n,q:pts[n-1]||point,point:point||pts[n-1]||'',a,src,st:st(cf,a)})}
  return out}
 function rvHtml(x,ro){const R=RV&&RV.forId===x.id?RV:{},n=(x.clarifications||[]).filter(c=>!isDis(c.a)).length,P=R.prop;
  return `<div class="rovo" id="rovoBox"><h4>Let Rovo answer first</h4><p>One prompt with every open point for this SOP. Rovo answers from Confluence; what it finds is saved for you, and only the rest is left for you to answer.</p>
  <div class="row"><button type="button" class="btn sm" id="rvCopy">Copy questions for Rovo</button>${R.copied?`<span class="rvmsg">✓ Copied ${R.pts.length} points. Paste into Rovo, then paste its answer below.</span>`:''}</div>
  ${ro?'<p>Turn on Edit mode to paste Rovo\'s answer.</p>':`<textarea class="t" id="rvIn" placeholder="Paste Rovo's whole answer here" aria-label="Rovo's answer">${esc(R.inp||'')}</textarea><div class="row"><button type="button" class="btn sm sec" id="rvUse">Use Rovo's answers</button>${R.msg?`<span class="rvmsg">${esc(R.msg)}</span>`:''}</div>`}
- ${(R.left||[]).length?`<div class="mut" style="font-size:13px">Left for you (${R.left.length}):</div><ul class="rvleft">${R.left.map((l,i)=>`<li><div class="pt">${esc(l.q)}<span class="tag">${l.st==='conflict'?'Pages disagree':'Not in Confluence'}</span></div>${l.a?`<div class="rv">Rovo: ${esc(l.a)}${l.src?' <span class="mut">('+esc(l.src)+')</span>':''}</div>`:''}${ro?'':`<textarea class="t" data-rvl="${i}" placeholder="Your answer, or Disregard">${esc(l.mine||'')}</textarea><div class="row"><button type="button" class="btn sm sec" data-rvs="${i}">Save answer</button></div>`}</li>`).join('')}</ul>`:''}
+ ${(R.left||[]).length?`<div class="mut" style="font-size:13px">Left for you (${R.left.length}):</div><ul class="rvleft">${R.left.map((l,i)=>`<li><div class="pt">${esc(l.q)}<span class="tag">${l.st==='conflict'?'Pages disagree':l.st==='check'?'Check Rovo\'s answer':'Not in Confluence'}</span></div>${l.a?`<div class="rv">Rovo: ${esc(l.a)}${l.src?' <span class="mut">('+esc(l.src)+')</span>':''}</div>`:''}${ro?'':`<textarea class="t" data-rvl="${i}" placeholder="Your answer, or Disregard">${esc(l.mine||'')}</textarea><div class="row"><button type="button" class="btn sm sec" data-rvs="${i}">Save answer</button></div>`}</li>`).join('')}</ul>`:''}
  ${ro?'':`<div class="apply"><h4>Apply answers to the SOP text</h4><p>${n?n+' answer'+(n===1?' is':'s are')+' kept beside the SOP. Write them into the steps and rules so the SOP agrees with itself, and the % can rise.':'No answers yet.'}</p>
  <div class="row"><button type="button" class="btn sm ${P?'sec':''}" id="rvApply" ${!n||R.busy?'disabled':''}>${R.busy?'Rewriting…':'Rewrite the SOP with the answers'}</button>${R.err?`<span class="errb">${esc(R.err)}</span>`:''}</div>
  ${P?`<div class="mut" style="font-size:13px">What changes (${P.changes.length}):</div><ul class="chg">${P.changes.map(c=>`<li>${esc(c)}</li>`).join('')}</ul>${P.conflicts.length?`<div class="mut" style="font-size:13px;margin-top:6px">Answers that disagree (the newest was used):</div><ul class="chg cfl">${P.conflicts.map(c=>`<li>${esc(c)}</li>`).join('')}</ul>`:''}<details><summary>See the new text</summary><pre>${esc(P.body)}</pre></details><div class="row"><button type="button" class="btn sm" id="rvAccept">Accept new text</button><button type="button" class="btn sm sec" id="rvCancel">Cancel</button></div>`:''}</div>`}</div>`}
@@ -1532,7 +1557,7 @@ function rvBind(){const x=draft;if(!x||!$('rovoBox'))return;const set=o=>{RV={..
  $('rvCopy').onclick=async()=>{const pts=rvPoints(x);const ok=await rvCopyText(rvPrompt(x,pts));if(ok)set({pts,copied:true});else{toast('Copy did not work. Select the prompt and copy it.');await ask({title:'Copy this into Rovo',msg:'Select all and copy.',ok:'Done',input:rvPrompt(x,pts)})}};
  if($('rvIn'))$('rvIn').oninput=e=>{RV={...(RV&&RV.forId===x.id?RV:{forId:x.id}),inp:e.target.value}};
  if($('rvUse'))$('rvUse').onclick=async()=>{const R=RV&&RV.forId===x.id?RV:{forId:x.id};const pts=R.pts||rvPoints(x);const got=rvParse($('rvIn').value,pts);
-  if(!got.length){set({inp:$('rvIn').value,msg:'Could not read numbered answers. Paste Rovo\'s whole reply.'});return}
+  if(!got.length){set({inp:$('rvIn').value,msg:'P2A could not find any answers in this. It looks for numbered points (1. 2. 3.) or ANSWER: lines. Paste Rovo\'s whole reply, or ask Rovo to answer again in the format from Copy questions for Rovo.'});return}
   const found=got.filter(g=>g.st==='found'),left=got.filter(g=>g.st!=='found');
   if(found.length&&!(await setClar(mergeClar(draft.clarifications,found.map(g=>({q:g.q,a:g.a+(g.src?' (Rovo: '+g.src+')':' (Rovo)'),at:Date.now(),by:'rovo'}))))))return;
   set({inp:'',left,msg:found.length+' answer'+(found.length===1?'':'s')+' from Rovo saved'+(left.length?'. '+left.length+' left for you below.':'. Nothing left for you.')})};
