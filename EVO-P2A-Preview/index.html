@@ -693,7 +693,7 @@ html:not([data-theme="dark"]) .sdn.tp:not(.sdempty){background:var(--k-email-bg)
   <section id="v-lib" hidden>
     <div class="lib">
       <div class="card">
-        <h3 id="listTitle">SOPs <span class="r"><button class="btn sm sec ed-only" id="expKind" title="Download everything in this tab as a JSON file">⤓ Export JSON</button><button class="btn sm sec ed-only" id="impKind" title="Word (.docx) or Markdown (.md). Several files at once is fine.">Import .md or .docx</button><button class="btn sm sec ed-only" id="scanLinks" title="Look through SOPs and templates for links not in this list yet, and add them for review" hidden>Find links in SOPs</button><button class="btn sm sec" id="cpTpl" title="Download the empty SOP template (version 2) to fill in with Rovo">⤓ SOP template</button><button class="btn sm sec" id="cpPrompt" title="The prompt to paste into Rovo with the template. Rovo rearranges a Confluence page into the SOP template.">Rovo prompt</button><button class="btn sm sec" id="bldBtn" title="Build a new SOP step by step, by typing or dictating">SOP Builder</button><button class="btn sm ed-only" id="addBtn">+ Add</button></span></h3>
+        <h3 id="listTitle">SOPs <span class="r"><button class="btn sm sec ed-only" id="expKind" title="Download everything in this tab as a JSON file">⤓ Export JSON</button><button class="btn sm sec ed-only" id="impKind" title="Word (.docx) or Markdown (.md). Several files at once is fine.">Import .md or .docx</button><button class="btn sm sec ed-only" id="scanLinks" title="Look through SOPs and templates for links not in this list yet, and add them for review" hidden>Find links in SOPs</button><button class="btn sm sec" id="cpTpl" title="Download the empty SOP template (version 2) to fill in with Rovo">⤓ SOP template</button><button class="btn sm sec" id="cpPrompt" title="The prompt to paste into Rovo with the template. Rovo rearranges a Confluence page into the SOP template.">Rovo prompt</button><span id="p210mw"><button type="button" class="btn sm sec" id="p210mb" aria-haspopup="menu" aria-expanded="false">More ▾</button><span id="p210mp" role="menu" hidden><button type="button" role="menuitem" data-p210="expKind">⤓ Export JSON (backup)</button><button type="button" role="menuitem" data-p210="rlFill">Fill matching data</button></span></span><button class="btn sm sec" id="bldBtn" title="Build a new SOP step by step, by typing or dictating">SOP Builder</button><button class="btn sm ed-only" id="addBtn">+ Add</button></span></h3>
         <input type="file" id="impKindFile" accept=".md,.markdown,.txt,.docx" multiple hidden>
         <div class="mut ed-only" id="impKindMsg" hidden></div>
         <input class="t" id="q" type="search" placeholder="Search title, topic, tags, text" aria-label="Search">
@@ -1018,8 +1018,9 @@ const shown=L.filter(x=>(filt==='all'||x.status===filt)&&(!tagF||(x.tags||[]).so
 const grp=x=>k==='sop'||k==='resource'?(x.topic||'No topic'):(sopOf(x)?.title||'Not linked to an SOP');
 const groups=new Map();shown.sort(byTitle).forEach(x=>{const g=grp(x);if(!groups.has(g))groups.set(g,[]);groups.get(g).push(x)});
 const cur=sel[k];
-const row=x=>k==='sop'?`<li class="acc-row ${x.id===cur?'open':''}"><button class="acch" data-id="${esc(x.id)}" aria-expanded="${x.id===cur}"><span class="chev" aria-hidden="true">▶</span><span class="nm">${esc(x.title||'Untitled')}</span><span class="meta">${pill(x.status)}<span>${linkedTo(x.id).length} template${linkedTo(x.id).length===1?'':'s'}</span><span>${(x.links||[]).length} link${(x.links||[]).length===1?'':'s'}</span>${(x.tags||[]).slice(0,3).map(t=>'<span>#'+esc(t)+'</span>').join('')}</span></button>${x.id===cur?'<div class="accbody" data-slot></div>':''}</li>`:`<li><button class="it" data-id="${esc(x.id)}" aria-current="${x.id===cur}"><span class="nm">${esc(x.title||'Untitled')}</span><span class="meta">${pill(x.status)}${(x.tags||[]).slice(0,3).map(t=>'<span>#'+esc(t)+'</span>').join('')}</span></button>${k!=='sop'?`<button type="button" class="rmx ed-only" data-rmres="${esc(x.id)}" aria-label="Remove ${esc(x.title||'link or file')}" title="Remove">×</button>`:''}</li>`;
-$('items').innerHTML=!ready?'<li class="mut">Loading…</li>':shown.length?[...groups.keys()].sort((a,b)=>/^No |^Not /.test(a)-/^No |^Not /.test(b)||a.localeCompare(b)).map(g=>(k==='sop'?`<li class="grp-h">${esc(g)}</li>`:`<li class="grp-h"><button class="grp-t" data-grp="${esc(g)}" aria-expanded="${!isColl(k,g)}"><span class="chev" aria-hidden="true">${isColl(k,g)?'▸':'▾'}</span>${esc(g)}<span class="n">${groups.get(g).length}</span></button><button type="button" class="rmx ed-only" data-rmgrp="${esc(g)}" title="Remove everything in this group" aria-label="Remove all in ${esc(g)}">×</button></li>`)+(k==='sop'?groups.get(g).map(row).join(''):(isColl(k,g)?'':groups.get(g).map(row).join('')))).join(''):`<li class="mut" style="padding:8px">${L.length?'Nothing matches.':'No '+KIND[k].many.toLowerCase()+' yet.'+(EDIT?' Use + Add or import a Rovo document on the Overview.':' Turn on Edit mode to add one.')}</li>`;
+const row=x=>k==='sop'?`<li class="acc-row ${x.id===cur?'open':''}"><button class="acch" data-id="${esc(x.id)}" aria-expanded="${x.id===cur}"><span class="chev" aria-hidden="true">▶</span><span class="nm">${esc(x.title||'Untitled')}</span><span class="meta">${pill(x.status)}<span>${linkedTo(x.id).length} template${linkedTo(x.id).length===1?'':'s'}</span><span>${(x.links||[]).length} link${(x.links||[]).length===1?'':'s'}</span>${(x.tags||[]).slice(0,3).map(t=>'<span>#'+esc(t)+'</span>').join('')}</span></button><button type="button" class="rmx ed-only p210x" data-rmres="${esc(x.id)}" aria-label="Remove ${esc(x.title||'SOP')}" title="Remove">×</button>${x.id===cur?'<div class="accbody" data-slot></div>':''}</li>`:`<li><button class="it" data-id="${esc(x.id)}" aria-current="${x.id===cur}"><span class="nm">${esc(x.title||'Untitled')}</span><span class="meta">${pill(x.status)}${(x.tags||[]).slice(0,3).map(t=>'<span>#'+esc(t)+'</span>').join('')}</span></button>${k!=='sop'?`<button type="button" class="rmx ed-only" data-rmres="${esc(x.id)}" aria-label="Remove ${esc(x.title||'link or file')}" title="Remove">×</button>`:''}</li>`;
+document.body.classList.toggle('p210sop',k==='sop');$('bldBtn').classList.remove('sec');document.body.classList.toggle('p210ag',!!(window.EVO&&EVO.settings&&EVO.settings.role&&EVO.settings.role!=='admin'));
+$('items').innerHTML=!ready?'<li class="mut">Loading…</li>':shown.length?[...groups.keys()].sort((a,b)=>/^No |^Not /.test(a)-/^No |^Not /.test(b)||a.localeCompare(b)).map(g=>(k==='sop'?`<li class="grp-h">${esc(g)}<button type="button" class="rmx ed-only" data-rmgrp="${esc(g)}" title="Remove every SOP in this topic" aria-label="Remove all in ${esc(g)}">×</button></li>`:`<li class="grp-h"><button class="grp-t" data-grp="${esc(g)}" aria-expanded="${!isColl(k,g)}"><span class="chev" aria-hidden="true">${isColl(k,g)?'▸':'▾'}</span>${esc(g)}<span class="n">${groups.get(g).length}</span></button><button type="button" class="rmx ed-only" data-rmgrp="${esc(g)}" title="Remove everything in this group" aria-label="Remove all in ${esc(g)}">×</button></li>`)+(k==='sop'?groups.get(g).map(row).join(''):(isColl(k,g)?'':groups.get(g).map(row).join('')))).join(''):`<li class="mut" style="padding:8px">${L.length?'Nothing matches.':'No '+KIND[k].many.toLowerCase()+' yet.'+(EDIT?' Use + Add or import a Rovo document on the Overview.':' Turn on Edit mode to add one.')}</li>`;
 $('items').querySelectorAll('[data-grp]').forEach(b=>b.onclick=()=>{const key=k+'|'+b.dataset.grp,c=S.get('coll',{});c[key]=!c[key];S.set('coll',c);renderList()});
 $('items').querySelectorAll('[data-rmgrp]').forEach(b=>b.onclick=async e=>{e.stopPropagation();if(dirty)return confirmLeave();const g=b.dataset.rmgrp,L2=groups.get(g)||[];if(!L2.length)return;
  const ok=await ask({title:'Remove "'+g+'"?',ok:'Remove',danger:true});if(!ok)return;
@@ -2212,7 +2213,7 @@ async function removeItem(x){const kids=childrenOf(x.id);
  if(!(await del(x.id)))return;if(x.assetId)dropAsset(x.assetId);
  for(const y of kids){const u={parents:(y.parents||[]).filter(p=>p!==x.id)};if(y.sopId===x.id)u.sopId='';await patch(y.id,u);ITEMS.set(y.id,{...y,...u})}
  if(x.kind==='topic')for(const y of [...ITEMS.values()].filter(z=>lowc(z.topic||'')===lowc(x.title))){await patch(y.id,{topic:''});ITEMS.set(y.id,{...y,topic:''})}
- ITEMS.delete(x.id);toast('Removed "'+x.title+'"');renderAll()}
+ ITEMS.delete(x.id);for(const kk in sel)if(sel[kk]===x.id){sel[kk]=null;S.set('sel',sel);draft=null;dirty=false}toast('Removed "'+x.title+'"');renderAll()}
 async function renameTopic(nid){const old=nodeTitle(nid),v=await ask({title:'Rename topic',msg:'Everything in "'+old+'" moves to the new name.',ok:'Rename',input:old});if(!v||v===old)return;
  if(!nid.startsWith('vt:')){await patch(nid,{title:v,updatedAt:Date.now()});ITEMS.set(nid,{...ITEMS.get(nid),title:v})}
  for(const x of [...ITEMS.values()]){const u={};if(lowc(x.topic||'')===lowc(old))u.topic=v;if((x.parents||[]).some(p=>lowc(p)===lowc('vt:'+old)))u.parents=x.parents.map(p=>lowc(p)===lowc('vt:'+old)?'vt:'+v:p);if(Object.keys(u).length){await patch(x.id,{...u,updatedAt:Date.now()});ITEMS.set(x.id,{...x,...u})}}
@@ -2913,6 +2914,33 @@ button.p22-danger,.btn.p22-danger{color:var(--bad)!important;border-color:var(--
 <script id="p22-danger">(function(){const RE=/^\s*(clear everything|remove\b|delete\b|retire\b)/i;
 const mark=()=>document.querySelectorAll('button:not(.p22-danger)').forEach(b=>{if(RE.test(b.textContent||''))b.classList.add('p22-danger')});
 mark();new MutationObserver(()=>{clearTimeout(mark._t);mark._t=setTimeout(mark,120)}).observe(document.documentElement,{childList:true,subtree:true})})();</script>
+<style id="p28-css">
+/* P2A 2.8: Rovo first, then apply answers to the SOP text */
+.rovo{margin-top:12px;padding:12px;border-radius:10px;background:var(--accbg,rgba(91,194,231,.12));border:1px solid color-mix(in srgb,var(--cyan,#5BC2E7) 35%,transparent)}
+.rovo h4{margin:0 0 4px;font-size:14px;font-weight:650;color:var(--title)}
+.rovo p{margin:0 0 8px;font-size:13px;color:var(--mut)}
+.rovo .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0}
+.rovo textarea{width:100%;min-height:90px;box-sizing:border-box}
+.rovo .rvmsg{font-size:13px;color:var(--ok,#1F7A4A)}
+.rovo .rvleft{list-style:none;margin:8px 0 0;padding:0}
+.rovo .rvleft li{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:8px 10px;margin-top:6px}
+.rovo .rvleft .pt{font-weight:600;color:var(--title);font-size:14px}
+.rovo .rvleft .tag{font-size:12px;font-weight:600;border-radius:999px;padding:1px 8px;margin-left:6px;background:var(--warnbg,#FDF1D8);color:var(--warn,#8A5A00)}
+.rovo .rvleft .rv{font-size:13px;color:var(--ink);margin:4px 0}
+.rovo .rvleft textarea{min-height:44px}
+.rovo .apply{border-top:1px solid var(--line);margin-top:12px;padding-top:10px}
+.rovo .chg{margin:6px 0 0 18px;padding:0;font-size:13px;color:var(--ink)}
+.rovo .cfl li{color:var(--warn,#8A5A00)}
+.rovo pre{white-space:pre-wrap;font:inherit;font-size:13px;max-height:320px;overflow:auto;background:var(--card);border:1px solid var(--line);border-radius:6px;padding:8px}
+</style>
+<style id="p210-css">#cpTpl,#cpPrompt,body.p210sop #addBtn,body.p210sop #expKind,body.p210sop #rlFill{display:none!important}#p210mw{display:none;position:relative}body.p210sop.editing #p210mw{display:inline-block}#p210mp{position:absolute;right:0;top:calc(100% + 4px);z-index:30;display:flex;flex-direction:column;min-width:210px;padding:4px;border:var(--bw,1px) solid var(--line);border-radius:10px;background:var(--card);box-shadow:0 8px 24px rgba(0,0,0,.18)}#p210mp[hidden]{display:none}#p210mp button{text-align:left;border:0;background:none;color:var(--ink);font:inherit;font-size:13px;padding:8px 10px;border-radius:6px;cursor:pointer}#p210mp button:hover,#p210mp button:focus-visible{background:var(--accbg)}#p210mp button[hidden]{display:none}.acc-row{position:relative}.acc-row>.p210x{position:absolute!important;right:10px!important;top:12px!important}.acc-row>.acch{padding-right:44px}body.p210ag #items .rmx{display:none!important}</style>
+<script>/* P2A 2.10: More menu on the SOPs tab */
+(function(){const mb=document.getElementById('p210mb'),mp=document.getElementById('p210mp');if(!mb)return;
+ const close=()=>{mp.hidden=true;mb.setAttribute('aria-expanded','false')};
+ mb.onclick=e=>{e.stopPropagation();if(!mp.hidden)return close();mp.querySelectorAll('[data-p210]').forEach(b=>b.hidden=!document.getElementById(b.dataset.p210));mp.hidden=false;mb.setAttribute('aria-expanded','true');const f=mp.querySelector('button:not([hidden])');f&&f.focus()};
+ mp.onclick=e=>{const b=e.target.closest('[data-p210]');if(!b)return;close();const t=document.getElementById(b.dataset.p210);t&&t.click()};
+ document.addEventListener('click',e=>{if(!mp.hidden&&!e.target.closest('#p210mw'))close()});
+ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!mp.hidden){close();mb.focus()}})})();</script>
 <script>
 /* EVO P2A standalone: Settings (AI, library and sync, folder), the chat-tab AI flow, update notices and admin push. */
 (function(){
@@ -3546,23 +3574,4 @@ const css=document.createElement('style');css.textContent=`.rlbox{border:1px sol
 
 </script>
 
-<style id="p28-css">
-/* P2A 2.8: Rovo first, then apply answers to the SOP text */
-.rovo{margin-top:12px;padding:12px;border-radius:10px;background:var(--accbg,rgba(91,194,231,.12));border:1px solid color-mix(in srgb,var(--cyan,#5BC2E7) 35%,transparent)}
-.rovo h4{margin:0 0 4px;font-size:14px;font-weight:650;color:var(--title)}
-.rovo p{margin:0 0 8px;font-size:13px;color:var(--mut)}
-.rovo .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0}
-.rovo textarea{width:100%;min-height:90px;box-sizing:border-box}
-.rovo .rvmsg{font-size:13px;color:var(--ok,#1F7A4A)}
-.rovo .rvleft{list-style:none;margin:8px 0 0;padding:0}
-.rovo .rvleft li{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:8px 10px;margin-top:6px}
-.rovo .rvleft .pt{font-weight:600;color:var(--title);font-size:14px}
-.rovo .rvleft .tag{font-size:12px;font-weight:600;border-radius:999px;padding:1px 8px;margin-left:6px;background:var(--warnbg,#FDF1D8);color:var(--warn,#8A5A00)}
-.rovo .rvleft .rv{font-size:13px;color:var(--ink);margin:4px 0}
-.rovo .rvleft textarea{min-height:44px}
-.rovo .apply{border-top:1px solid var(--line);margin-top:12px;padding-top:10px}
-.rovo .chg{margin:6px 0 0 18px;padding:0;font-size:13px;color:var(--ink)}
-.rovo .cfl li{color:var(--warn,#8A5A00)}
-.rovo pre{white-space:pre-wrap;font:inherit;font-size:13px;max-height:320px;overflow:auto;background:var(--card);border:1px solid var(--line);border-radius:6px;padding:8px}
-</style>
 </body></html>
