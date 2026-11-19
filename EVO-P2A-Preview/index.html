@@ -3760,7 +3760,7 @@ const sOpen=s=>(D.depth>=1)!==D.S.has(s.name),oOpen=o=>(D.depth>=2)!==D.O.has(o.
 function setS(n,open){if((D.depth>=1)===open)D.S.delete(n);else D.S.add(n)}
 function setO(n,open){if((D.depth>=2)===open)D.O.delete(n);else D.O.add(n)}
 const rekey=(set,a,b)=>{if(a!==b&&set.has(a)){set.delete(a);set.add(b)}};
-function lines(){const g=$('f44web');if(!g)return;let sv=g.querySelector('svg');if(!sv){sv=document.createElementNS('http://www.w3.org/2000/svg','svg');sv.setAttribute('aria-hidden','true');g.prepend(sv)}
+function lines(){if(window.__p248)return window.__p248.lines();const g=$('f44web');if(!g)return;let sv=g.querySelector('svg');if(!sv){sv=document.createElementNS('http://www.w3.org/2000/svg','svg');sv.setAttribute('aria-hidden','true');g.prepend(sv)}
  const R=g.getBoundingClientRect();sv.setAttribute('width',g.scrollWidth);sv.setAttribute('height',g.scrollHeight);let d='';
  if(getComputedStyle(sv).display!=='none')g.querySelectorAll('[data-p]').forEach(e=>{const p=document.getElementById(e.dataset.p);if(!p||!e.offsetParent)return;const a=p.getBoundingClientRect(),b=e.getBoundingClientRect(),r=e.dataset.side==='r';
   const x1=(r?a.right:a.left)-R.left+g.scrollLeft,y1=a.top+a.height/2-R.top,x2=(r?b.left:b.right)-R.left+g.scrollLeft,y2=b.top+b.height/2-R.top,m=(x1+x2)/2;
@@ -3791,11 +3791,11 @@ function draw(keep){const root=$('f44');if(!root||!draft||!P())return;const d=dr
  if(D.forId!==d.id){D.forId=d.id;D.depth=0;D.S.clear();D.O.clear();D.menu=null;D.sec={};D.et=null;p.F.sel=null;p.F.nt=null}
  if(ro){p.F.sel=null;p.F.nt=null;D.et=null}
  const DN=['Overview','Outcomes','Full detail'],LK=d.links||[],sec=(id,cls,title,note,body)=>'<details class="f42card f44sec '+cls+'" data-sec="'+id+'"'+(D.sec[id]?' open':'')+'><summary>'+title+' <span>'+note+'</span></summary>'+body+'</details>';
- let h='<div class="f44bar"><span class="f44hint">Tap a step to see its outcomes. Tap an outcome to see what it causes'+(ro?'':' and change it')+'. Tap an open step again to fold everything under it.'+(ro?' Turn on Edit mode to change things here.':'')+'</span><span class="f44seg" role="group" aria-label="How much to show">'+DN.map((n,k)=>'<button type="button" data-dd="'+k+'" aria-pressed="'+(D.depth===k&&!D.S.size&&!D.O.size)+'">'+n+'</button>').join('')+'</span><button type="button" class="btn sm sec" data-classic="1">Classic diagram</button></div>';
+ let h='<div class="f44bar"><span class="f44hint">Tap a step to see its outcomes. Tap an outcome to see what it causes'+(ro?'':' and change it')+'. Tap an open step again to fold everything under it. Drag to move around.'+(ro?' Turn on Edit mode to change things here.':'')+'</span><span class="f44seg" role="group" aria-label="How much to show">'+DN.map((n,k)=>'<button type="button" data-dd="'+k+'" aria-pressed="'+(D.depth===k&&!D.S.size&&!D.O.size)+'">'+n+'</button>').join('')+'</span><span class="f48z"><button type="button" class="btn sm sec" data-z="out" aria-label="Zoom out">−</button><span id="f48pct">100%</span><button type="button" class="btn sm sec" data-z="in" aria-label="Zoom in">+</button><button type="button" class="btn sm sec" data-z="fit">Fit</button></span><button type="button" class="btn sm sec" data-classic="1">Classic diagram</button></div>';
  const WL=LK.map((l,i)=>[l,i]).filter(x=>!+x[0].step);
  h+='<div class="f44secs">'+sec('wo','wo','Watch out for',M.watch.length+' · agents see these on top of the case',ro?(M.watch.length?'<ul>'+M.watch.map(w=>'<li>'+esc(w)+'</li>').join('')+'</ul>':'<p class="mut">None yet.</p>'):M.watch.map((w,i)=>'<div class="f42row"><input class="f42in" data-w="'+i+'" value="'+esc(w)+'" aria-label="Watch-out '+(i+1)+'"><button type="button" class="f42x"'+A('wx',i)+' aria-label="Remove">×</button></div>').join('')+'<div class="f42row"><input class="f42in bd" id="f42wn" placeholder="Add a watch-out, then Enter"><button type="button" class="btn sm sec"'+A('wadd')+'>Add</button></div>')+
   sec('tl','','Tools and links for the whole SOP',WL.length+' · links for one step sit on that step',ro?(WL.length?WL.map(x=>'<div>↗ '+(/^https?:\/\//i.test(x[0].u||'')?'<a href="'+esc(x[0].u)+'" target="_blank" rel="noopener">'+esc(x[0].l||x[0].u)+'</a>':esc(x[0].l||'link'))+'</div>').join(''):'<p class="mut">None yet.</p>'):WL.map(x=>linkRow(x[0],x[1])).join('')+'<div class="f42row"><button type="button" class="btn sm sec"'+A('ladd',0)+'>+ Add a tool or link</button></div>')+'</div>';
- h+='<div class="f44web" id="f44web"><button type="button" class="f44cap" data-dd="0" title="Fold everything back to the overview">Case arrives</button><div class="f44ok"></div>';
+ h+='<div class="f44vp" id="f44vp"><div class="f44web" id="f44web"><button type="button" class="f44cap" data-dd="0" title="Fold everything back to the overview">Case arrives</button><div class="f44ok"></div>';
  if(!M.steps.length)h+=ro?'<p class="mut" style="text-align:center">No steps yet. Turn on Edit mode to add the first one.</p>':'<button type="button" class="btn sm sec" style="align-self:center"'+A('sadd',0)+'>+ Add the first step</button>';
  M.steps.forEach((s,i)=>{const open=sOpen(s),a=[],n=s.outs.filter(o=>['need','lost'].includes(p.kindOf(o))).length,end=M.O.okOnly.includes(i+1),lk=LK.map((l,q)=>[l,q]).filter(x=>+x[0].step===i+1);
   if(n)a.push(n+' outcome'+(n>1?'s':'')+' need'+(n>1?'':'s')+' a template');if(/\[CHECK/i.test(s.name+' '+s.detail))a.push('not confirmed');
@@ -3808,9 +3808,9 @@ function draw(keep){const root=$('f44');if(!root||!draft||!P())return;const d=dr
   else box='<button type="button" class="'+cls+'" id="f44s'+i+'" data-s="'+i+'" aria-expanded="'+open+'"><span class="f42num">'+(i+1)+'</span><span class="f44t"><b>'+esc(s.name)+'</b>'+(open&&s.detail?'<span class="f44d">'+esc(s.detail)+'</span>':'')+meta+(open&&lk.length?'<span class="f44m">'+lk.map(x=>'↗ '+esc(x[0].l||x[0].u||'link')).join(' · ')+'</span>':'')+'</span><span class="cv">'+(open?'▾':'▸')+'</span></button>';
   h+='<div class="f44row"><div class="f44l">'+L.join('')+'</div><div class="f44nw'+(mn?' on':'')+'">'+box+pts+'</div><div class="f44r">'+R.join('')+'</div></div>'+
    (i<M.steps.length-1?'<div class="f44ok"><span>'+(s.outs.some(o=>p.kindOf(o)!=='route')?'OK':'')+'</span></div>':'')});
- h+='<div class="f44ok"></div>'+(ro?'<div class="f44cap end">'+(M.O.def?'All OK: ✉ '+esc(M.O.def):'All OK: no email')+'</div>':'<div class="f44cap end ed"><label class="l" for="f42def">When everything is OK, the reply is</label><input class="t" id="f42def" list="f42dl" value="'+esc(M.O.def)+'" placeholder="No email when everything is OK"><datalist id="f42dl">'+p.emails().map(x=>'<option value="'+esc(x.title)+'">').join('')+'</datalist><label class="l" for="f42oko">A step done only when everything is OK</label><select id="f42oko"><option value="0">None</option>'+M.steps.map((s,j)=>'<option value="'+(j+1)+'"'+(M.O.okOnly.includes(j+1)?' selected':'')+'>Step '+(j+1)+' · '+esc(s.name.slice(0,50))+'</option>').join('')+'</select></div>')+'</div><div class="f42leg"><span><i class="h"></i>problem, adds its email</span><span><i class="r"></i>path only, changes nothing in the reply</span></div>';
- root.innerHTML=h;const ab=root.parentElement.querySelector('.actions');if(ab)ab.hidden=!dirty;lines();requestAnimationFrame(lines);if(y!=null)scrollTo(0,y)}
-function click(e){const t=e.target.closest('button');if(!t)return;const d=t.dataset,p=P(),F=p.F;
+ h+='<div class="f44ok"></div>'+(ro?'<div class="f44cap end">'+(M.O.def?'All OK: ✉ '+esc(M.O.def):'All OK: no email')+'</div>':'<div class="f44cap end ed"><label class="l" for="f42def">When everything is OK, the reply is</label><input class="t" id="f42def" list="f42dl" value="'+esc(M.O.def)+'" placeholder="No email when everything is OK"><datalist id="f42dl">'+p.emails().map(x=>'<option value="'+esc(x.title)+'">').join('')+'</datalist><label class="l" for="f42oko">A step done only when everything is OK</label><select id="f42oko"><option value="0">None</option>'+M.steps.map((s,j)=>'<option value="'+(j+1)+'"'+(M.O.okOnly.includes(j+1)?' selected':'')+'>Step '+(j+1)+' · '+esc(s.name.slice(0,50))+'</option>').join('')+'</select></div>')+'</div></div><div class="f42leg"><span><i class="h"></i>problem, adds its email</span><span><i class="r"></i>path only, changes nothing in the reply</span></div>';
+ root.innerHTML=h;const ab=root.parentElement.querySelector('.actions');if(ab)ab.hidden=!dirty;window.__p248&&window.__p248.after();lines();requestAnimationFrame(lines);if(y!=null)scrollTo(0,y)}
+function click(e){if(window.__p248&&window.__p248.eat())return;const t=e.target.closest('button');if(!t)return;window.__p248&&window.__p248.anchor(t);const d=t.dataset,p=P(),F=p.F;
  if(d.dd!=null){D.depth=+d.dd;D.S.clear();D.O.clear();D.menu=null;F.sel=null;F.nt=null;D.et=null;return draw(true)}
  if(d.classic){D.classic=true;return renderEditor()}
  if(d.menu!=null){D.menu=D.menu===+d.menu?null:+d.menu;draw(true);const f=document.querySelector('.f44pm button');if(f)f.focus();return}
@@ -3838,7 +3838,7 @@ function mount(){const E=$('editor'),d=draft,p=P();
  E.innerHTML=sdTabs()+'<div class="sdhead"><span class="kind">SOP</span><h2>'+esc(d.title||'Untitled')+'</h2></div><div id="f44"></div><div class="actions f44act"'+(dirty?'':' hidden')+'><button class="btn ed-only" id="saveBtn">Save</button><button class="btn sec ed-only" id="discardBtn">Discard changes</button><span class="save-state dirty" id="saveState">Unsaved changes</span></div>';
  E.querySelectorAll('[data-sot]').forEach(b=>b.onclick=()=>{SOPTAB=b.dataset.sot;S.set('sopTab',SOPTAB);renderEditor()});
  $('saveBtn').onclick=()=>save('Edited in the SOP diagram');$('discardBtn').onclick=()=>{draft=clone(ITEMS.get(draft.id));dirty=false;p.F.sel=null;p.F.nt=null;D.et=null;renderEditor()};
- const R=$('f44');R.onclick=click;R.oninput=input;R.onchange=e=>{p.onChange(e);const ab=E.querySelector('.actions');if(ab)ab.hidden=!dirty};
+ const R=$('f44');R.onclick=click;R.oninput=input;window.__p248&&window.__p248.bind(R);R.onchange=e=>{p.onChange(e);const ab=E.querySelector('.actions');if(ab)ab.hidden=!dirty};
  R.addEventListener('input',()=>{const ab=E.querySelector('.actions');if(ab)ab.hidden=!dirty});
  R.addEventListener('toggle',e=>{const k=e.target.dataset&&e.target.dataset.sec;if(k)D.sec[k]=e.target.open},true);
  R.addEventListener('focusin',e=>{if(e.target.id==='f42ot'&&EDIT){e.target.select();p.tlist('')}});
@@ -3879,7 +3879,7 @@ const css=document.createElement('style');css.textContent=`
 .f44pm{position:absolute;z-index:8;top:calc(50% + 14px);right:0;width:260px;max-width:78vw;background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:0 10px 28px rgba(0,0,0,.25);padding:6px;text-align:left}.f44pmh{font-size:11px;font-weight:650;letter-spacing:.05em;text-transform:uppercase;color:var(--mut);padding:4px 8px}
 .f44pm button{display:block;width:100%;text-align:left;border:0;background:transparent;color:var(--ink);border-radius:8px;padding:6px 8px;cursor:pointer;font:inherit;font-size:13px}.f44pm button:hover,.f44pm button:focus{background:var(--accbg);outline:none}.f44pm b{display:block;font-weight:600}.f44pm small{display:block;color:var(--mut);font-size:12px;line-height:1.35}
 .f44act{position:sticky;bottom:0;background:var(--card);padding:8px 0;z-index:9;border-top:var(--bw,1px) solid var(--line)}
-@media(max-width:900px){.f44web>svg{display:none}.f44row{grid-template-columns:minmax(0,1fr)}.f44nw{order:1}.f44r{order:2}.f44l{order:3}.f44l,.f44r{align-items:flex-start;margin-left:22px;padding-left:12px;border-left:2px solid var(--line)}.f44l:empty,.f44r:empty{display:none}.f44ox,.f44ox.l{flex-direction:column;align-items:flex-start;gap:6px}.f44ox>.f44o{max-width:100%}.f44ox.l .f44kids,.f44kids{align-items:flex-start;margin-left:14px}.f44pan{margin-left:14px;max-width:100%;flex:none;width:calc(100% - 14px)}.f44cap,.f44ok{align-self:flex-start}.f44ok{margin-left:22px}.f44pt.r{right:6px;top:-10px;margin-top:0}.f44pt.t{left:40px}.f44pm{right:auto;left:0;top:14px}}`;
+`;
 document.head.appendChild(css);
 })();
 
@@ -3901,6 +3901,65 @@ const HIDE=/^(Steps\b|Tool links|Which reply to send)/;
 const css=document.createElement('style');css.textContent=`.f46bar{display:flex;gap:10px;align-items:center;margin:10px 0 0;font-size:13px}.f46note{margin:10px 0;padding:8px 12px;border:var(--bw,1px) solid var(--line);border-radius:10px;background:var(--accbg);font-size:13px}.f46note .lnk{border:0;background:transparent;color:var(--link);font:inherit;font-weight:600;cursor:pointer;padding:0;text-decoration:underline}`;
 document.head.appendChild(css);
 })();
+
+/* ---------- P2A 2.48: the web diagram sits on a large canvas. Boxes keep their shape and the diagram grows outward when
+   you open things; drag anywhere to move it, zoom with the buttons, Ctrl + wheel or a pinch. More room between boxes,
+   and a thin blue line links the steps. ---------- */
+(function(){
+const V={z:1,x:null,y:20,forId:'',an:null,drag:null,moved:false,sx:null,pts:new Map(),pinch:0};
+const vp=()=>$('f44vp'),web=()=>$('f44web'),clamp=z=>Math.max(.25,Math.min(2,z));
+const spine=()=>document.querySelector('#f44web .f44nw')||document.querySelector('#f44web .f44cap');
+function apply(){const w=web();if(!w)return;w.style.transform='translate('+V.x.toFixed(1)+'px,'+V.y.toFixed(1)+'px) scale('+V.z+')';const p=$('f48pct');if(p)p.textContent=Math.round(V.z*100)+'%';const s=spine();if(s){const r=s.getBoundingClientRect();V.sx=r.left+r.width/2}}
+function center(){const v=vp(),s=spine();if(!v||!s)return;V.x=v.clientWidth/2-(s.offsetLeft+s.offsetWidth/2)*V.z}
+function after(){const v=vp(),w=web();if(!v||!w||!draft)return;if(V.forId!==draft.id){V.forId=draft.id;V.z=1;V.x=null;V.y=20;V.an=null;V.sx=null}
+ if(V.x==null){center();V.an=null;return apply()}
+ const sx=V.sx,an=V.an;V.an=null;w.style.transform='translate('+V.x+'px,'+V.y+'px) scale('+V.z+')';
+ const e=an&&document.querySelector(an.q);
+ if(e){const r=e.getBoundingClientRect();V.x+=an.l-r.left;V.y+=an.t-r.top}
+ else if(sx!=null){const s=spine();if(s){const r=s.getBoundingClientRect();V.x+=sx-(r.left+r.width/2)}}
+ apply();
+ /* keep an open editor inside the canvas */
+ const pn=w.querySelector('.f44pan');if(pn&&an){const r=pn.getBoundingClientRect(),b=v.getBoundingClientRect();let dx=0,dy=0;if(r.width<b.width-24){if(r.right>b.right-12)dx=b.right-12-r.right;else if(r.left<b.left+12)dx=b.left+12-r.left}if(r.bottom>b.bottom-12)dy=Math.max(b.bottom-12-r.bottom,b.top+12-r.top);else if(r.top<b.top+12)dy=b.top+12-r.top;if(dx||dy){V.x+=dx;V.y+=dy;apply()}}}
+function anchor(t){const e=t.closest('[id^="f44s"],[id^="f44o"]');const q=e?'#'+e.id:null,el=q&&document.querySelector(q);if(el){const r=el.getBoundingClientRect();V.an={q,l:r.left,t:r.top}}else V.an=null}
+function lines(){const g=web();if(!g)return;let sv=g.querySelector('svg');if(!sv){sv=document.createElementNS('http://www.w3.org/2000/svg','svg');sv.setAttribute('aria-hidden','true');g.prepend(sv)}
+ const R=g.getBoundingClientRect(),z=V.z||1;sv.setAttribute('width',g.offsetWidth);sv.setAttribute('height',g.offsetHeight);let d='';
+ const pos=e=>{const a=e.getBoundingClientRect();return{l:(a.left-R.left)/z,r:(a.right-R.left)/z,t:(a.top-R.top)/z,b:(a.bottom-R.top)/z}};
+ const N=[...g.querySelectorAll('.f44cap,.f44s')].map(pos);for(let i=0;i<N.length-1;i++){const a=N[i],b=N[i+1],x1=(a.l+a.r)/2,x2=(b.l+b.r)/2;d+='<path class="spine" d="M'+x1.toFixed(1)+' '+a.b.toFixed(1)+' L'+x2.toFixed(1)+' '+b.t.toFixed(1)+'"/>'}
+ g.querySelectorAll('[data-p]').forEach(e=>{const p=document.getElementById(e.dataset.p);if(!p||!e.offsetParent)return;const a=pos(p),b=pos(e),r=e.dataset.side==='r';
+  const x1=r?a.r:a.l,y1=(a.t+a.b)/2,x2=r?b.l:b.r,y2=(b.t+b.b)/2,m=(x1+x2)/2;
+  d+='<path class="'+(e.dataset.c||'')+'" d="M'+x1.toFixed(1)+' '+y1.toFixed(1)+' C'+m.toFixed(1)+' '+y1.toFixed(1)+' '+m.toFixed(1)+' '+y2.toFixed(1)+' '+x2.toFixed(1)+' '+y2.toFixed(1)+'"/>'});sv.innerHTML=d}
+function zoomAt(nz,cx,cy){nz=clamp(nz);V.x=cx-(cx-V.x)*nz/V.z;V.y=cy-(cy-V.y)*nz/V.z;V.z=nz;apply()}
+function fit(){const v=vp(),w=web();if(!v||!w)return;V.z=clamp(Math.min(1,(v.clientWidth-40)/w.offsetWidth));V.x=(v.clientWidth-w.offsetWidth*V.z)/2;V.y=20;apply()}
+function eat(){if(V.moved){V.moved=false;return true}return false}
+function bind(R){
+ R.addEventListener('click',e=>{const t=e.target.closest('[data-z]');if(!t)return;const v=vp();if(!v)return;const k=t.dataset.z;if(k==='fit')fit();else zoomAt(V.z*(k==='in'?1.2:1/1.2),v.clientWidth/2,v.clientHeight/2)});
+ R.addEventListener('pointerdown',e=>{const v=e.target.closest('#f44vp');if(!v||e.target.closest('input,textarea,select,.f42tsl')||(e.pointerType==='mouse'&&e.button!==0))return;V.pts.set(e.pointerId,[e.clientX,e.clientY]);
+  if(V.pts.size===2){const [a,b]=[...V.pts.values()];V.pinch=Math.hypot(a[0]-b[0],a[1]-b[1]);V.drag=null;V.moved=true}else{V.drag={x:e.clientX,y:e.clientY,ox:V.x,oy:V.y};V.moved=false}});
+ R.addEventListener('pointermove',e=>{if(!V.pts.has(e.pointerId))return;V.pts.set(e.pointerId,[e.clientX,e.clientY]);const v=vp();if(!v)return;
+  if(V.pts.size===2&&V.pinch){const [a,b]=[...V.pts.values()],dd=Math.hypot(a[0]-b[0],a[1]-b[1]),r=v.getBoundingClientRect();if(dd>0){zoomAt(V.z*dd/V.pinch,(a[0]+b[0])/2-r.left,(a[1]+b[1])/2-r.top);V.pinch=dd}return}
+  const g=V.drag;if(!g)return;const dx=e.clientX-g.x,dy=e.clientY-g.y;if(!V.moved&&Math.hypot(dx,dy)<6)return;if(!V.moved){V.moved=true;try{v.setPointerCapture(e.pointerId)}catch(_){}v.classList.add('pan')}V.x=g.ox+dx;V.y=g.oy+dy;apply()});
+ const up=e=>{V.pts.delete(e.pointerId);if(V.pts.size<2)V.pinch=0;if(!V.pts.size){V.drag=null;const v=vp();if(v)v.classList.remove('pan');if(V.moved)setTimeout(()=>{V.moved=false},0)}};
+ R.addEventListener('pointerup',up);R.addEventListener('pointercancel',up);
+ R.addEventListener('wheel',e=>{const v=e.target.closest('#f44vp');if(!v||e.target.closest('textarea,.f42tsl'))return;e.preventDefault();const r=v.getBoundingClientRect();
+  if(e.ctrlKey||e.metaKey)zoomAt(V.z*Math.exp(-e.deltaY*.0022),e.clientX-r.left,e.clientY-r.top);else{V.x-=e.deltaX;V.y-=e.deltaY;apply()}},{passive:false})}
+addEventListener('resize',()=>{if(web())apply()});
+window.__p248={V,after,anchor,lines,eat,bind,fit};
+const css=document.createElement('style');css.textContent=`
+.f44vp{position:relative;height:max(440px,74vh);overflow:hidden;border:var(--bw,1px) solid var(--line);border-radius:12px;cursor:grab;touch-action:none;background-color:var(--card);background-image:radial-gradient(color-mix(in srgb,var(--mut) 28%,transparent) 1px,transparent 1px);background-size:22px 22px}.f44vp.pan{cursor:grabbing}.f44vp.pan *{cursor:grabbing!important}
+.f44web{position:absolute;left:0;top:0;transform-origin:0 0;display:grid;grid-template-columns:1fr 340px 1fr;column-gap:76px;width:max-content;overflow:visible;padding:0 40px 40px;align-items:center}
+.f44web>svg{position:absolute;left:0;top:0;pointer-events:none;overflow:visible}.f44web>svg path.spine{stroke:var(--link);stroke-width:1.5;opacity:.9}
+.f44row{display:grid;grid-template-columns:subgrid;grid-column:1/-1;row-gap:0;column-gap:76px;align-items:center}
+.f44l{grid-column:1}.f44nw{grid-column:2}.f44r{grid-column:3}.f44l,.f44r{gap:16px;padding:12px 0;min-width:max-content}
+.f44web>.f44cap,.f44web>.f44ok,.f44web>p,.f44web>button.btn{grid-column:2;justify-self:center;align-self:center}
+.f44ok{min-height:44px;background:transparent}.f44ok span{left:10px;top:50%;transform:translateY(-50%)}
+.f44ox{gap:60px;max-width:none}.f44ox>.f44o{flex:none;max-width:320px}.f44o{width:max-content;max-width:320px}
+.f44kids{gap:12px}.f44k{width:max-content;max-width:300px}
+.f44pan{flex:none;width:380px;max-width:none}
+.f44cap.end{max-width:none}.f44cap.end.ed{width:340px}
+.f48z{display:inline-flex;align-items:center;gap:4px}.f48z span{min-width:42px;text-align:center;font-size:12px;color:var(--mut)}`;
+document.head.appendChild(css);
+})();
+
 
 </script>
 <script>
