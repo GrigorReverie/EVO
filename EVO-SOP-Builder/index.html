@@ -1,0 +1,546 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex,nofollow"></head><body>
+<title>SOP Builder</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap">
+<style>
+/* Layout: sticky top bar with three tabs (How to, Diagram, Details); the Diagram is a spine of steps with outcomes branching left and right. Tokens follow P2A's palette so the two feel like one product. */
+:root{
+ --bg:#f4f7f9;--card:#ffffff;--ink:#16202b;--mut:#5a6876;--line:#d4dce3;--soft:#eef3f6;
+ --acc:#0b7fa8;--accbg:#e2f3f9;--onacc:#ffffff;
+ --amb:#8a5a00;--ambbg:#fff3d6;--ambbd:#e3bd5f;
+ --red:#a4262c;--redbg:#fde8ea;--grn:#1a6b3c;--grnbg:#e2f4e9;--blu:#234e9c;--blubg:#e6edfb;
+ --shadow:0 10px 28px rgba(16,32,43,.16);
+ --f-body:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+ --f-head:"Space Grotesk",Inter,system-ui,sans-serif;
+ --f-mono:ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f151b;--card:#17202a;--ink:#e7edf3;--mut:#9aa8b6;--line:#2b3846;--soft:#1c2733;--acc:#5bc2e7;--accbg:#12313d;--onacc:#06202b;--amb:#f2c96b;--ambbg:#382c10;--ambbd:#7a6220;--red:#ff9aa0;--redbg:#3d1a1d;--grn:#7fd6a0;--grnbg:#143021;--blu:#9db9ff;--blubg:#1a2744;--shadow:0 10px 28px rgba(0,0,0,.5);color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0f151b;--card:#17202a;--ink:#e7edf3;--mut:#9aa8b6;--line:#2b3846;--soft:#1c2733;--acc:#5bc2e7;--accbg:#12313d;--onacc:#06202b;--amb:#f2c96b;--ambbg:#382c10;--ambbd:#7a6220;--red:#ff9aa0;--redbg:#3d1a1d;--grn:#7fd6a0;--grnbg:#143021;--blu:#9db9ff;--blubg:#1a2744;--shadow:0 10px 28px rgba(0,0,0,.5);color-scheme:dark}
+*{box-sizing:border-box}[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 var(--f-body)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--card)}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+h1,h2,h3{font-family:var(--f-head);text-wrap:balance;margin:0}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:9;background:var(--card);border-bottom:1px solid var(--line);padding-block:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center}
+.brand{display:flex;align-items:baseline;gap:8px;margin-right:4px}.brand b{font-family:var(--f-head);font-size:17px;font-weight:700;letter-spacing:-.01em}.brand span{font-size:12px;color:var(--mut);font-weight:600}
+.pick{display:flex;gap:6px;align-items:center;flex:1;min-width:220px}.pick select{flex:1;min-width:0;max-width:340px;border:1px solid var(--line);border-radius:8px;padding:5px 8px;background:var(--card)}
+.tabs{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden}.tabs button{border:0;background:transparent;padding:5px 14px;cursor:pointer;font-weight:600;font-size:13px}.tabs button[aria-selected=true]{background:var(--acc);color:var(--onacc)}
+.saved{font-size:12px;color:var(--mut)}.saved.no{color:var(--amb);font-weight:600}
+.btn{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:5px 12px;cursor:pointer;font-weight:600;font-size:13px;line-height:1.4}.btn:hover{border-color:var(--acc)}.btn.pri{background:var(--acc);border-color:var(--acc);color:var(--onacc)}.btn.sm{font-size:12px;padding:3px 10px}.btn.danger{color:var(--red)}.btn.armed,.ic.armed{background:var(--redbg);border-color:var(--red);color:var(--red)}
+.ic{border:1px solid transparent;background:transparent;border-radius:7px;cursor:pointer;color:var(--mut);padding:1px 7px;font-size:14px;line-height:1.4}.ic:hover{background:var(--soft);color:var(--ink)}.ic:disabled{opacity:.3;cursor:default}
+main{padding-block:16px 80px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:14px;max-width:1280px;margin:0 auto}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px;min-width:0}
+.h{font-size:12px;font-weight:650;letter-spacing:.06em;text-transform:uppercase;color:var(--mut);display:flex;gap:8px;align-items:center;flex-wrap:wrap}.h .n{text-transform:none;letter-spacing:0;font-weight:400}
+details.card>summary{cursor:pointer;list-style:none}details.card>summary::-webkit-details-marker{display:none}details.card>summary:before{content:"▸";font-size:11px;color:var(--mut)}details.card[open]>summary:before{content:"▾"}details.card[open]>summary{margin-bottom:10px}
+.wo{background:var(--ambbg);border-color:var(--ambbd)}.wo .h{color:var(--amb)}
+.banner{background:var(--accbg);border:1px solid var(--acc);border-radius:10px;padding:10px 14px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+label.l{display:block;font-size:12px;font-weight:600;color:var(--mut);margin:10px 0 3px}
+.f{width:100%;border:1px solid var(--line);border-radius:8px;padding:6px 10px;background:var(--card);min-width:0}textarea.f{resize:vertical;min-height:62px;field-sizing:content}
+.help{font-size:12px;color:var(--mut);margin:4px 0 0}
+.row2{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:8px}
+.li{display:flex;gap:6px;align-items:center;padding:3px 0}.li .f{flex:1}
+.lk{display:grid;grid-template-columns:minmax(110px,1fr) minmax(0,1.6fr) auto auto;gap:6px;align-items:center;padding:3px 0}
+@media(max-width:640px){.lk{grid-template-columns:minmax(0,1fr) auto auto}.lk .lu{grid-column:1/-1;order:5}}
+.lk select{border:1px solid var(--line);border-radius:8px;padding:5px 6px;background:var(--card);max-width:150px}
+/* diagram */
+.dgbar{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;margin-bottom:12px}.dgbar .sp{flex:1}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden}.seg button{border:0;background:transparent;padding:4px 12px;cursor:pointer;font-weight:600;font-size:12px}.seg button[aria-pressed=true]{background:var(--acc);color:var(--onacc)}
+.leg{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12px;color:var(--mut)}.leg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px;border:1px solid}
+.leg .e{background:var(--ambbg);border-color:var(--ambbd)}.leg .p{background:var(--blubg);border-color:var(--blu)}.leg .x{background:var(--redbg);border-color:var(--red)}
+.att{font-size:12px;font-weight:600;color:var(--amb);background:var(--ambbg);border:1px solid var(--ambbd);border-radius:999px;padding:2px 10px;cursor:pointer}.att.ok{color:var(--grn);background:var(--grnbg);border-color:var(--grn);cursor:default}
+.dgwrap{overflow-x:auto}
+.dg{position:relative;display:flex;flex-direction:column;align-items:stretch;min-width:0}
+.dgsvg{position:absolute;left:0;top:0;pointer-events:none;overflow:visible;z-index:0}.dgsvg path{fill:none;stroke:var(--ambbd);stroke-width:1.75}.dgsvg path.path{stroke:var(--blu)}.dgsvg path.none{stroke:var(--red)}
+.cap{align-self:center;border:1.5px solid var(--line);border-radius:999px;padding:3px 14px;font-size:12px;font-weight:600;color:var(--mut);background:var(--card);position:relative;z-index:1}
+.spine{align-self:center;position:relative;height:30px;width:2px;background:var(--line)}
+.spine button{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:20px;height:20px;border-radius:50%;border:1.5px solid var(--acc);background:var(--card);color:var(--acc);font:700 13px/1 system-ui,sans-serif;padding:0;cursor:pointer;opacity:.45;z-index:2}
+.spine button:hover,.spine button:focus-visible{opacity:1;background:var(--acc);color:var(--onacc)}
+.spine button:after{content:"";position:absolute;inset:-8px}
+.row{display:grid;grid-template-columns:minmax(0,1fr) minmax(230px,300px) minmax(0,1fr);gap:0 48px;align-items:center}
+.row.open{align-items:start}
+.wl,.wr{display:flex;flex-direction:column;gap:8px;min-width:0;padding:4px 0}.wl{align-items:flex-end}.wr{align-items:flex-start}
+.nw{position:relative;min-width:0;z-index:1}.nw.s{width:100%}.nw.o{max-width:100%;display:flex;flex-direction:column;gap:6px}.wl .nw.o{align-items:flex-end}
+.dgn{display:flex;gap:10px;align-items:flex-start;width:100%;border:1.5px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--card);text-align:left}
+button.dgn{cursor:pointer;font:inherit;color:inherit}button.dgn:hover{border-color:var(--acc)}
+.dgn.op{border:2px solid var(--acc);flex-direction:column;gap:6px;box-shadow:var(--shadow)}
+.dgn .dgt{min-width:0;flex:1}.dgn .dgt b{display:block;font-weight:600;font-size:14px;overflow-wrap:anywhere}.dgn .dgt small{display:block;font-size:12px;color:var(--mut)}
+.dgn .cv{color:var(--mut);flex:none;margin-left:auto}
+.num{flex:none;width:26px;height:26px;border-radius:50%;background:var(--accbg);color:var(--acc);font-weight:700;display:flex;align-items:center;justify-content:center;font-size:12px;font-variant-numeric:tabular-nums}
+.dgh{display:flex;gap:8px;align-items:center;width:100%}
+.st{flex:1;min-width:0;font-weight:600;font-size:14px;border:1px solid var(--line);border-radius:7px;padding:4px 8px;background:var(--card)}
+.sd{width:100%;font-size:13px;border:1px solid var(--line);border-radius:7px;padding:4px 8px;background:var(--card);resize:vertical;min-height:44px;field-sizing:content}
+.stools{display:flex;flex-wrap:wrap;gap:4px;align-items:center;width:100%}.stools .grow{flex:1}
+.slinks{width:100%;font-size:13px}
+.dots{display:inline-flex;gap:3px;vertical-align:-1px;margin-left:6px}.dots i{width:8px;height:8px;border-radius:2px;border:1px solid var(--ambbd);background:var(--ambbg)}.dots i.path{border-color:var(--blu);background:var(--blubg)}.dots i.none{border-color:var(--red);background:var(--redbg)}
+.dob{display:inline-flex;flex-direction:column;align-items:flex-start;text-align:left;border:1.5px solid var(--ambbd);background:var(--ambbg);color:var(--ink);border-radius:10px;padding:5px 11px;cursor:pointer;font:inherit;font-size:13px;max-width:280px;min-width:120px}
+.dob b{font-weight:600;overflow-wrap:anywhere}.dob small{font-size:12px;color:var(--mut);overflow-wrap:anywhere}.dob small.warn{color:var(--amb);font-weight:600}
+.dob.path{border-color:var(--blu);background:var(--blubg)}.dob.none{border-color:var(--red);background:var(--redbg)}
+.dob:hover{border-color:var(--acc)}.dob.sel{outline:2px solid var(--acc);outline-offset:2px}
+.pt{position:absolute;z-index:3;width:20px;height:20px;border-radius:50%;border:1.5px solid var(--acc);background:var(--card);color:var(--acc);font:700 13px/1 system-ui,sans-serif;padding:0;cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:.7;top:22px}
+.pt:after{content:"";position:absolute;inset:-8px}.pt:hover,.pt:focus-visible{opacity:1;background:var(--acc);color:var(--onacc)}
+.pt.l{left:-11px}.pt.r{right:-11px}
+.oed{width:min(360px,100%);background:var(--card);border:2px solid var(--acc);border-radius:12px;padding:6px 12px 12px;box-shadow:var(--shadow);text-align:left}
+.oed .h{margin-top:6px;color:var(--acc)}
+.kinds{display:flex;flex-wrap:wrap;gap:6px}.kinds button{border:1px solid var(--line);background:transparent;border-radius:999px;padding:3px 10px;cursor:pointer;font-size:12px;font-weight:600}.kinds button[aria-pressed=true]{background:var(--acc);border-color:var(--acc);color:var(--onacc)}
+.share{font-size:12px;color:var(--amb);background:var(--ambbg);border-radius:8px;padding:4px 8px;margin-top:6px}
+.dgend{align-self:center;width:min(340px,100%);display:flex;flex-direction:column;gap:8px;align-items:center;position:relative;z-index:1}
+.dgend>button{border:1.5px solid var(--grn);background:var(--grnbg);border-radius:10px;padding:8px 14px;cursor:pointer;font:inherit;text-align:center;width:100%}.dgend>button b{color:var(--grn)}.dgend>button small{display:block;font-size:12px;color:var(--mut)}
+.empty{text-align:center;padding:26px 10px;color:var(--mut)}.empty p{margin:0 0 10px}
+@media(max-width:860px){
+ .dgsvg{display:none}.row,.row.open{grid-template-columns:minmax(0,1fr);gap:0}
+ .row>.nw.s{order:1}.row>.wr{order:2}.row>.wl{order:3}
+ .wl,.wr{align-items:flex-start;margin-left:13px;padding-left:14px;border-left:2px solid var(--line)}.wl:empty,.wr:empty{display:none}
+ .wl .nw.o{align-items:flex-start}.spine,.cap,.dgend{align-self:flex-start;margin-left:12px}.cap{margin-left:0}.dgend{margin-left:0}
+ .pt.l{display:none}.pt.r{top:-10px;right:44px}.dob{max-width:100%}
+}
+/* list view */
+.lst{border-top:1px solid var(--line);padding:6px 0}.lst:first-child{border-top:0}
+.lst>summary{display:flex;gap:10px;align-items:center;cursor:pointer;list-style:none;padding:4px 0}.lst>summary::-webkit-details-marker{display:none}
+.lst>summary b{font-weight:600;min-width:0;overflow-wrap:anywhere}.lst>summary small{color:var(--mut);font-size:12px;margin-left:auto;white-space:nowrap}
+.lst>summary:after{content:"▸";color:var(--mut);font-size:11px}.lst[open]>summary:after{content:"▾"}
+.lbody{padding:6px 0 8px 36px;display:flex;flex-direction:column;gap:8px}
+@media(max-width:640px){.lbody{padding-left:0}}
+.chips{display:flex;flex-wrap:wrap;gap:6px;align-items:flex-start}
+/* how to */
+.how{max-width:860px;width:100%;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+.hero{padding:22px 22px 18px}.hero h1{font-size:28px;line-height:1.15;letter-spacing:-.02em;margin-bottom:8px}.hero p{max-width:65ch;margin:0 0 12px;color:var(--mut);font-size:15px}
+.how details.card>summary{font-family:var(--f-head);font-size:16px;font-weight:600;display:flex;gap:10px;align-items:baseline}
+.how details.card>summary .k{font:600 12px/1 var(--f-body);color:var(--acc);background:var(--accbg);border-radius:999px;padding:3px 8px}
+.how .body{max-width:68ch}.how .body p{margin:0 0 10px}.how .body ul,.how .body ol{margin:0 0 10px;padding-left:20px}.how .body li{margin-bottom:4px}
+.how code{font:12.5px var(--f-mono);background:var(--soft);border-radius:5px;padding:1px 5px}
+.flow3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:6px 0 12px}
+.flow3 div{border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--soft)}.flow3 b{display:block;font-family:var(--f-head);font-size:15px}.flow3 span{font-size:13px;color:var(--mut)}
+@media(max-width:560px){.flow3{grid-template-columns:minmax(0,1fr)}}
+.pair{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;margin:4px 0 12px}.pair div{border-radius:10px;padding:8px 12px;font-size:13px}.pair .bad{background:var(--redbg)}.pair .good{background:var(--grnbg)}.pair b{display:block;font-size:12px;letter-spacing:.05em;text-transform:uppercase}
+@media(max-width:560px){.pair{grid-template-columns:minmax(0,1fr)}}
+.mini{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:4px 0 12px}.mini .dgn{width:auto}
+/* send sheet */
+.ov{position:fixed;inset:0;z-index:20;background:rgba(10,20,28,.45);display:flex;align-items:flex-start;justify-content:center;padding:calc(40px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) 24px max(16px,env(safe-area-inset-left,0px));overflow:auto}
+.sheet{background:var(--card);border-radius:14px;box-shadow:var(--shadow);width:min(640px,100%);padding:18px 20px;display:flex;flex-direction:column;gap:12px}
+.sheet h2{font-size:20px}.sheet ol{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:10px}
+.chk{border:1px solid var(--ambbd);background:var(--ambbg);border-radius:10px;padding:8px 12px;font-size:13px}.chk ul{margin:4px 0 0;padding-left:18px}.chk.ok{border-color:var(--grn);background:var(--grnbg);color:var(--grn);font-weight:600}
+.lnk{border:0;background:transparent;color:var(--acc);cursor:pointer;padding:0;font:inherit;font-size:13px;text-decoration:underline}
+textarea.out{width:100%;min-height:260px;border:1px solid var(--line);border-radius:8px;padding:10px;background:var(--soft);font:12.5px/1.5 var(--f-mono)}
+#toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);background:var(--ink);color:var(--bg);padding:8px 16px;border-radius:999px;font-size:13px;font-weight:600;opacity:0;pointer-events:none;transition:.2s;z-index:30;max-width:calc(100% - 32px);text-align:center}#toast.show{opacity:1;transform:translate(-50%,0)}
+@media(prefers-reduced-motion:reduce){#toast{transition:none}}
+.mut{color:var(--mut)}
+</style>
+
+<header class="top">
+ <div class="brand"><b>SOP Builder</b><span>for P2A</span></div>
+ <div class="pick"><label for="sopPick" class="mut" style="font-size:12px;font-weight:600">SOP</label><select id="sopPick" aria-label="Choose an SOP"></select><button class="btn sm" data-a="new" type="button">+ New SOP</button></div>
+ <div class="tabs" role="tablist" aria-label="Sections">
+  <button role="tab" type="button" data-a="tab" data-t="howto" id="t-howto">How to</button><button role="tab" type="button" data-a="tab" data-t="build" id="t-build">Diagram</button><button role="tab" type="button" data-a="tab" data-t="details" id="t-details">Details</button>
+ </div>
+ <span id="saved" class="saved" role="status"></span>
+ <button class="btn pri" type="button" data-a="send">Submit for import</button>
+</header>
+<main id="main"></main>
+<div id="ov" class="ov" hidden></div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function(){
+'use strict';
+const KEY='sopBuilder.v1',UIKEY='sopBuilder.ui.v1';
+const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid=()=>Math.random().toString(36).slice(2,10);
+const low=s=>String(s||'').trim().toLowerCase();
+const isUrl=u=>/^https?:\/\/\S+$/i.test(String(u||'').trim());
+
+const EXAMPLE=`# SOP for P2A: Parking permit request (example)
+
+From: Example
+Notes for import: This is the example that comes with the builder.
+
+## SOP
+
+Title: Parking permit request (example)
+Tags: Permits, parking
+
+Steps:
+1. Find the member in back office — Search by name, then narrow by email.
+2. Check the account is active — Suspended or closed accounts cannot get a permit.
+3. Check the vehicle details — Plate, make and colour are filled in and match the photo.
+4. Check the permit is not already issued — One permit per vehicle at a time.
+5. Issue the permit, or leave on hold — Hold: leave the request open and note what we are waiting for.
+
+Outcomes:
+- At step 1: No account found -> ACCOUNT NOT FOUND
+- At step 2: Account suspended -> ACCOUNT SUSPENDED | suspended, closed account
+- At step 3: Plate missing -> PLATE NEEDED | no plate, plate not entered
+- At step 3: Photo does not match -> PHOTO DOES NOT MATCH
+- At step 4: Permit already issued -> PERMIT ALREADY ISSUED | already have a permit
+- Only when all OK: step 5
+
+Do now:
+- Account suspended: Do not issue a permit. Note why in the profile.
+- Permit already issued: Do not issue a second permit.
+
+Watch out for:
+- Never issue a permit for a plate that belongs to another member.
+- A temporary paper plate is not a valid plate.
+
+## Replies
+
+### Reply: PLATE NEEDED
+Hi XXX,
+
+Thanks for your permit request. We still need the licence plate for your vehicle. Please reply with the plate number and we will issue your permit right away.
+
+## Tickets
+
+### Ticket: PLATE NEEDED
+Permit request missing the plate number. Asked the member to send it. Request left open.
+`;
+
+/* ---------- model ---------- */
+function blank(){return{id:uid(),title:'',topic:'',tags:'',confluence:'',author:'',role:'',notes:'',steps:[],watch:[],links:[],ok:{tpl:'',text:'',ticket:'',only:''},example:false,created:Date.now(),updated:Date.now()}}
+function mkStep(name,detail){return{id:uid(),name:name||'',detail:detail||'',outs:[]}}
+function mkOut(o){return Object.assign({id:uid(),label:'',kind:'email',tpl:'',text:'',ticket:'',doNow:'',words:'',side:''},o||{})}
+
+/* ---------- read an SOP text (this builder's file, or plain P2A SOP text) ---------- */
+function parseAny(raw){
+ const t=String(raw||'').replace(/^\ufeff/,'').replace(/\r\n?/g,'\n'),o=blank(),mail={},tick={},outs=[],dn={},lks=[];let okTpl='',only=0,m;
+ const h1=t.match(/^#\s+(.+?)\s*#*$/m);
+ if(m=t.match(/^From:\s*(.+?)(?:\s*\(([^)]*)\))?\s*$/m)){if(!/^(not given|example)$/i.test(m[1].trim())){o.author=m[1].trim();o.role=(m[2]||'').trim()}}
+ if(m=t.match(/^Notes(?: for (?:import|Grigor))?:\s*(.+)$/m))o.notes=m[1].trim();
+ if(m=t.match(/^Title:\s*(.+)$/m))o.title=m[1].trim();else if(h1)o.title=h1[1].replace(/^SOP for P2A:\s*/i,'').replace(/[*_`]/g,'').trim();
+ if(m=t.match(/^Tags?:\s*(.+)$/m)){const a=m[1].split(/[,;]/).map(x=>x.trim()).filter(Boolean);o.topic=a[0]||'';o.tags=a.slice(1).join(', ')}
+ let sec='',cur=null;
+ t.split('\n').forEach(line=>{
+  const hm=line.match(/^(#{2,3})\s+(.+?)\s*#*$/);
+  if(hm){const x=hm[2].replace(/[*_`]/g,'').trim();
+   if(hm[1]==='##'){sec=/^repl/i.test(x)?'replies':/^ticket/i.test(x)?'tickets':'';cur=null;return}
+   if(sec==='replies'||sec==='tickets'){cur={t:x.replace(/^(reply|ticket)\s*[:\-–—]\s*/i,'').trim(),L:[]};(sec==='replies'?mail:tick)[low(cur.t)]=cur;return}}
+  if(sec==='replies'||sec==='tickets'){if(cur)cur.L.push(line);return}
+  const hh=line.match(/^\s*(Steps|Outcomes|Do now|Watch out for|Tool links?|Tools and links|Rules|Escalate when|Sources)\s*:\s*$/i);if(hh){sec=hh[1].toLowerCase();return}
+  const x=line.trim();if(!x)return;
+  if(sec==='steps'){const s=x.match(/^(\d+)[.)]\s*(.+?)(?:\s+[—–]\s+(.*))?$/);if(s)o.steps.push(mkStep(s[2].trim(),(s[3]||'').trim()))}
+  else if(sec==='outcomes'){let r=x.match(/^[-*•]?\s*At step (\d+)\s*:\s*(.+?)\s*(?:->|→|=>)\s*(.*)$/i);
+   if(r){const p=r[3].split('|');outs.push({n:+r[1],label:r[2].trim(),tpl:(p[0]||'').trim(),words:p.slice(1).join('|').trim()});return}
+   if(r=x.match(/^[-*•]?\s*(?:All OK|Default)\s*(?:->|→|=>|:)\s*(.+)$/i)){okTpl=r[1].trim();return}
+   if(r=x.match(/^[-*•]?\s*Only when all OK\s*:\s*step\s*(\d+)/i))only=+r[1]}
+  else if(sec==='do now'){const r=x.match(/^[-*•]?\s*(.+?):\s+(.+)$/);if(r)dn[low(r[1])]=r[2].trim()}
+  else if(sec==='watch out for'){o.watch.push(x.replace(/^[-*•]\s*/,''))}
+  else if(/^tool|^tools/.test(sec)){const u=x.match(/https?:\/\/[^\s)>\]]+/);let lab=x.replace(/^[-*•]\s*/,'');if(u)lab=lab.slice(0,lab.indexOf(u[0]));lab=lab.replace(/[\s:|–—(\[-]+$/,'').trim();
+   let st=0;const sm=lab.match(/\s*\((?:step|at step)\s*(\d+)\)\s*$/i);if(sm){st=+sm[1];lab=lab.slice(0,sm.index).trim()}
+   const sm2=x.match(/\|\s*step\s*(\d+)\s*$/i);if(sm2)st=+sm2[1];
+   if(u&&/^confluence( page)?$/i.test(lab)&&!o.confluence){o.confluence=u[0];return}
+   lks.push({id:uid(),name:lab||(u?u[0]:''),url:u?u[0]:'',st})}
+ });
+ const body=c=>c?c.L.join('\n').replace(/^\n+|\s+$/g,''):'';
+ outs.forEach(u=>{const s=o.steps[u.n-1];if(!s)return;const kind=u.tpl==='-'?'path':u.tpl?'email':'none';
+  s.outs.push(mkOut({label:u.label,kind,tpl:kind==='email'?u.tpl:'',words:u.words,doNow:dn[low(u.label)]||'',text:kind==='email'?body(mail[low(u.tpl)]):'',ticket:kind==='email'?body(tick[low(u.tpl)]):''}))});
+ o.links=lks.map(k=>({id:k.id,name:k.name,url:k.url,step:k.st&&o.steps[k.st-1]?o.steps[k.st-1].id:''}));
+ if(okTpl&&okTpl!=='-'){o.ok.tpl=okTpl;o.ok.text=body(mail[low(okTpl)]);o.ok.ticket=body(tick[low(okTpl)])}
+ if(only&&o.steps[only-1])o.ok.only=o.steps[only-1].id;
+ return o}
+
+/* ---------- write the file P2A imports (Architecture > SOPs > Import) ---------- */
+const one=s=>String(s||'').replace(/\s*\n+\s*/g,' ').trim();
+const cl=s=>one(s).replace(/\s*(->|→|=>)\s*/g,' - ').replace(/\|/g,'/');
+function safeBody(s){return String(s||'').replace(/\r\n?/g,'\n').split('\n').map(l=>l.replace(/^\s*#+\s*/,'').replace(/^\s*>\s?/,'').replace(/^(\s*)tip\s*:/i,'$1Tip -')).join('\n').replace(/^\n+|\s+$/g,'')}
+function exportText(S){
+ const idx=id=>S.steps.findIndex(s=>s.id===id)+1,title=cl(S.title)||'Untitled SOP',D=new Date().toISOString().slice(0,10);
+ let t='# SOP for P2A: '+title+'\n\nFrom: '+(cl(S.author)||'not given')+(one(S.role)?' ('+one(S.role).replace(/[()]/g,'')+')':'')+'\nSent: '+D+'\nMade with: SOP Builder 1.0\n';
+ if(one(S.notes))t+='Notes for import: '+one(S.notes)+'\n';
+ t+='\n## SOP\n\nTitle: '+title+'\n';
+ const tags=[S.topic,...String(S.tags||'').split(',')].map(x=>cl(x).replace(/,/g,'')).filter(Boolean);if(tags.length)t+='Tags: '+tags.join(', ')+'\n';
+ const L=[];if(isUrl(S.confluence))L.push('- Confluence page: '+S.confluence.trim());
+ S.links.forEach(k=>{if(!isUrl(k.url))return;const i=k.step?idx(k.step):0;L.push('- '+(cl(k.name).replace(/:/g,' ')||'Link')+(i?' (step '+i+')':'')+': '+k.url.trim())});
+ if(L.length)t+='Tool links:\n'+L.join('\n')+'\n';
+ t+='\nSteps:\n'+S.steps.map((s,i)=>(i+1)+'. '+(cl(s.name).replace(/\s+[—–]\s+/g,', ')||'Step '+(i+1))+(one(s.detail)?' — '+one(s.detail):'')).join('\n')+'\n';
+ const O=[];S.steps.forEach((s,i)=>s.outs.forEach(o=>{if(!cl(o.label))return;const tp=o.kind==='path'?'-':o.kind==='email'?cl(o.tpl):'';O.push('- At step '+(i+1)+': '+cl(o.label).replace(/:/g,' -')+' -> '+tp+(cl(o.words)?' | '+cl(o.words):''))}));
+ if(cl(S.ok.tpl))O.push('- All OK -> '+cl(S.ok.tpl));
+ if(S.ok.only&&idx(S.ok.only))O.push('- Only when all OK: step '+idx(S.ok.only));
+ if(O.length)t+='\nOutcomes:\n'+O.join('\n')+'\n';
+ const DN=[];S.steps.forEach(s=>s.outs.forEach(o=>{if(cl(o.label)&&one(o.doNow))DN.push('- '+cl(o.label).replace(/:/g,' -')+': '+one(o.doNow))}));
+ if(DN.length)t+='\nDo now:\n'+DN.join('\n')+'\n';
+ const W=S.watch.map(one).filter(Boolean);if(W.length)t+='\nWatch out for:\n'+W.map(w=>'- '+w).join('\n')+'\n';
+ const R=new Map(),T=new Map();
+ const take=(tp,text,ticket)=>{const k=low(cl(tp));if(!k)return;if(safeBody(text)&&!R.has(k))R.set(k,[cl(tp),safeBody(text)]);if(safeBody(ticket)&&!T.has(k))T.set(k,[cl(tp),safeBody(ticket)])};
+ S.steps.forEach(s=>s.outs.forEach(o=>{if(o.kind==='email')take(o.tpl,o.text,o.ticket)}));take(S.ok.tpl,S.ok.text,S.ok.ticket);
+ if(R.size)t+='\n## Replies\n'+[...R.values()].map(([n,b])=>'\n### Reply: '+n+'\n'+b+'\n').join('');
+ if(T.size)t+='\n## Tickets\n'+[...T.values()].map(([n,b])=>'\n### Ticket: '+n+'\n'+b+'\n').join('');
+ return t}
+
+/* ---------- storage (this browser only) ---------- */
+let DB={cur:'',sops:{}},S=null,canSave=true;
+let ui={tab:'howto',view:'web',secs:{},open:new Set(),sel:null,arm:null,focus:null};
+try{const r=localStorage.getItem(KEY);if(r){const j=JSON.parse(r);if(j&&j.sops&&typeof j.sops==='object')DB=j}}catch(e){canSave=false}
+try{const r=localStorage.getItem(UIKEY);if(r){const j=JSON.parse(r);if(j){if(j.tab)ui.tab=j.tab;if(j.view)ui.view=j.view;if(j.secs)ui.secs=j.secs}}}catch(e){}
+function fresh(){const e=parseAny(EXAMPLE);e.example=true;DB.sops[e.id]=e;return e}
+if(!Object.keys(DB.sops).length){const e=fresh();DB.cur=e.id}
+S=DB.sops[DB.cur]||Object.values(DB.sops)[0];DB.cur=S.id;
+let saveT;
+function save(){S.updated=Date.now();clearTimeout(saveT);saveT=setTimeout(()=>{try{localStorage.setItem(KEY,JSON.stringify(DB));canSave=true}catch(e){canSave=false}savedLabel()},250)}
+function saveUi(){try{localStorage.setItem(UIKEY,JSON.stringify({tab:ui.tab,view:ui.view,secs:ui.secs}))}catch(e){}}
+function savedLabel(){const el=$('#saved');el.className='saved'+(canSave?'':' no');el.textContent=canSave?'Saved in this browser':'Not saved: copy your text before you close'}
+
+/* ---------- helpers for views ---------- */
+const sideOf=(o,j)=>o.side||(j%2?'l':'r');
+const findStep=id=>S.steps.find(s=>s.id===id);
+function cons(o){if(o.kind==='path')return{t:'Choose a path'+(o.words?' · '+o.words:''),w:false};
+ if(o.kind==='none')return{t:'No email'+(o.doNow?' · do now':''),w:false};
+ if(!o.tpl.trim())return{t:'Email needs a name',w:true};
+ return{t:'✉ '+o.tpl+(o.text.trim()?'':' (existing)')+(o.ticket.trim()?' · ticket':'')+(o.doNow.trim()?' · do now':''),w:false}}
+function sec(id,cls,title,note,body){const open=!!ui.secs[id];return '<details class="card '+cls+'" data-sec="'+id+'"'+(open?' open':'')+'><summary class="h">'+title+' <span class="n">'+note+'</span></summary>'+body+'</details>'}
+function emailNames(){const n=new Map();S.steps.forEach(s=>s.outs.forEach(o=>{if(o.kind==='email'&&o.tpl.trim())n.set(low(o.tpl),o.tpl.trim())}));if(S.ok.tpl.trim())n.set(low(S.ok.tpl),S.ok.tpl.trim());return[...n.values()]}
+function users(tp,except){const k=low(tp);if(!k)return[];const a=[];S.steps.forEach(s=>s.outs.forEach(o=>{if(o!==except&&o.kind==='email'&&low(o.tpl)===k)a.push(o.label||'an outcome')}));if(except!=='ok'&&low(S.ok.tpl)===k)a.push('Everything OK');return a}
+function checks(){const A=[],seen=new Map();
+ if(!S.title.trim())A.push({t:'Give the SOP a name (Details tab).',go:'details'});
+ if(!S.steps.length)A.push({t:'Add at least one step.',go:'build'});
+ if(S.steps.length>12)A.push({t:S.steps.length+' steps is long to follow under pressure. If it has two paths, it may be two SOPs.',soft:1});
+ S.steps.forEach((s,i)=>{if(!s.name.trim())A.push({t:'Step '+(i+1)+' has no name.',s:s.id});
+  if(s.outs.length>6)A.push({t:'Step '+(i+1)+' has '+s.outs.length+' outcomes. More than 6 is hard to scan.',s:s.id,soft:1});
+  s.outs.forEach(o=>{const k=low(o.label);if(!k){A.push({t:'An outcome on step '+(i+1)+' has no name.',s:s.id,o:o.id});return}
+   if(seen.has(k))A.push({t:'Two outcomes are called "'+o.label.trim()+'". Give each its own name.',s:s.id,o:o.id});seen.set(k,1);
+   if(o.kind==='email'&&!o.tpl.trim())A.push({t:'"'+o.label.trim()+'" sends an email but the email has no name.',s:s.id,o:o.id})})});
+ S.links.forEach(k=>{if(!isUrl(k.url))A.push({t:'The link "'+(k.name||'with no name')+'" has no web address, so it will not be sent.',link:1})});
+ return A}
+
+/* ---------- top bar ---------- */
+function renderTop(){const P=$('#sopPick'),L=Object.values(DB.sops).sort((a,b)=>b.updated-a.updated);
+ P.innerHTML=L.map(x=>'<option value="'+x.id+'"'+(x.id===S.id?' selected':'')+'>'+esc((x.title||'Untitled SOP')+(x.example?' · example':''))+'</option>').join('');
+ ['howto','build','details'].forEach(t=>$('#t-'+t).setAttribute('aria-selected',ui.tab===t));savedLabel()}
+
+/* ---------- How to ---------- */
+function howto(){const k=(id,n,title,body,open)=>{const o=ui.secs['h-'+id]!==undefined?ui.secs['h-'+id]:!!open;return '<details class="card" data-sec="h-'+id+'"'+(o?' open':'')+'><summary><span class="k">'+n+'</span>'+title+'</summary><div class="body">'+body+'</div></details>'};
+ return '<div class="how">'+
+ '<div class="card hero"><h1>Build an SOP agents can follow on a live case</h1><p>This page turns what you know about one kind of member request into an SOP for P2A, the tool Evo agents use while they handle an email, call or text. You build the steps, what the agent can find at each step, and what happens next. Then you submit it for import: the page makes one file for P2A.</p>'+
+ '<div class="row2"><button class="btn pri" type="button" data-a="new">Start a new SOP</button><button class="btn" type="button" data-a="tab" data-t="build">Look at the example</button></div>'+
+ '<p class="help" style="margin-top:10px">Your work is kept only in this browser until you download it. Nothing goes to P2A or to anyone else on its own.</p></div>'+
+ k('what','1','How P2A uses your SOP',
+  '<p>When a member gets in touch, P2A finds the matching SOP and shows the agent its steps one at a time. At each step the agent checks something and picks what they found. Each pick brings its own email text, ticket note and "do now" warning. When the agent is done, P2A has one reply and one ticket ready, even when the member had several problems.</p>'+
+  '<div class="flow3"><div><b>Check</b><span>A short step: "Check the record is under 3 months old".</span></div><div><b>Find the problem</b><span>The agent picks what they found: "Over 3 months", or OK.</span></div><div><b>Act</b><span>P2A brings the right email, ticket note and what to do now.</span></div></div>'+
+  '<p>So the most useful SOP is not a long page of policy. It is a list of checks, and for each check, the problems an agent can find and what happens for each one.</p>',true)+
+ k('steps','2','Write steps an agent can follow under pressure',
+  '<ul><li><b>One check per step</b>, in the order the agent works. Start with a verb: Find, Check, Ask, Approve.</li><li><b>Keep the step name to 3 to 7 words.</b> Put the detail in the detail box. Agents see the detail when they open the step.</li><li><b>12 steps or fewer.</b> If the SOP has two paths (BC and non-BC, for example), add a "choose a path" outcome, or make it two SOPs.</li><li><b>A step with no outcomes</b> is a simple tick. <b>A step with outcomes</b> makes the agent pick one, and "OK" is always offered, so you do not need to add it.</li></ul>'+
+  '<div class="pair"><div class="bad"><b>Hard to use</b>Agents should verify that the driving abstract provided by the member is dated within the last three months, as older documentation is not acceptable per policy.</div><div class="good"><b>Easy to use</b>Check the record is under 3 months old<br><span class="mut">Detail: date is on the top right of the record.</span></div></div>')+
+ k('outs','3','Add what the agent can find (outcomes)',
+  '<p>An outcome is a problem the agent can see at that step. Name it the way an agent would say it: "Selfie missing", "Record over 3 months", "Card in another name". One outcome per real problem, up to 6 on a step.</p>'+
+  '<p>Each outcome does one of three things:</p>'+
+  '<div class="mini"><span class="dob"><b>Send an email</b><small>✉ the reply for this problem</small></span><span class="dob path"><b>Choose a path</b><small>BC or non-BC, no email</small></span><span class="dob none"><b>No email</b><small>do now only</small></span></div>'+
+  '<ul><li><b>Do now</b> is what the agent must do, or must not do, straight away. Example: "Do not approve. Ask for photos of the physical licence."</li><li><b>Words that point to this</b> are words members use for this problem, like "old abstract". P2A uses them to suggest the outcome from the member\'s message.</li></ul>')+
+ k('emails','4','Emails and ticket notes',
+  '<ul><li>If Evo already has an email template for this, type its <b>exact name</b> and leave the text empty. P2A links it to the real template.</li><li>If there is no template yet, give the email a short name and write the text. Write <code>XXX</code> where the member\'s first name goes.</li><li>Write one email per problem. P2A joins them when a member has more than one problem, so each email should make sense on its own.</li><li>The <b>ticket note</b> is for the next agent: what happened, what the issue was, and how it was resolved or what we are waiting for. Leave out the member\'s name and email; the ticket already has them.</li><li>If one email is used by several outcomes, changing its text changes it for all of them.</li></ul>')+
+ k('wo','5','Watch out for, tools and links',
+  '<ul><li><b>Watch out for</b> is for the pitfalls that cause mistakes or complaints. Keep each one to a sentence. Agents see these at the top of the SOP.</li><li><b>Tools and links</b> are the pages an agent needs open. A link can be for the whole SOP or for one step, so it shows up exactly where it is needed.</li></ul>')+
+ k('conf','6','Confluence stays the source of truth',
+  '<ul><li>Link the Confluence page this SOP comes from, in Details. If you own that page, the SOP should say the same thing.</li><li>Do not invent a rule to fill a gap. If you are not sure, write <code>[CHECK]</code> in the step detail with your question. P2A flags it so it gets settled.</li><li>If Confluence and what agents really do are different, say so in the notes for Grigor.</li></ul>')+
+ k('use','7','Using the builder',
+  '<ol><li><b>Diagram</b> shows the steps down the middle. Tap a step to open it and edit its name and detail.</li><li>Use the <b>+</b> on the side of an open step to add an outcome, and the <b>+</b> on the line between steps to add a step there.</li><li>Tap an outcome to edit it: what the agent finds, what happens, the email, do now and words.</li><li><b>List</b> shows the same SOP as folded rows, if you prefer a list. Everything starts folded; open only what you are working on.</li><li><b>Details</b> holds the name, topic, Confluence link, your name and notes for Grigor.</li></ol>')+
+ k('send','8','Submit for import',
+  '<ol><li>Press <b>Submit for import</b> at the top. It lists anything still missing.</li><li>Press <b>Download SOP file</b>. You get one <code>.md</code> file, the format P2A imports directly.</li><li>Send that file back to whoever asked you to build the SOP. They import it into P2A, and the steps, outcomes, emails and links come across as you built them.</li><li>To keep working on another computer, open the file text in Details, under "Open an SOP from text".</li></ol>')+
+ '</div>'}
+
+/* ---------- Diagram tab ---------- */
+function exBanner(){return S.example?'<div class="banner"><span><b>This is an example SOP.</b> Look around and try things. Start your own when you are ready.</span><button class="btn pri sm" type="button" data-a="new">+ New SOP</button></div>':''}
+function build(){const A=checks(),hard=A.filter(a=>!a.soft).length;
+ let h=exBanner();
+ h+=sec('watch','wo','Watch out for',S.watch.length?S.watch.length+' · pitfalls agents must not miss':'none yet · pitfalls agents must not miss',
+  S.watch.map((w,i)=>'<div class="li"><input class="f" data-f="w" data-i="'+i+'" value="'+esc(w)+'" aria-label="Watch out for '+(i+1)+'"><button class="ic" type="button" data-a="wrm" data-i="'+i+'" aria-label="Remove">×</button></div>').join('')+
+  '<div class="li"><input class="f" id="wnew" placeholder="Add a pitfall, e.g. Never approve from a forwarded record" aria-label="New watch out for"><button class="btn sm" type="button" data-a="wadd">Add</button></div>');
+ const LK=S.links.filter(k=>!k.step);
+ h+=sec('links','','Tools and links',LK.length?LK.length+' for the whole SOP':'none yet · pages the agent needs open',LK.map(linkRow).join('')+'<div class="row2"><button class="btn sm" type="button" data-a="ladd">+ Add a tool or link</button><span class="help">Links for one step are added inside that step.</span></div>');
+ h+='<div class="card"><div class="dgbar"><div class="seg" role="group" aria-label="View"><button type="button" data-a="view" data-v="web" aria-pressed="'+(ui.view==='web')+'">Diagram</button><button type="button" data-a="view" data-v="list" aria-pressed="'+(ui.view==='list')+'">List</button></div>'+
+  (S.steps.length?'<button class="btn sm" type="button" data-a="foldall">Fold all</button><button class="btn sm" type="button" data-a="openall">Open all steps</button>':'')+
+  '<span class="sp"></span>'+(hard?'<button class="att" type="button" data-a="send">'+hard+' to fix before sending</button>':(S.steps.length?'<span class="att ok">Ready to send</span>':''))+
+  '<div class="leg"><span><i class="e"></i>Email</span><span><i class="p"></i>Choose a path</span><span><i class="x"></i>No email</span></div></div>'+
+  (ui.view==='web'?'<div class="dgwrap">'+web()+'</div>':list())+'</div>';
+ return h}
+function linkRow(k){return '<div class="lk"><input class="f" data-f="l.name" data-l="'+k.id+'" value="'+esc(k.name)+'" placeholder="Name, e.g. Back office" aria-label="Link name"><input class="f lu" data-f="l.url" data-l="'+k.id+'" value="'+esc(k.url)+'" placeholder="Paste the web address" aria-label="Link address">'+
+ '<select data-f="l.step" data-l="'+k.id+'" aria-label="Where it is used"><option value="">Whole SOP</option>'+S.steps.map((s,j)=>'<option value="'+s.id+'"'+(k.step===s.id?' selected':'')+'>Step '+(j+1)+'</option>').join('')+'</select>'+
+ '<button class="ic" type="button" data-a="lrm" data-l="'+k.id+'" aria-label="Remove link">×</button></div>'}
+function dots(s){return s.outs.length?'<span class="dots" aria-hidden="true">'+s.outs.map(o=>'<i class="'+o.kind+'"></i>').join('')+'</span>':''}
+function stepSub(s){const n=s.outs.length,l=S.links.filter(k=>k.step===s.id).length;return (n?n+' outcome'+(n>1?'s':''):'tick only')+(l?' · '+l+' link'+(l>1?'s':''):'')}
+function stepEdit(s,i){const LK=S.links.filter(k=>k.step===s.id);
+ return '<textarea class="sd" data-f="s.detail" data-s="'+s.id+'" placeholder="Detail agents see when they open the step (optional)" aria-label="Step '+(i+1)+' detail">'+esc(s.detail)+'</textarea>'+
+ (LK.length?'<div class="slinks">'+LK.map(linkRow).join('')+'</div>':'')+
+ (s.outs.length?'':'<p class="help">What can the agent find here? Add each problem as an outcome. With no outcomes, this step is a simple tick.</p>')+
+ '<div class="stools"><button class="btn sm" type="button" data-a="oadd" data-s="'+s.id+'">+ Outcome</button><button class="btn sm" type="button" data-a="ladd" data-s="'+s.id+'">+ Link</button><span class="grow"></span>'+
+ '<button class="ic" type="button" data-a="sup" data-s="'+s.id+'" aria-label="Move step up" title="Move up"'+(i?'':' disabled')+'>↑</button><button class="ic" type="button" data-a="sdn" data-s="'+s.id+'" aria-label="Move step down" title="Move down"'+(i<S.steps.length-1?'':' disabled')+'>↓</button>'+
+ '<button class="ic'+(ui.arm==='s'+s.id?' armed':'')+'" type="button" data-a="srm" data-s="'+s.id+'" aria-label="Remove step" title="Remove step">'+(ui.arm==='s'+s.id?'Tap again to remove':'×')+'</button></div>'}
+function web(){if(!S.steps.length)return '<div class="empty"><p>No steps yet. Start with the first thing an agent checks.</p><button class="btn pri" type="button" data-a="sadd" data-i="0">+ Add the first step</button></div>';
+ let h='<div class="dg" id="dg"><svg class="dgsvg" id="dgsvg" aria-hidden="true"></svg><div class="cap">Member gets in touch</div>';
+ S.steps.forEach((s,i)=>{const open=ui.open.has(s.id),L=[],R=[];
+  if(open)s.outs.forEach((o,j)=>(sideOf(o,j)==='l'?L:R).push(oBox(s,o)));
+  h+=spine(i);
+  const box=open?'<div class="nw s"><div class="dgn op" id="n-'+s.id+'"><div class="dgh"><span class="num">'+(i+1)+'</span><input class="st" data-f="s.name" data-s="'+s.id+'" value="'+esc(s.name)+'" placeholder="What the agent checks (3 to 7 words)" aria-label="Step '+(i+1)+' name"><button class="ic" type="button" data-a="sfold" data-s="'+s.id+'" aria-label="Fold step '+(i+1)+'" title="Fold">▾</button></div>'+stepEdit(s,i)+'</div>'+
+   '<button class="pt l" type="button" data-a="oadd" data-s="'+s.id+'" data-side="l" aria-label="Add an outcome on the left" title="Add an outcome">+</button><button class="pt r" type="button" data-a="oadd" data-s="'+s.id+'" data-side="r" aria-label="Add an outcome on the right" title="Add an outcome">+</button></div>'
+   :'<div class="nw s"><button class="dgn" type="button" id="n-'+s.id+'" data-a="sopen" data-s="'+s.id+'" aria-expanded="false"><span class="num">'+(i+1)+'</span><span class="dgt"><b data-sn="'+s.id+'">'+esc(s.name||'New step')+'</b><small>'+stepSub(s)+dots(s)+'</small></span><span class="cv">▸</span></button></div>';
+  h+='<div class="row'+(open?' open':'')+'"><div class="wl">'+L.join('')+'</div>'+box+'<div class="wr">'+R.join('')+'</div></div>'});
+ h+=spine(S.steps.length)+okBox()+'</div>';return h}
+function spine(i){return '<div class="spine"><button type="button" data-a="sadd" data-i="'+i+'" aria-label="Add a step here'+(i<S.steps.length?' (before step '+(i+1)+')':' (at the end)')+'" title="Add a step here">+</button></div>'}
+function oBox(s,o){const c=cons(o),sel=ui.sel&&ui.sel.o===o.id;
+ return '<div class="nw o"><button class="dob '+o.kind+(sel?' sel':'')+'" type="button" data-a="osel" data-s="'+s.id+'" data-o="'+o.id+'" data-k="'+o.kind+'" aria-expanded="'+sel+'"><b data-ol="'+o.id+'">'+esc(o.label||'New outcome')+'</b><small data-oc="'+o.id+'" class="'+(c.w?'warn':'')+'">'+esc(c.t)+'</small></button>'+(sel?oEd(s,o):'')+'</div>'}
+function oEd(s,o){const sh=o.kind==='email'?users(o.tpl,o):[],K=[['email','Send an email'],['path','Choose a path'],['none','No email']];
+ const help={email:'The agent sends this email for this problem. P2A joins it with the others if the member has more than one problem.',path:'Tells the agent which way to go, like BC or non-BC. No email. Use the words box to say what points to each path.',none:'No email is sent. Use Do now to say what the agent must do.'}[o.kind];
+ let h='<div class="oed" role="group" aria-label="Edit outcome"><div class="h">Outcome at step '+(S.steps.indexOf(s)+1)+'</div>'+
+ '<label class="l" for="oe-label">What the agent finds</label><input class="f" id="oe-label" data-f="o.label" data-s="'+s.id+'" data-o="'+o.id+'" value="'+esc(o.label)+'" placeholder="e.g. Record over 3 months old">'+
+ '<label class="l">What happens</label><div class="kinds" role="group" aria-label="What happens">'+K.map(([k,t])=>'<button type="button" data-a="okind" data-k="'+k+'" data-s="'+s.id+'" data-o="'+o.id+'" aria-pressed="'+(o.kind===k)+'">'+t+'</button>').join('')+'</div><p class="help">'+help+'</p>';
+ if(o.kind==='email')h+='<label class="l" for="oe-tpl">Email name</label><input class="f" id="oe-tpl" list="tplList" data-f="o.tpl" data-s="'+s.id+'" data-o="'+o.id+'" value="'+esc(o.tpl)+'" placeholder="Exact Evo template name, or a short new name"><datalist id="tplList">'+emailNames().map(n=>'<option value="'+esc(n)+'">').join('')+'</datalist>'+
+  '<label class="l" for="oe-text">Email text <span class="mut" style="font-weight:400">(leave empty for an existing Evo template)</span></label><textarea class="f" id="oe-text" data-f="o.text" data-s="'+s.id+'" data-o="'+o.id+'" placeholder="Hi XXX,&#10;&#10;Thanks for…">'+esc(o.text)+'</textarea>'+
+  '<div class="share" id="oe-share"'+(sh.length?'':' hidden')+'>Also used by: '+esc(sh.join(', '))+'. Changing the text changes it for all of them.</div>'+
+  '<label class="l" for="oe-ticket">Ticket note <span class="mut" style="font-weight:400">(optional)</span></label><textarea class="f" id="oe-ticket" data-f="o.ticket" data-s="'+s.id+'" data-o="'+o.id+'" placeholder="What happened, the issue, and how it was resolved or what we are waiting for">'+esc(o.ticket)+'</textarea>';
+ h+='<label class="l" for="oe-do">Do now <span class="mut" style="font-weight:400">(optional)</span></label><textarea class="f" id="oe-do" data-f="o.doNow" data-s="'+s.id+'" data-o="'+o.id+'" placeholder="What the agent must do, or must not do, right away">'+esc(o.doNow)+'</textarea>'+
+ '<label class="l" for="oe-words">Words that point to this <span class="mut" style="font-weight:400">(optional)</span></label><input class="f" id="oe-words" data-f="o.words" data-s="'+s.id+'" data-o="'+o.id+'" value="'+esc(o.words)+'" placeholder="Words members use, e.g. old abstract, expired record">'+
+ '<div class="row2">'+(ui.view==='web'?'<button class="btn sm" type="button" data-a="oside" data-s="'+s.id+'" data-o="'+o.id+'">Move to the other side</button>':'')+
+ '<button class="btn sm danger'+(ui.arm==='o'+o.id?' armed':'')+'" type="button" data-a="orm" data-s="'+s.id+'" data-o="'+o.id+'">'+(ui.arm==='o'+o.id?'Tap again to remove':'Remove outcome')+'</button><span style="flex:1"></span><button class="btn pri sm" type="button" data-a="odone">Done</button></div></div>';
+ return h}
+function okBox(){const sel=ui.sel&&ui.sel.ok,on=S.ok.only&&findStep(S.ok.only);
+ let h='<div class="dgend"><button type="button" data-a="oksel" aria-expanded="'+!!sel+'"><b>Everything is OK</b><small>'+esc(S.ok.tpl.trim()?'✉ '+S.ok.tpl:'No email')+(on?' · step '+(S.steps.indexOf(on)+1)+' only then':'')+'</small></button>';
+ if(sel){const sh=users(S.ok.tpl,'ok');h+='<div class="oed" role="group" aria-label="When everything is OK"><div class="h">When everything is OK</div>'+
+  '<label class="l" for="ok-tpl">Email name <span class="mut" style="font-weight:400">(optional)</span></label><input class="f" id="ok-tpl" list="tplList2" data-f="ok.tpl" value="'+esc(S.ok.tpl)+'" placeholder="Leave empty when no email is needed"><datalist id="tplList2">'+emailNames().map(n=>'<option value="'+esc(n)+'">').join('')+'</datalist>'+
+  '<label class="l" for="ok-text">Email text</label><textarea class="f" id="ok-text" data-f="ok.text" placeholder="Hi XXX,&#10;&#10;Your account is approved…">'+esc(S.ok.text)+'</textarea>'+
+  '<div class="share" id="oe-share"'+(sh.length?'':' hidden')+'>Also used by: '+esc(sh.join(', '))+'.</div>'+
+  '<label class="l" for="ok-ticket">Ticket note</label><textarea class="f" id="ok-ticket" data-f="ok.ticket" placeholder="e.g. All checks passed. Account approved.">'+esc(S.ok.ticket)+'</textarea>'+
+  '<label class="l" for="ok-only">A step done only when everything is OK</label><select class="f" id="ok-only" data-f="ok.only"><option value="">None</option>'+S.steps.map((s,j)=>'<option value="'+s.id+'"'+(S.ok.only===s.id?' selected':'')+'>Step '+(j+1)+' · '+esc((s.name||'New step').slice(0,50))+'</option>').join('')+'</select>'+
+  '<p class="help">For example "Approve the account": agents skip it when they found a problem.</p><div class="row2"><span style="flex:1"></span><button class="btn pri sm" type="button" data-a="odone">Done</button></div></div>'}
+ return h+'</div>'}
+function list(){if(!S.steps.length)return '<div class="empty"><p>No steps yet. Start with the first thing an agent checks.</p><button class="btn pri" type="button" data-a="sadd" data-i="0">+ Add the first step</button></div>';
+ let h='<div>';S.steps.forEach((s,i)=>{const open=ui.open.has(s.id),selO=ui.sel&&ui.sel.s===s.id?s.outs.find(o=>o.id===ui.sel.o):null;
+  h+='<details class="lst" data-ls="'+s.id+'"'+(open?' open':'')+'><summary><span class="num">'+(i+1)+'</span><b data-sn="'+s.id+'">'+esc(s.name||'New step')+'</b><small>'+stepSub(s)+dots(s)+'</small></summary>';
+  if(open)h+='<div class="lbody"><input class="st" data-f="s.name" data-s="'+s.id+'" value="'+esc(s.name)+'" placeholder="What the agent checks (3 to 7 words)" aria-label="Step '+(i+1)+' name">'+stepEdit(s,i).replace('<div class="stools">','<div class="chips">'+s.outs.map(o=>{const c=cons(o);return '<button class="dob '+o.kind+(selO===o?' sel':'')+'" type="button" data-a="osel" data-s="'+s.id+'" data-o="'+o.id+'"><b data-ol="'+o.id+'">'+esc(o.label||'New outcome')+'</b><small data-oc="'+o.id+'" class="'+(c.w?'warn':'')+'">'+esc(c.t)+'</small></button>'}).join('')+'</div>'+(selO?oEd(s,selO):'')+'<div class="stools">')+'</div>';
+  h+='</details>'});
+ h+='<div class="row2"><button class="btn sm" type="button" data-a="sadd" data-i="'+S.steps.length+'">+ Add a step at the end</button></div>';
+ h+='<div style="margin-top:10px">'+okBox()+'</div></div>';return h}
+
+/* ---------- Details tab ---------- */
+function details(){const F=(id,f,lab,ph,help,ta)=>'<label class="l" for="'+id+'">'+lab+'</label>'+(ta?'<textarea class="f" id="'+id+'" data-f="'+f+'" placeholder="'+esc(ph)+'">'+esc(S[f.slice(2)])+'</textarea>':'<input class="f" id="'+id+'" data-f="'+f+'" value="'+esc(S[f.slice(2)])+'" placeholder="'+esc(ph)+'">')+(help?'<p class="help">'+help+'</p>':'');
+ return exBanner()+'<div class="card"><div class="h">About this SOP</div>'+
+ F('d-title','S.title','SOP name','e.g. Account approval: driving record','Name it the way an agent would look for it.')+
+ F('d-topic','S.topic','Topic','e.g. Registration')+
+ F('d-tags','S.tags','Tags','e.g. account approval, driving record','Separate with commas.')+
+ F('d-conf','S.confluence','Confluence page','Paste the web address of the page this SOP comes from','Confluence stays the source of truth. P2A compares the SOP with this page.')+
+ '</div><div class="card"><div class="h">From you</div>'+
+ F('d-author','S.author','Your name','So the reviewer knows who to ask')+
+ F('d-role','S.role','Your role or team','e.g. Team lead, Member services')+
+ F('d-notes','S.notes','Notes for import','Anything the reviewer should know: open questions, where Confluence differs from what agents do…','',1)+
+ '</div>'+
+ sec('imp','','Open an SOP from text','paste text you were sent, or saved before',
+  '<p class="help" style="margin-top:0">Paste text from an SOP file this builder made, or an SOP with Steps and Outcomes. It opens as a new SOP; nothing here is changed.</p><textarea class="f" id="impTxt" style="min-height:140px" placeholder="# SOP for P2A: …" aria-label="SOP text to open"></textarea>'+
+  '<div class="row2"><button class="btn pri sm" type="button" data-a="imp">Open as a new SOP</button><label class="btn sm" for="impFile" style="cursor:pointer">Choose a file…</label><input type="file" id="impFile" accept=".md,.txt,.markdown,text/plain,text/markdown" hidden><span class="help" id="impMsg"></span></div>')+
+ '<div class="card"><div class="h">Remove</div><p class="help" style="margin-top:0">Removes this SOP from this browser. Send it first if you want to keep it.</p><div class="row2"><button class="btn sm danger'+(ui.arm==='sop'?' armed':'')+'" type="button" data-a="delsop">'+(ui.arm==='sop'?'Tap again to remove this SOP':'Remove this SOP')+'</button></div></div>'}
+
+/* ---------- Send ---------- */
+function fileName(){const b=String(S.title||'').trim().toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,60)||'untitled';return 'SOP-'+b+'.md'}
+async function download(){const name=fileName(),text=exportText(S);let d=null;try{d=window.claude&&window.claude.use?await window.claude.use('downloads'):null}catch(e){d=null}
+ if(d){try{const r=await d.save({filename:name,data:text});toast(r.status==='saved'?'Saved '+name+'. Send it back to whoever asked for the SOP.':'Sent');return}catch(e){if(e&&e.code==='declined'){toast('Not saved. Press Download again when you are ready.');return}}}
+ else{try{const u=URL.createObjectURL(new Blob([text],{type:'text/markdown'})),a=document.createElement('a');a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),2000);toast('Downloaded '+name);return}catch(e){}}
+ const ta=$('#sendTxt');if(ta){const dd=ta.closest('details');if(dd)dd.open=true;ta.focus();ta.select()}toast('Download is not available here. Copy the selected text into a file named '+name+'.')}
+function openSend(){const A=checks(),txt=exportText(S),hard=A.filter(a=>!a.soft),soft=A.filter(a=>a.soft),noText=emailNames().filter(n=>!S.steps.some(s=>s.outs.some(o=>o.kind==='email'&&low(o.tpl)===low(n)&&o.text.trim()))&&!(low(S.ok.tpl)===low(n)&&S.ok.text.trim()));
+ const item=a=>'<li>'+esc(a.t)+(a.s||a.go?' <button class="lnk" type="button" data-a="go" data-s="'+(a.s||'')+'" data-o="'+(a.o||'')+'" data-g="'+(a.go||'build')+'">Show me</button>':'')+'</li>';
+ const fname=fileName(),oc=[];S.steps.forEach(x=>x.outs.forEach(o=>{if(o.label.trim())oc.push(o)}));const nOut=oc.length+(S.ok.tpl.trim()?1:0),mails=new Set(),ticks=new Set();
+ S.steps.forEach(x=>x.outs.forEach(o=>{if(o.kind==='email'&&o.tpl.trim()){if(o.text.trim())mails.add(low(o.tpl));if(o.ticket.trim())ticks.add(low(o.tpl))}}));if(S.ok.tpl.trim()){if(S.ok.text.trim())mails.add(low(S.ok.tpl));if(S.ok.ticket.trim())ticks.add(low(S.ok.tpl))}
+ const nMail=mails.size,nTick=ticks.size,nWatch=S.watch.filter(w=>w.trim()).length,nLink=S.links.filter(k=>isUrl(k.url)).length+(isUrl(S.confluence)?1:0);
+ $('#ov').innerHTML='<div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sh-h"><div style="display:flex;justify-content:space-between;gap:10px;align-items:center"><h2 id="sh-h">Submit this SOP for import</h2><button class="ic" type="button" data-a="close" aria-label="Close">✕</button></div>'+
+ (S.example?'<div class="chk">This is the example SOP. Start your own with <b>+ New SOP</b> before you submit anything.</div>':'')+
+ (hard.length?'<div class="chk"><b>Fix before sending</b><ul>'+hard.map(item).join('')+'</ul></div>':'<div class="chk ok">Nothing is missing.</div>')+
+ (soft.length?'<div class="chk"><b>Worth a look</b><ul>'+soft.map(item).join('')+'</ul></div>':'')+
+ (noText.length?'<p class="help" style="margin:0">'+noText.length+' email'+(noText.length>1?'s have':' has')+' a name but no text: '+esc(noText.join(', '))+'. P2A will match '+(noText.length>1?'them':'it')+' to existing Evo templates.</p>':'')+
+ '<p style="margin:0">This is what P2A will import: <b>'+S.steps.length+' step'+(S.steps.length===1?'':'s')+'</b>, <b>'+nOut+' outcome'+(nOut===1?'':'s')+'</b>, <b>'+nMail+' email'+(nMail===1?'':'s')+'</b> with text, <b>'+nTick+' ticket note'+(nTick===1?'':'s')+'</b>, <b>'+nWatch+' watch-out'+(nWatch===1?'':'s')+'</b> and <b>'+nLink+' link'+(nLink===1?'':'s')+'</b>.</p>'+
+ '<div class="row2"><button class="btn pri" type="button" data-a="dl">Download SOP file</button><span class="help">'+esc(fname)+' · opens in P2A under Architecture, SOPs, Import</span></div>'+
+ '<p class="help" style="margin:0">Send the downloaded file back to whoever asked you to build this SOP. Your SOP stays in this browser, so you can keep improving it and download it again.</p>'+
+ '<div class="row2"><button class="btn sm" type="button" data-a="copy">Copy the text instead</button></div>'+
+ '<details><summary class="lnk" style="text-decoration:none">See the file text</summary><textarea class="out" id="sendTxt" readonly aria-label="SOP text">'+esc(txt)+'</textarea></details></div>';
+ $('#ov').hidden=false;$('#ov').querySelector('[data-a="dl"]').focus()}
+async function copy(text,ta,msg){try{await navigator.clipboard.writeText(text);toast(msg)}catch(e){if(ta){const d=ta.closest('details');if(d)d.open=true;ta.focus();ta.select()}toast('Press Ctrl+C (Cmd+C on a Mac) to copy the selected text.')}}
+function toast(m){const t=$('#toast');t.textContent=m;t.className='show';clearTimeout(toast.t);toast.t=setTimeout(()=>t.className='',3200)}
+
+/* ---------- render ---------- */
+function render(keep){const y=scrollY;renderTop();const m=$('#main');
+ m.innerHTML=ui.tab==='howto'?howto():ui.tab==='details'?details():build();
+ if(keep!==false)scrollTo(0,y);
+ if(ui.tab==='build'&&ui.view==='web')requestAnimationFrame(lines);
+ if(ui.focus){const el=document.querySelector(ui.focus);ui.focus=null;if(el){el.focus({preventScroll:true});const r=el.getBoundingClientRect();if(r.top<80||r.bottom>innerHeight-20)el.scrollIntoView({block:'center'})}}}
+function lines(){const g=$('#dg'),sv=$('#dgsvg');if(!g||!sv)return;if(innerWidth<=860){sv.innerHTML='';return}
+ const G=g.getBoundingClientRect();sv.setAttribute('width',g.scrollWidth);sv.setAttribute('height',g.scrollHeight);let p='';
+ g.querySelectorAll('.row.open').forEach(r=>{const se=r.querySelector('.dgn');if(!se)return;const sb=se.getBoundingClientRect();
+  r.querySelectorAll('.dob').forEach(b=>{const ob=b.getBoundingClientRect(),left=ob.right<=sb.left+2,x1=(left?sb.left:sb.right)-G.left,y1=sb.top+22-G.top,x2=(left?ob.right:ob.left)-G.left,y2=ob.top+Math.min(ob.height/2,22)-G.top,dx=(x2-x1)/2;
+   p+='<path class="'+esc(b.dataset.k)+'" d="M'+x1.toFixed(1)+' '+y1.toFixed(1)+' C'+(x1+dx).toFixed(1)+' '+y1.toFixed(1)+' '+(x2-dx).toFixed(1)+' '+y2.toFixed(1)+' '+x2.toFixed(1)+' '+y2.toFixed(1)+'"/>'})});
+ sv.innerHTML=p}
+addEventListener('resize',()=>requestAnimationFrame(lines));
+
+/* ---------- actions ---------- */
+function ch(){save();render()}
+function arm(key){if(ui.arm===key){ui.arm=null;clearTimeout(arm.t);return true}ui.arm=key;clearTimeout(arm.t);arm.t=setTimeout(()=>{if(ui.arm===key){ui.arm=null;render()}},3500);render();return false}
+function switchTo(id){S=DB.sops[id];DB.cur=id;ui.open.clear();ui.sel=null;ui.arm=null;save();render(false);scrollTo(0,0)}
+function newSop(from){const n=from||blank();DB.sops[n.id]=n;ui.tab='build';saveUi();switchTo(n.id);if(!from&&!n.steps.length){ui.focus=null}}
+document.addEventListener('click',e=>{
+ if(e.target.id==='ov'){$('#ov').hidden=true;return}
+ const b=e.target.closest('[data-a]');if(!b)return;const a=b.dataset.a,s=b.dataset.s?findStep(b.dataset.s):null,o=s&&b.dataset.o?s.outs.find(x=>x.id===b.dataset.o):null;
+ if(a!=='srm'&&a!=='orm'&&a!=='delsop')ui.arm=null;
+ switch(a){
+ case 'tab':ui.tab=b.dataset.t;saveUi();render(false);scrollTo(0,0);break;
+ case 'view':ui.view=b.dataset.v;saveUi();render();break;
+ case 'new':newSop();break;
+ case 'sopen':ui.open.add(s.id);ui.focus='[data-f="s.name"][data-s="'+s.id+'"]';render();break;
+ case 'sfold':ui.open.delete(s.id);if(ui.sel&&ui.sel.s===s.id)ui.sel=null;render();break;
+ case 'foldall':ui.open.clear();ui.sel=null;render();break;
+ case 'openall':S.steps.forEach(x=>ui.open.add(x.id));render();break;
+ case 'sadd':{const n=mkStep();S.steps.splice(+b.dataset.i,0,n);ui.open.add(n.id);ui.focus='[data-f="s.name"][data-s="'+n.id+'"]';ch();break}
+ case 'sup':case 'sdn':{const i=S.steps.indexOf(s),j=a==='sup'?i-1:i+1;if(j<0||j>=S.steps.length)return;[S.steps[i],S.steps[j]]=[S.steps[j],S.steps[i]];ch();break}
+ case 'srm':if(!arm('s'+s.id))return;S.steps.splice(S.steps.indexOf(s),1);S.links.forEach(k=>{if(k.step===s.id)k.step=''});if(S.ok.only===s.id)S.ok.only='';if(ui.sel&&ui.sel.s===s.id)ui.sel=null;ch();toast('Step removed');break;
+ case 'oadd':{const n=mkOut({side:b.dataset.side||''});s.outs.push(n);ui.open.add(s.id);ui.sel={s:s.id,o:n.id};ui.focus='#oe-label';ch();break}
+ case 'osel':ui.sel=ui.sel&&ui.sel.o===o.id?null:{s:s.id,o:o.id};render();break;
+ case 'oksel':ui.sel=ui.sel&&ui.sel.ok?null:{ok:1};render();break;
+ case 'odone':ui.sel=null;render();break;
+ case 'okind':o.kind=b.dataset.k;ch();break;
+ case 'oside':o.side=sideOf(o,s.outs.indexOf(o))==='l'?'r':'l';ch();break;
+ case 'orm':if(!arm('o'+o.id))return;s.outs.splice(s.outs.indexOf(o),1);ui.sel=null;ch();toast('Outcome removed');break;
+ case 'wadd':{const v=$('#wnew').value.trim();if(!v){$('#wnew').focus();return}S.watch.push(v);ui.secs.watch=true;ui.focus='#wnew';ch();break}
+ case 'wrm':S.watch.splice(+b.dataset.i,1);ch();break;
+ case 'ladd':{const n={id:uid(),name:'',url:'',step:s?s.id:''};S.links.push(n);if(!s)ui.secs.links=true;else ui.open.add(s.id);ui.focus='[data-f="l.name"][data-l="'+n.id+'"]';ch();break}
+ case 'lrm':S.links=S.links.filter(k=>k.id!==b.dataset.l);ch();break;
+ case 'send':openSend();break;
+ case 'dl':download();break;
+ case 'close':$('#ov').hidden=true;break;
+ case 'copy':copy(exportText(S),$('#sendTxt'),'Copied. Paste it into a new file saved as .md.');break;
+  case 'go':{$('#ov').hidden=true;ui.tab=b.dataset.g==='details'?'details':'build';saveUi();if(b.dataset.s){ui.open.add(b.dataset.s);if(b.dataset.o)ui.sel={s:b.dataset.s,o:b.dataset.o}}
+   render(false);const el=b.dataset.o?document.querySelector('[data-o="'+b.dataset.o+'"]'):b.dataset.s?document.getElementById('n-'+b.dataset.s)||document.querySelector('[data-ls="'+b.dataset.s+'"]'):(ui.tab==='details'?$('#d-title'):null);
+   if(el){el.scrollIntoView({block:'center'});if(el.focus)el.focus({preventScroll:true})}break}
+ case 'imp':{const v=$('#impTxt').value;const n=parseAny(v);if(!n.steps.length){$('#impMsg').textContent='No steps found. The text needs a "Steps:" list with numbered steps.';return}newSop(n);toast('Opened "'+(n.title||'Untitled SOP')+'" with '+n.steps.length+' steps');break}
+ case 'delsop':if(!arm('sop'))return;delete DB.sops[S.id];if(!Object.keys(DB.sops).length){const e2=fresh();DB.cur=e2.id}switchTo(Object.values(DB.sops).sort((x,y)=>y.updated-x.updated)[0].id);toast('SOP removed');break;
+ }});
+document.addEventListener('input',e=>{const el=e.target,f=el.dataset.f;if(!f)return;const v=el.value;
+ const s=el.dataset.s?findStep(el.dataset.s):null,o=s&&el.dataset.o?s.outs.find(x=>x.id===el.dataset.o):null;
+ const txt=(sel,t)=>document.querySelectorAll(sel).forEach(n=>n.textContent=t);
+ const cn=()=>{const c=cons(o);document.querySelectorAll('[data-oc="'+o.id+'"]').forEach(n=>{n.textContent=c.t;n.className=c.w?'warn':''})};
+ if(S.example&&f!=='S.notes')S.example=false;
+ switch(f){
+ case 's.name':s.name=v;txt('[data-sn="'+s.id+'"]',v||'New step');break;
+ case 's.detail':s.detail=v;break;
+ case 'o.label':o.label=v;txt('[data-ol="'+o.id+'"]',v||'New outcome');break;
+ case 'o.tpl':{o.tpl=v;const sh=users(v,o),box=$('#oe-share');if(box){box.hidden=!sh.length;box.textContent='Also used by: '+sh.join(', ')+'. Changing the text changes it for all of them.'}cn();break}
+ case 'o.text':case 'o.ticket':{const k=f.slice(2);o[k]=v;const key=low(o.tpl);if(key){S.steps.forEach(x=>x.outs.forEach(y=>{if(y!==o&&y.kind==='email'&&low(y.tpl)===key)y[k]=v}));if(low(S.ok.tpl)===key)S.ok[k]=v}cn();break}
+ case 'o.doNow':case 'o.words':o[f.slice(2)]=v;cn();break;
+ case 'ok.tpl':case 'ok.text':case 'ok.ticket':{const k=f.slice(3);S.ok[k]=v;if(k!=='tpl'){const key=low(S.ok.tpl);if(key)S.steps.forEach(x=>x.outs.forEach(y=>{if(y.kind==='email'&&low(y.tpl)===key)y[k]=v}))}break}
+ case 'w':S.watch[+el.dataset.i]=v;break;
+ case 'l.name':case 'l.url':{const k=S.links.find(x=>x.id===el.dataset.l);if(k)k[f.slice(2)]=v;break}
+ default:if(f.startsWith('S.')){S[f.slice(2)]=v;if(f==='S.title')renderTop()}}
+ save();if(ui.tab==='build'&&ui.view==='web')requestAnimationFrame(lines)});
+document.addEventListener('change',e=>{const el=e.target;
+ if(el.id==='sopPick'){switchTo(el.value);return}
+ if(el.id==='impFile'){const file=el.files[0];el.value='';if(!file)return;const r=new FileReader();r.onload=()=>{$('#impTxt').value=String(r.result||'');$('#impMsg').textContent='Loaded '+file.name+'. Press "Open as a new SOP".'};r.onerror=()=>{$('#impMsg').textContent='Could not read that file. Copy its text and paste it here instead.'};r.readAsText(file);return}
+ const f=el.dataset.f;if(!f)return;
+ if(f==='l.step'){const k=S.links.find(x=>x.id===el.dataset.l);if(k){k.step=el.value;if(k.step)ui.open.add(k.step)}ch();return}
+ if(f==='ok.only'){S.ok.only=el.value;ch();return}
+ if(f==='o.tpl'){const s=findStep(el.dataset.s),o=s&&s.outs.find(x=>x.id===el.dataset.o);if(o&&!o.text.trim()){let src=null;S.steps.forEach(x=>x.outs.forEach(y=>{if(!src&&y!==o&&y.kind==='email'&&low(y.tpl)===low(o.tpl)&&(y.text||y.ticket))src=y}));if(src){o.text=src.text;o.ticket=src.ticket;ch()}}}});
+document.addEventListener('toggle',e=>{const d=e.target;if(!(d instanceof HTMLDetailsElement))return;
+ if(d.dataset.sec){ui.secs[d.dataset.sec]=d.open;saveUi()}
+ if(d.dataset.ls){const id=d.dataset.ls,was=ui.open.has(id);if(d.open&&!was){ui.open.add(id);render()}else if(!d.open&&was){ui.open.delete(id);if(ui.sel&&ui.sel.s===id)ui.sel=null;render()}}},true);
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(!$('#ov').hidden){$('#ov').hidden=true;return}if(ui.sel){ui.sel=null;render()}}
+ if(e.key==='Enter'&&e.target.id==='wnew'){e.preventDefault();document.querySelector('[data-a="wadd"]').click()}});
+
+window.__sopb={parseAny,exportText,get S(){return S},get DB(){return DB}};
+render(false);
+})();
+</script>
+
+</body></html>
