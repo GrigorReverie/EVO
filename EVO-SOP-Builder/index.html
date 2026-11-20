@@ -11,13 +11,13 @@
  --acc:#0b7fa8;--accbg:#e2f3f9;--onacc:#ffffff;
  --amb:#8a5a00;--ambbg:#fff3d6;--ambbd:#e3bd5f;
  --red:#a4262c;--redbg:#fde8ea;--grn:#1a6b3c;--grnbg:#e2f4e9;--blu:#234e9c;--blubg:#e6edfb;
- --shadow:0 10px 28px rgba(16,32,43,.16);
+ --shadow:0 10px 28px rgba(16,32,43,.16);--dot:#bfcbd6;
  --f-body:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
  --f-head:"Space Grotesk",Inter,system-ui,sans-serif;
  --f-mono:ui-monospace,Menlo,Consolas,monospace;
 }
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f151b;--card:#17202a;--ink:#e7edf3;--mut:#9aa8b6;--line:#2b3846;--soft:#1c2733;--acc:#5bc2e7;--accbg:#12313d;--onacc:#06202b;--amb:#f2c96b;--ambbg:#382c10;--ambbd:#7a6220;--red:#ff9aa0;--redbg:#3d1a1d;--grn:#7fd6a0;--grnbg:#143021;--blu:#9db9ff;--blubg:#1a2744;--shadow:0 10px 28px rgba(0,0,0,.5);color-scheme:dark}}
-:root[data-theme="dark"]{--bg:#0f151b;--card:#17202a;--ink:#e7edf3;--mut:#9aa8b6;--line:#2b3846;--soft:#1c2733;--acc:#5bc2e7;--accbg:#12313d;--onacc:#06202b;--amb:#f2c96b;--ambbg:#382c10;--ambbd:#7a6220;--red:#ff9aa0;--redbg:#3d1a1d;--grn:#7fd6a0;--grnbg:#143021;--blu:#9db9ff;--blubg:#1a2744;--shadow:0 10px 28px rgba(0,0,0,.5);color-scheme:dark}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f151b;--card:#17202a;--ink:#e7edf3;--mut:#9aa8b6;--line:#2b3846;--soft:#1c2733;--acc:#5bc2e7;--accbg:#12313d;--onacc:#06202b;--amb:#f2c96b;--ambbg:#382c10;--ambbd:#7a6220;--red:#ff9aa0;--redbg:#3d1a1d;--grn:#7fd6a0;--grnbg:#143021;--blu:#9db9ff;--blubg:#1a2744;--shadow:0 10px 28px rgba(0,0,0,.5);--dot:#34424f;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0f151b;--card:#17202a;--ink:#e7edf3;--mut:#9aa8b6;--line:#2b3846;--soft:#1c2733;--acc:#5bc2e7;--accbg:#12313d;--onacc:#06202b;--amb:#f2c96b;--ambbg:#382c10;--ambbd:#7a6220;--red:#ff9aa0;--redbg:#3d1a1d;--grn:#7fd6a0;--grnbg:#143021;--blu:#9db9ff;--blubg:#1a2744;--shadow:0 10px 28px rgba(0,0,0,.5);--dot:#34424f;color-scheme:dark}
 *{box-sizing:border-box}[hidden]{display:none!important}
 body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 var(--f-body)}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--card)}
@@ -51,23 +51,42 @@ label.l{display:block;font-size:12px;font-weight:600;color:var(--mut);margin:10p
 .leg{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12px;color:var(--mut)}.leg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px;border:1px solid}
 .leg .e{background:var(--ambbg);border-color:var(--ambbd)}.leg .p{background:var(--blubg);border-color:var(--blu)}.leg .x{background:var(--redbg);border-color:var(--red)}
 .att{font-size:12px;font-weight:600;color:var(--amb);background:var(--ambbg);border:1px solid var(--ambbd);border-radius:999px;padding:2px 10px;cursor:pointer}.att.ok{color:var(--grn);background:var(--grnbg);border-color:var(--grn);cursor:default}
-.dgwrap{overflow-x:auto}
-.dg{position:relative;display:flex;flex-direction:column;align-items:stretch;min-width:0}
+.cvw{position:relative;margin:0 auto;max-width:100%}
+.cv{height:max(360px,56vh);position:relative;overflow:hidden;border:1px solid var(--line);border-radius:10px;background-color:var(--soft);background-image:radial-gradient(circle,var(--dot) 1.1px,transparent 1.5px);touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none}
+.cv.pan{cursor:grabbing}.cv input,.cv textarea,.cv select{user-select:text;-webkit-user-select:text}
+.dg{position:absolute;left:0;top:0;width:1400px;display:flex;flex-direction:column;align-items:stretch;transform-origin:0 0;padding:16px 0 40px}
+.rs{position:absolute;bottom:0;width:24px;height:24px;z-index:5;touch-action:none;opacity:.6}.rs:hover{opacity:1}
+.rs.r{right:0;cursor:nwse-resize;background:linear-gradient(135deg,transparent 50%,var(--acc) 50%,var(--acc) 57%,transparent 57%,transparent 69%,var(--acc) 69%,var(--acc) 76%,transparent 76%)}
+.rs.l{left:0;cursor:nesw-resize;background:linear-gradient(225deg,transparent 50%,var(--acc) 50%,var(--acc) 57%,transparent 57%,transparent 69%,var(--acc) 69%,var(--acc) 76%,transparent 76%)}
+.zm{display:inline-flex;gap:4px;align-items:center}.zm span{font-size:12px;font-weight:600;min-width:40px;text-align:center;font-variant-numeric:tabular-nums}
+.ow{display:flex;align-items:center;gap:40px}.wl .ow{flex-direction:row-reverse}
+.kids{display:flex;flex-direction:column;gap:8px}.wl .kids{align-items:flex-end}.wr .kids{align-items:flex-start}
+.kid{border:1.5px solid var(--line);background:var(--card);border-radius:10px;padding:4px 10px 6px;font:inherit;font-size:13px;text-align:left;cursor:pointer;width:220px;color:var(--ink);position:relative;z-index:1}
+.kid small{display:block;font-size:11px;font-weight:650;letter-spacing:.05em;text-transform:uppercase;color:var(--mut)}.kid small i{font-style:normal;opacity:.6;margin-left:4px}
+.kid span{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.kid:hover{border-color:var(--acc)}.kid.emp span{color:var(--mut)}.kid.warn span{color:var(--amb);font-weight:600}
+.kid.k-res.email{background:var(--ambbg);border-color:var(--ambbd)}.kid.k-res.path{background:var(--blubg);border-color:var(--blu)}.kid.k-res.none{background:var(--redbg);border-color:var(--red)}
+.kids .oed{width:300px;position:relative;z-index:2}
+.nw.o .pt.o{top:-10px;right:-10px;left:auto}.wl .nw.o .pt.o{right:auto;left:-10px}
+.pm{position:absolute;z-index:9;top:14px;left:calc(100% - 6px);width:240px;background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:6px;text-align:left}.wl .pm{left:auto;right:calc(100% - 6px)}
+.pm .pmh{font-size:11px;font-weight:650;letter-spacing:.06em;text-transform:uppercase;color:var(--mut);padding:4px 8px}
+.pm button{display:block;width:100%;text-align:left;border:0;background:transparent;color:var(--ink);border-radius:8px;padding:6px 8px;cursor:pointer;font:inherit;font-size:13px}.pm button:hover,.pm button:focus-visible{background:var(--accbg)}.pm button small{display:block;color:var(--mut);font-size:12px}.pm button.danger{color:var(--red)}.pm button.armed{background:var(--redbg)}
+.dob .chev{margin-left:6px;color:var(--mut);font-size:11px}
 .dgsvg{position:absolute;left:0;top:0;pointer-events:none;overflow:visible;z-index:0}.dgsvg path{fill:none;stroke:var(--ambbd);stroke-width:1.75}.dgsvg path.path{stroke:var(--blu)}.dgsvg path.none{stroke:var(--red)}
 .cap{align-self:center;border:1.5px solid var(--line);border-radius:999px;padding:3px 14px;font-size:12px;font-weight:600;color:var(--mut);background:var(--card);position:relative;z-index:1}
-.spine{align-self:center;position:relative;height:30px;width:2px;background:var(--line)}
+.spine{align-self:center;position:relative;height:34px;width:2px}
 .spine button{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:20px;height:20px;border-radius:50%;border:1.5px solid var(--acc);background:var(--card);color:var(--acc);font:700 13px/1 system-ui,sans-serif;padding:0;cursor:pointer;opacity:.45;z-index:2}
 .spine button:hover,.spine button:focus-visible{opacity:1;background:var(--acc);color:var(--onacc)}
 .spine button:after{content:"";position:absolute;inset:-8px}
 .row{display:grid;grid-template-columns:minmax(0,1fr) minmax(230px,300px) minmax(0,1fr);gap:0 48px;align-items:center}
 .row.open{align-items:start}
 .wl,.wr{display:flex;flex-direction:column;gap:8px;min-width:0;padding:4px 0}.wl{align-items:flex-end}.wr{align-items:flex-start}
-.nw{position:relative;min-width:0;z-index:1}.nw.s{width:100%}.nw.o{max-width:100%;display:flex;flex-direction:column;gap:6px}.wl .nw.o{align-items:flex-end}
+.nw{position:relative;min-width:0;z-index:1}
+.nw:has(.pm){z-index:30}.nw.s{width:100%}.nw.o{max-width:100%;display:flex;flex-direction:column;gap:6px}.wl .nw.o{align-items:flex-end}
 .dgn{display:flex;gap:10px;align-items:flex-start;width:100%;border:1.5px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--card);text-align:left}
 button.dgn{cursor:pointer;font:inherit;color:inherit}button.dgn:hover{border-color:var(--acc)}
 .dgn.op{border:2px solid var(--acc);flex-direction:column;gap:6px;box-shadow:var(--shadow)}
 .dgn .dgt{min-width:0;flex:1}.dgn .dgt b{display:block;font-weight:600;font-size:14px;overflow-wrap:anywhere}.dgn .dgt small{display:block;font-size:12px;color:var(--mut)}
-.dgn .cv{color:var(--mut);flex:none;margin-left:auto}
+.dgn .chv{color:var(--mut);flex:none;margin-left:auto}
 .num{flex:none;width:26px;height:26px;border-radius:50%;background:var(--accbg);color:var(--acc);font-weight:700;display:flex;align-items:center;justify-content:center;font-size:12px;font-variant-numeric:tabular-nums}
 .dgh{display:flex;gap:8px;align-items:center;width:100%}
 .st{flex:1;min-width:0;font-weight:600;font-size:14px;border:1px solid var(--line);border-radius:7px;padding:4px 8px;background:var(--card)}
@@ -82,6 +101,32 @@ button.dgn{cursor:pointer;font:inherit;color:inherit}button.dgn:hover{border-col
 .pt{position:absolute;z-index:3;width:20px;height:20px;border-radius:50%;border:1.5px solid var(--acc);background:var(--card);color:var(--acc);font:700 13px/1 system-ui,sans-serif;padding:0;cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:.7;top:22px}
 .pt:after{content:"";position:absolute;inset:-8px}.pt:hover,.pt:focus-visible{opacity:1;background:var(--acc);color:var(--onacc)}
 .pt.l{left:-11px}.pt.r{right:-11px}
+.nw.s>.pt{opacity:0;transition:opacity .12s}.nw.s:hover>.pt,.nw.s:focus-within>.pt,.row.open .nw.s>.pt{opacity:.7}.nw.s>.pt:hover,.nw.s>.pt:focus-visible{opacity:1}
+.nw.s>.pt.l,.nw.s>.pt.r{top:50%;margin-top:-10px}.pt.t{top:-10px;left:50%;margin-left:-10px}.pt.b{top:auto;bottom:-10px;left:50%;margin-left:-10px}
+.pt.x{top:-10px;left:-10px;right:auto;border-color:var(--red);color:var(--red);font-size:14px}.pt.x:hover,.pt.x:focus-visible{background:var(--red);color:var(--card)}
+.pt.x.ask{width:auto;padding:0 8px;height:22px;border-radius:999px;opacity:1!important;background:var(--red);color:var(--card);font-size:12px;white-space:nowrap;z-index:9}
+.nw.s>.pt.x{left:auto;right:-10px}.wl .pt.xo{left:auto;right:-10px}
+.nw.o>.pt.x,.nw.o>.pt.lk{opacity:0;transition:opacity .12s}.nw.o:hover>.pt,.nw.o:focus-within>.pt,.nw.o>.pt.ask{opacity:.7}.nw.o>.pt:hover{opacity:1}
+.pt.lk{top:auto;bottom:-11px;left:50%;margin-left:-10px;border-style:dashed;border-color:var(--blu);color:var(--blu);font-size:12px;cursor:crosshair;touch-action:none}.pt.lk:hover,.pt.lk:focus-visible{background:var(--blu);color:var(--card)}
+.kw{position:relative;display:inline-flex}.kw .pt.x{left:auto;right:-9px;top:-9px;width:18px;height:18px;opacity:0}.kw:hover .pt.x,.kw .pt.x:focus-visible,.kw .pt.x.ask{opacity:.8}
+#lkline{position:fixed;inset:0;width:100vw;height:100vh;z-index:50;pointer-events:none}#lkline line{stroke:var(--blu);stroke-width:2;stroke-dasharray:6 4}
+.cv.linking .dgn{cursor:crosshair}.dgn.tg{border-color:var(--blu)!important;box-shadow:0 0 0 3px var(--blubg)}.dgn.q.tg{background:var(--blu)!important}
+#lkhint{position:fixed;left:50%;top:14px;transform:translateX(-50%);z-index:60;background:var(--ink);color:var(--card);border-radius:999px;padding:8px 8px 8px 16px;font-size:14px;box-shadow:var(--shadow);display:flex;gap:12px;align-items:center;max-width:calc(100% - 32px)}
+#lkhint button{font:inherit;font-size:13px;border:1px solid currentColor;background:transparent;color:inherit;border-radius:999px;padding:3px 10px;cursor:pointer}
+/* flow-chart shapes: step with answers = decision (pointed sides), tick-only step = action (rectangle), answer = pill, email = document (cut corner), result = rounded */
+.dgn{position:relative;border-radius:4px;touch-action:none}.dob{touch-action:none}
+.dgn.q{isolation:isolate;border-color:transparent!important;background:var(--line);padding-left:26px;padding-right:26px;clip-path:polygon(16px 0,calc(100% - 16px) 0,100% 50%,calc(100% - 16px) 100%,16px 100%,0 50%);box-shadow:none}
+.dgn.q::before{content:"";position:absolute;inset:1.5px;background:var(--card);clip-path:polygon(15.4px 0,calc(100% - 15.4px) 0,100% 50%,calc(100% - 15.4px) 100%,15.4px 100%,0 50%);z-index:-1}
+button.dgn.q:hover,.dgn.q.op{background:var(--acc)}.dgn.q.op::before{inset:2px}.dgn.q.op{padding-left:30px;padding-right:30px}
+.dob{border-radius:999px;padding:5px 14px}
+.kid.doc{border-color:transparent;background:var(--line);clip-path:polygon(0 0,calc(100% - 14px) 0,100% 14px,100% 100%,0 100%);isolation:isolate;padding-right:18px;border-radius:2px}.kid.doc::before{content:"";position:absolute;inset:1.5px;background:var(--card);clip-path:polygon(0 0,calc(100% - 13.4px) 0,100% 13.4px,100% 100%,0 100%);z-index:-1}.kid.doc:hover{background:var(--acc)}.kid.doc.warn{background:var(--ambbd)}
+.kid.end{border-radius:999px;padding-left:14px}.kid.thn{border-style:dashed;border-color:var(--blu)}.kid.thn.emp{border-color:var(--line)}
+.onlyb{display:block;margin-top:3px;font-size:11.5px;color:var(--blu);font-weight:600}
+.onlyd{margin-top:10px}.onlyd summary{cursor:pointer;font-size:12px;font-weight:650;letter-spacing:.04em;text-transform:uppercase;color:var(--mut)}.cb{display:flex;gap:6px;align-items:flex-start;margin-top:5px;font-size:13px}
+.dgsvg path.spine{stroke:var(--acc);stroke-width:1.5}.dgsvg path.then{stroke:var(--blu);stroke-dasharray:6 4;stroke-width:1.5}
+.dgsvg marker path{stroke:none}.dgsvg .mk.email path{fill:var(--ambbd)}.dgsvg .mk.path path{fill:var(--blu)}.dgsvg .mk.none path{fill:var(--red)}.dgsvg .mk.spine path{fill:var(--acc)}.dgsvg .mk.then path{fill:var(--blu)}
+.dgcard.full{position:fixed;inset:0;z-index:40;margin:0;border-radius:0;display:flex;flex-direction:column;overflow:hidden;padding:10px 16px 12px}.dgcard.full .cvw{flex:1 1 auto;width:100%!important;display:flex;flex-direction:column;min-height:0}.dgcard.full .cv{flex:1 1 auto;height:auto!important;min-height:0}.dgcard.full .rs{display:none}html.lock{overflow:hidden}
+.leg{margin-top:8px}.leg i{width:20px;height:11px}.leg i.q{border:0;background:var(--mut);clip-path:polygon(5px 0,calc(100% - 5px) 0,100% 50%,calc(100% - 5px) 100%,5px 100%,0 50%)}.leg i.a{border-radius:2px;border-color:var(--mut)}.leg i.o{border-radius:999px;background:var(--ambbg);border-color:var(--ambbd)}.leg i.o.p{background:var(--blubg);border-color:var(--blu)}.leg i.o.x{background:var(--redbg);border-color:var(--red)}.leg i.d{border:0;background:var(--mut);clip-path:polygon(0 0,calc(100% - 5px) 0,100% 5px,100% 100%,0 100%)}.leg i.n{border:0;border-top:1.5px dashed var(--blu);height:0;border-radius:0;vertical-align:3px}
 .oed{width:min(360px,100%);background:var(--card);border:2px solid var(--acc);border-radius:12px;padding:6px 12px 12px;box-shadow:var(--shadow);text-align:left}
 .oed .h{margin-top:6px;color:var(--acc)}
 .kinds{display:flex;flex-wrap:wrap;gap:6px}.kinds button{border:1px solid var(--line);background:transparent;border-radius:999px;padding:3px 10px;cursor:pointer;font-size:12px;font-weight:600}.kinds button[aria-pressed=true]{background:var(--acc);border-color:var(--acc);color:var(--onacc)}
@@ -89,13 +134,6 @@ button.dgn{cursor:pointer;font:inherit;color:inherit}button.dgn:hover{border-col
 .dgend{align-self:center;width:min(340px,100%);display:flex;flex-direction:column;gap:8px;align-items:center;position:relative;z-index:1}
 .dgend>button{border:1.5px solid var(--grn);background:var(--grnbg);border-radius:10px;padding:8px 14px;cursor:pointer;font:inherit;text-align:center;width:100%}.dgend>button b{color:var(--grn)}.dgend>button small{display:block;font-size:12px;color:var(--mut)}
 .empty{text-align:center;padding:26px 10px;color:var(--mut)}.empty p{margin:0 0 10px}
-@media(max-width:860px){
- .dgsvg{display:none}.row,.row.open{grid-template-columns:minmax(0,1fr);gap:0}
- .row>.nw.s{order:1}.row>.wr{order:2}.row>.wl{order:3}
- .wl,.wr{align-items:flex-start;margin-left:13px;padding-left:14px;border-left:2px solid var(--line)}.wl:empty,.wr:empty{display:none}
- .wl .nw.o{align-items:flex-start}.spine,.cap,.dgend{align-self:flex-start;margin-left:12px}.cap{margin-left:0}.dgend{margin-left:0}
- .pt.l{display:none}.pt.r{top:-10px;right:44px}.dob{max-width:100%}
-}
 /* list view */
 .lst{border-top:1px solid var(--line);padding:6px 0}.lst:first-child{border-top:0}
 .lst>summary{display:flex;gap:10px;align-items:center;cursor:pointer;list-style:none;padding:4px 0}.lst>summary::-webkit-details-marker{display:none}
@@ -201,11 +239,11 @@ Permit request missing the plate number. Asked the member to send it. Request le
 /* ---------- model ---------- */
 function blank(){return{id:uid(),title:'',topic:'',tags:'',confluence:'',author:'',role:'',notes:'',steps:[],watch:[],links:[],ok:{tpl:'',text:'',ticket:'',only:''},example:false,created:Date.now(),updated:Date.now()}}
 function mkStep(name,detail){return{id:uid(),name:name||'',detail:detail||'',outs:[]}}
-function mkOut(o){return Object.assign({id:uid(),label:'',kind:'email',tpl:'',text:'',ticket:'',doNow:'',words:'',side:''},o||{})}
+function mkOut(o){return Object.assign({id:uid(),label:'',kind:'email',tpl:'',text:'',ticket:'',doNow:'',words:'',side:'',then:'',only:[]},o||{})}
 
 /* ---------- read an SOP text (this builder's file, or plain P2A SOP text) ---------- */
 function parseAny(raw){
- const t=String(raw||'').replace(/^\ufeff/,'').replace(/\r\n?/g,'\n'),o=blank(),mail={},tick={},outs=[],dn={},lks=[];let okTpl='',only=0,m;
+ const t=String(raw||'').replace(/^\ufeff/,'').replace(/\r\n?/g,'\n'),o=blank(),mail={},tick={},outs=[],dn={},lks=[],onlyA=[];let okTpl='',only=0,m;
  const h1=t.match(/^#\s+(.+?)\s*#*$/m);
  if(m=t.match(/^From:\s*(.+?)(?:\s*\(([^)]*)\))?\s*$/m)){if(!/^(not given|example)$/i.test(m[1].trim())){o.author=m[1].trim();o.role=(m[2]||'').trim()}}
  if(m=t.match(/^Notes(?: for (?:import|Grigor))?:\s*(.+)$/m))o.notes=m[1].trim();
@@ -222,9 +260,10 @@ function parseAny(raw){
   const x=line.trim();if(!x)return;
   if(sec==='steps'){const s=x.match(/^(\d+)[.)]\s*(.+?)(?:\s+[—–]\s+(.*))?$/);if(s)o.steps.push(mkStep(s[2].trim(),(s[3]||'').trim()))}
   else if(sec==='outcomes'){let r=x.match(/^[-*•]?\s*At step (\d+)\s*:\s*(.+?)\s*(?:->|→|=>)\s*(.*)$/i);
-   if(r){const p=r[3].split('|');outs.push({n:+r[1],label:r[2].trim(),tpl:(p[0]||'').trim(),words:p.slice(1).join('|').trim()});return}
+   if(r){const p=r[3].split('|').map(z=>z.trim());let th='';const q=p.findIndex((z,k)=>k>0&&/^then\s*:/i.test(z));if(q>0){th=p[q].replace(/^then\s*:/i,'').trim();p.splice(q,1)}outs.push({n:+r[1],label:r[2].trim(),tpl:p[0]||'',words:p.slice(1).filter(Boolean).join(' | '),then:th});return}
    if(r=x.match(/^[-*•]?\s*(?:All OK|Default)\s*(?:->|→|=>|:)\s*(.+)$/i)){okTpl=r[1].trim();return}
-   if(r=x.match(/^[-*•]?\s*Only when all OK\s*:\s*step\s*(\d+)/i))only=+r[1]}
+   if(r=x.match(/^[-*•]?\s*Only when all OK\s*:\s*step\s*(\d+)/i)){only=+r[1];return}
+   if(r=x.match(/^[-*•]?\s*Only when (.+?)\s*:\s*(?:steps?\s*)?([\d,\s]+)$/i))onlyA.push({label:r[1].trim(),steps:(r[2].match(/\d+/g)||[]).map(Number)})}
   else if(sec==='do now'){const r=x.match(/^[-*•]?\s*(.+?):\s+(.+)$/);if(r)dn[low(r[1])]=r[2].trim()}
   else if(sec==='watch out for'){o.watch.push(x.replace(/^[-*•]\s*/,''))}
   else if(/^tool|^tools/.test(sec)){const u=x.match(/https?:\/\/[^\s)>\]]+/);let lab=x.replace(/^[-*•]\s*/,'');if(u)lab=lab.slice(0,lab.indexOf(u[0]));lab=lab.replace(/[\s:|–—(\[-]+$/,'').trim();
@@ -236,6 +275,9 @@ function parseAny(raw){
  const body=c=>c?c.L.join('\n').replace(/^\n+|\s+$/g,''):'';
  outs.forEach(u=>{const s=o.steps[u.n-1];if(!s)return;const kind=u.tpl==='-'?'path':u.tpl?'email':'none';
   s.outs.push(mkOut({label:u.label,kind,tpl:kind==='email'?u.tpl:'',words:u.words,doNow:dn[low(u.label)]||'',text:kind==='email'?body(mail[low(u.tpl)]):'',ticket:kind==='email'?body(tick[low(u.tpl)]):''}))});
+ const thenOf=v=>{v=String(v||'').trim();let q;if(!v||/^(continue|next)$/i.test(v))return '';if(/^(stop|end|stop here)$/i.test(v))return 'stop';if(q=v.match(/^(?:go to\s+)?step\s+(\d+)$/i))return o.steps[+q[1]-1]?o.steps[+q[1]-1].id:'';if(q=v.match(/^sop\s*:?\s*(.+)$/i))return 'sop:'+q[1].trim();return ''};
+ outs.forEach(u=>{const s=o.steps[u.n-1];if(!s)return;const x=s.outs.find(y=>y.label===u.label);if(x)x.then=thenOf(u.then)});
+ onlyA.forEach(g=>o.steps.forEach(s=>s.outs.forEach(x=>{if(low(x.label)===low(g.label))x.only=g.steps.map(n=>o.steps[n-1]&&o.steps[n-1].id).filter(Boolean)})));
  o.links=lks.map(k=>({id:k.id,name:k.name,url:k.url,step:k.st&&o.steps[k.st-1]?o.steps[k.st-1].id:''}));
  if(okTpl&&okTpl!=='-'){o.ok.tpl=okTpl;o.ok.text=body(mail[low(okTpl)]);o.ok.ticket=body(tick[low(okTpl)])}
  if(only&&o.steps[only-1])o.ok.only=o.steps[only-1].id;
@@ -245,9 +287,10 @@ function parseAny(raw){
 const one=s=>String(s||'').replace(/\s*\n+\s*/g,' ').trim();
 const cl=s=>one(s).replace(/\s*(->|→|=>)\s*/g,' - ').replace(/\|/g,'/');
 function safeBody(s){return String(s||'').replace(/\r\n?/g,'\n').split('\n').map(l=>l.replace(/^\s*#+\s*/,'').replace(/^\s*>\s?/,'').replace(/^(\s*)tip\s*:/i,'$1Tip -')).join('\n').replace(/^\n+|\s+$/g,'')}
+function thenTxt(o,idx){const v=o.then||'';if(v==='stop')return 'stop';if(/^sop:/.test(v))return 'SOP '+cl(v.slice(4));if(v){const n=idx(v);return n?'step '+n:''}return ''}
 function exportText(S){
  const idx=id=>S.steps.findIndex(s=>s.id===id)+1,title=cl(S.title)||'Untitled SOP',D=new Date().toISOString().slice(0,10);
- let t='# SOP for P2A: '+title+'\n\nFrom: '+(cl(S.author)||'not given')+(one(S.role)?' ('+one(S.role).replace(/[()]/g,'')+')':'')+'\nSent: '+D+'\nMade with: SOP Builder 1.0\n';
+ let t='# SOP for P2A: '+title+'\n\nFrom: '+(cl(S.author)||'not given')+(one(S.role)?' ('+one(S.role).replace(/[()]/g,'')+')':'')+'\nSent: '+D+'\nMade with: SOP Builder 1.3\n';
  if(one(S.notes))t+='Notes for import: '+one(S.notes)+'\n';
  t+='\n## SOP\n\nTitle: '+title+'\n';
  const tags=[S.topic,...String(S.tags||'').split(',')].map(x=>cl(x).replace(/,/g,'')).filter(Boolean);if(tags.length)t+='Tags: '+tags.join(', ')+'\n';
@@ -255,9 +298,10 @@ function exportText(S){
  S.links.forEach(k=>{if(!isUrl(k.url))return;const i=k.step?idx(k.step):0;L.push('- '+(cl(k.name).replace(/:/g,' ')||'Link')+(i?' (step '+i+')':'')+': '+k.url.trim())});
  if(L.length)t+='Tool links:\n'+L.join('\n')+'\n';
  t+='\nSteps:\n'+S.steps.map((s,i)=>(i+1)+'. '+(cl(s.name).replace(/\s+[—–]\s+/g,', ')||'Step '+(i+1))+(one(s.detail)?' — '+one(s.detail):'')).join('\n')+'\n';
- const O=[];S.steps.forEach((s,i)=>s.outs.forEach(o=>{if(!cl(o.label))return;const tp=o.kind==='path'?'-':o.kind==='email'?cl(o.tpl):'';O.push('- At step '+(i+1)+': '+cl(o.label).replace(/:/g,' -')+' -> '+tp+(cl(o.words)?' | '+cl(o.words):''))}));
+ const O=[];S.steps.forEach((s,i)=>s.outs.forEach(o=>{if(!cl(o.label))return;const tp=o.kind==='path'?'-':o.kind==='email'?cl(o.tpl):'';const th=thenTxt(o,idx);O.push('- At step '+(i+1)+': '+cl(o.label).replace(/:/g,' -')+' -> '+tp+(cl(o.words)?' | '+cl(o.words):'')+(th?' | then: '+th:''))}));
  if(cl(S.ok.tpl))O.push('- All OK -> '+cl(S.ok.tpl));
  if(S.ok.only&&idx(S.ok.only))O.push('- Only when all OK: step '+idx(S.ok.only));
+ S.steps.forEach(s=>s.outs.forEach(o=>{const n=[...new Set((o.only||[]).map(idx).filter(Boolean))].sort((a,b)=>a-b);if(cl(o.label)&&n.length&&low(cl(o.label))!=='all ok')O.push('- Only when '+cl(o.label).replace(/:/g,' -')+': step '+n.join(', '))}));
  if(O.length)t+='\nOutcomes:\n'+O.join('\n')+'\n';
  const DN=[];S.steps.forEach(s=>s.outs.forEach(o=>{if(cl(o.label)&&one(o.doNow))DN.push('- '+cl(o.label).replace(/:/g,' -')+': '+one(o.doNow))}));
  if(DN.length)t+='\nDo now:\n'+DN.join('\n')+'\n';
@@ -271,21 +315,22 @@ function exportText(S){
 
 /* ---------- storage (this browser only) ---------- */
 let DB={cur:'',sops:{}},S=null,canSave=true;
-let ui={tab:'howto',view:'web',secs:{},open:new Set(),sel:null,arm:null,focus:null};
+let ui={tab:'howto',view:'web',secs:{},open:new Set(),oOpen:new Set(),menu:null,sel:null,arm:null,focus:null,cvW:0,cvH:0};
 try{const r=localStorage.getItem(KEY);if(r){const j=JSON.parse(r);if(j&&j.sops&&typeof j.sops==='object')DB=j}}catch(e){canSave=false}
-try{const r=localStorage.getItem(UIKEY);if(r){const j=JSON.parse(r);if(j){if(j.tab)ui.tab=j.tab;if(j.view)ui.view=j.view;if(j.secs)ui.secs=j.secs}}}catch(e){}
+try{const r=localStorage.getItem(UIKEY);if(r){const j=JSON.parse(r);if(j){if(j.tab)ui.tab=j.tab;if(j.view)ui.view=j.view;if(j.secs)ui.secs=j.secs;if(j.cvW)ui.cvW=j.cvW;if(j.cvH)ui.cvH=j.cvH}}}catch(e){}
 function fresh(){const e=parseAny(EXAMPLE);e.example=true;DB.sops[e.id]=e;return e}
 if(!Object.keys(DB.sops).length){const e=fresh();DB.cur=e.id}
 S=DB.sops[DB.cur]||Object.values(DB.sops)[0];DB.cur=S.id;
 let saveT;
 function save(){S.updated=Date.now();clearTimeout(saveT);saveT=setTimeout(()=>{try{localStorage.setItem(KEY,JSON.stringify(DB));canSave=true}catch(e){canSave=false}savedLabel()},250)}
-function saveUi(){try{localStorage.setItem(UIKEY,JSON.stringify({tab:ui.tab,view:ui.view,secs:ui.secs}))}catch(e){}}
+function saveUi(){try{localStorage.setItem(UIKEY,JSON.stringify({tab:ui.tab,view:ui.view,secs:ui.secs,cvW:ui.cvW,cvH:ui.cvH}))}catch(e){}}
 function savedLabel(){const el=$('#saved');el.className='saved'+(canSave?'':' no');el.textContent=canSave?'Saved in this browser':'Not saved: copy your text before you close'}
 
 /* ---------- helpers for views ---------- */
 const sideOf=(o,j)=>o.side||(j%2?'l':'r');
 const findStep=id=>S.steps.find(s=>s.id===id);
-function cons(o){if(o.kind==='path')return{t:'Choose a path'+(o.words?' · '+o.words:''),w:false};
+function cons(o){const c=cons0(o),v=o.then||'';if(v==='stop')c.t+=' · ■ stop';else if(/^sop:/.test(v))c.t+=' · → SOP';else if(v){const n=stepNo(v);if(n)c.t+=' · → '+n}return c}
+function cons0(o){if(o.kind==='path')return{t:'Choose a path'+(o.words?' · '+o.words:''),w:false};
  if(o.kind==='none')return{t:'No email'+(o.doNow?' · do now':''),w:false};
  if(!o.tpl.trim())return{t:'Email needs a name',w:true};
  return{t:'✉ '+o.tpl+(o.text.trim()?'':' (existing)')+(o.ticket.trim()?' · ticket':'')+(o.doNow.trim()?' · do now':''),w:false}}
@@ -326,7 +371,10 @@ function howto(){const k=(id,n,title,body,open)=>{const o=ui.secs['h-'+id]!==und
   '<p>An outcome is a problem the agent can see at that step. Name it the way an agent would say it: "Selfie missing", "Record over 3 months", "Card in another name". One outcome per real problem, up to 6 on a step.</p>'+
   '<p>Each outcome does one of three things:</p>'+
   '<div class="mini"><span class="dob"><b>Send an email</b><small>✉ the reply for this problem</small></span><span class="dob path"><b>Choose a path</b><small>BC or non-BC, no email</small></span><span class="dob none"><b>No email</b><small>do now only</small></span></div>'+
-  '<ul><li><b>Do now</b> is what the agent must do, or must not do, straight away. Example: "Do not approve. Ask for photos of the physical licence."</li><li><b>Words that point to this</b> are words members use for this problem, like "old abstract". P2A uses them to suggest the outcome from the member\'s message.</li></ul>')+
+  '<ul><li><b>Do now</b> is what the agent must do, or must not do, straight away. Example: "Do not approve. Ask for photos of the physical licence."</li><li><b>Words that point to this</b> are words members use for this problem, like "old abstract". P2A uses them to suggest the outcome from the member\'s message.</li></ul>'+
+  '<p><b>Read each answer as If, Then, And then:</b></p>'+
+  '<div class="flow3"><div><b>If</b><span>The answer: what the agent finds at this step. "Record over 3 months".</span></div><div><b>Then</b><span>What it causes right away: the <b>Email</b> it adds to the reply and the <b>Do now</b> instruction.</span></div><div><b>And then</b><span><b>What happens next</b>: continue to the next step, stop here and send the reply, or go to a later step.</span></div></div>'+
+  '<ul><li>Most answers just continue. Use <b>Stop here</b> when nothing after this check matters, for example "No account found".</li><li>Use <b>Go to step</b> to skip checks that do not apply. The steps in between are greyed out for the agent.</li><li><b>Steps only for this answer</b> are later steps the agent sees only when this answer is picked, like the BC record checks after "BC licence".</li></ul>')+
  k('emails','4','Emails and ticket notes',
   '<ul><li>If Evo already has an email template for this, type its <b>exact name</b> and leave the text empty. P2A links it to the real template.</li><li>If there is no template yet, give the email a short name and write the text. Write <code>XXX</code> where the member\'s first name goes.</li><li>Write one email per problem. P2A joins them when a member has more than one problem, so each email should make sense on its own.</li><li>The <b>ticket note</b> is for the next agent: what happened, what the issue was, and how it was resolved or what we are waiting for. Leave out the member\'s name and email; the ticket already has them.</li><li>If one email is used by several outcomes, changing its text changes it for all of them.</li></ul>')+
  k('wo','5','Watch out for, tools and links',
@@ -334,7 +382,7 @@ function howto(){const k=(id,n,title,body,open)=>{const o=ui.secs['h-'+id]!==und
  k('conf','6','Confluence stays the source of truth',
   '<ul><li>Link the Confluence page this SOP comes from, in Details. If you own that page, the SOP should say the same thing.</li><li>Do not invent a rule to fill a gap. If you are not sure, write <code>[CHECK]</code> in the step detail with your question. P2A flags it so it gets settled.</li><li>If Confluence and what agents really do are different, say so in the notes for Grigor.</li></ul>')+
  k('use','7','Using the builder',
-  '<ol><li><b>Diagram</b> shows the steps down the middle. Tap a step to open it and edit its name and detail.</li><li>Use the <b>+</b> on the side of an open step to add an outcome, and the <b>+</b> on the line between steps to add a step there.</li><li>Tap an outcome to edit it: what the agent finds, what happens, the email, do now and words.</li><li><b>List</b> shows the same SOP as folded rows, if you prefer a list. Everything starts folded; open only what you are working on.</li><li><b>Details</b> holds the name, topic, Confluence link, your name and notes for Grigor.</li></ol>')+
+  '<ol><li><b>Diagram</b> shows the steps down the middle as a flow chart. A step with answers has pointed sides (a decision); a tick-only step is a plain box; answers are rounded; an email looks like a page with a cut corner.</li><li>Point at a step to see its four <b>+</b> circles: top and bottom add a step above or below, left and right add an answer on that side. Tap a step to open it and edit its name and detail.</li><li>Tap an answer to see its boxes: <b>Email</b>, <b>Do now</b>, <b>Result</b>, <b>What happens next</b> and <b>Words</b>. Tap one to edit just that. The small <b>+</b> on the answer adds any of them, a new email template, or moves the answer to the other side.</li><li>To say where an answer leads, drag the dashed <b>↓</b> under it onto a step, or tap it and then tap the step. A dashed arrow shows the link. Press Esc to cancel.</li><li>Drag a step or an answer to move it where it reads best. <b>Tidy layout</b> puts everything back. The <b>×</b> on a box removes it: tap once, then tap <b>Remove?</b> to confirm.</li><li><b>Overview</b>, <b>Outcomes</b> and <b>Full detail</b> at the top show more or less at once. It starts at Overview.</li><li>Drag empty space to move around, scroll or pinch to zoom, and press <b>Fit</b> to see the whole SOP centred. Drag a bottom corner to make the diagram area bigger or smaller, or press <b>Full screen</b>.</li><li><b>List</b> shows the same SOP as folded rows, if you prefer a list.</li><li><b>Details</b> holds the name, topic, Confluence link, your name and notes for Grigor.</li></ol>')+
  k('send','8','Submit for import',
   '<ol><li>Press <b>Submit for import</b> at the top. It lists anything still missing.</li><li>Press <b>Download SOP file</b>. You get one <code>.md</code> file, the format P2A imports directly.</li><li>Send that file back to whoever asked you to build the SOP. They import it into P2A, and the steps, outcomes, emails and links come across as you built them.</li><li>To keep working on another computer, open the file text in Details, under "Open an SOP from text".</li></ol>')+
  '</div>'}
@@ -348,11 +396,13 @@ function build(){const A=checks(),hard=A.filter(a=>!a.soft).length;
   '<div class="li"><input class="f" id="wnew" placeholder="Add a pitfall, e.g. Never approve from a forwarded record" aria-label="New watch out for"><button class="btn sm" type="button" data-a="wadd">Add</button></div>');
  const LK=S.links.filter(k=>!k.step);
  h+=sec('links','','Tools and links',LK.length?LK.length+' for the whole SOP':'none yet · pages the agent needs open',LK.map(linkRow).join('')+'<div class="row2"><button class="btn sm" type="button" data-a="ladd">+ Add a tool or link</button><span class="help">Links for one step are added inside that step.</span></div>');
- h+='<div class="card"><div class="dgbar"><div class="seg" role="group" aria-label="View"><button type="button" data-a="view" data-v="web" aria-pressed="'+(ui.view==='web')+'">Diagram</button><button type="button" data-a="view" data-v="list" aria-pressed="'+(ui.view==='list')+'">List</button></div>'+
-  (S.steps.length?'<button class="btn sm" type="button" data-a="foldall">Fold all</button><button class="btn sm" type="button" data-a="openall">Open all steps</button>':'')+
+ h+='<div class="card dgcard'+(ui.full&&ui.view==='web'?' full':'')+'" id="dgcard"><div class="dgbar"><div class="seg" role="group" aria-label="View"><button type="button" data-a="view" data-v="web" aria-pressed="'+(ui.view==='web')+'">Diagram</button><button type="button" data-a="view" data-v="list" aria-pressed="'+(ui.view==='list')+'">List</button></div>'+
+  (S.steps.length?'<div class="seg" role="group" aria-label="How much to show">'+['Overview','Outcomes','Full detail'].map((t,i)=>'<button type="button" data-a="depth" data-v="'+i+'" aria-pressed="'+(depthNow()===i)+'">'+t+'</button>').join('')+'</div>':'')+
+  (ui.view==='web'&&S.steps.length?'<button class="btn sm" type="button" id="tidy" data-a="tidy"'+(anyPos()?'':' hidden')+' title="Put moved boxes back in place">Tidy layout</button><button class="btn sm" type="button" data-a="full">'+(ui.full?'Exit full screen':'Full screen')+'</button>':'')+
+  (ui.view==='web'&&S.steps.length?'<span class="zm"><button class="btn sm" type="button" data-a="zout" aria-label="Zoom out">−</button><span id="zpct">'+Math.round(V.z*100)+'%</span><button class="btn sm" type="button" data-a="zin" aria-label="Zoom in">+</button><button class="btn sm" type="button" data-a="fit">Fit</button></span>':'')+
   '<span class="sp"></span>'+(hard?'<button class="att" type="button" data-a="send">'+hard+' to fix before sending</button>':(S.steps.length?'<span class="att ok">Ready to send</span>':''))+
-  '<div class="leg"><span><i class="e"></i>Email</span><span><i class="p"></i>Choose a path</span><span><i class="x"></i>No email</span></div></div>'+
-  (ui.view==='web'?'<div class="dgwrap">'+web()+'</div>':list())+'</div>';
+  '</div>'+
+  (ui.view==='web'?web()+(S.steps.length?'<div class="leg"><span><i class="q"></i>Step with answers</span><span><i class="a"></i>Tick-only step</span><span><i class="o"></i>Answer: email</span><span><i class="o p"></i>Choose a path</span><span><i class="o x"></i>No email</span><span><i class="d"></i>Email</span><span><i class="n"></i>What happens next</span></div><p class="help">Drag empty space to move around, scroll or pinch to zoom, drag a bottom corner to resize. Drag a step or an answer to move it. Tap a step to see its answers, tap an answer to see what it causes. Drag the dashed ↓ under an answer onto the step it leads to.</p>':''):list())+'</div>';
  return h}
 function linkRow(k){return '<div class="lk"><input class="f" data-f="l.name" data-l="'+k.id+'" value="'+esc(k.name)+'" placeholder="Name, e.g. Back office" aria-label="Link name"><input class="f lu" data-f="l.url" data-l="'+k.id+'" value="'+esc(k.url)+'" placeholder="Paste the web address" aria-label="Link address">'+
  '<select data-f="l.step" data-l="'+k.id+'" aria-label="Where it is used"><option value="">Whole SOP</option>'+S.steps.map((s,j)=>'<option value="'+s.id+'"'+(k.step===s.id?' selected':'')+'>Step '+(j+1)+'</option>').join('')+'</select>'+
@@ -366,19 +416,66 @@ function stepEdit(s,i){const LK=S.links.filter(k=>k.step===s.id);
  '<div class="stools"><button class="btn sm" type="button" data-a="oadd" data-s="'+s.id+'">+ Outcome</button><button class="btn sm" type="button" data-a="ladd" data-s="'+s.id+'">+ Link</button><span class="grow"></span>'+
  '<button class="ic" type="button" data-a="sup" data-s="'+s.id+'" aria-label="Move step up" title="Move up"'+(i?'':' disabled')+'>↑</button><button class="ic" type="button" data-a="sdn" data-s="'+s.id+'" aria-label="Move step down" title="Move down"'+(i<S.steps.length-1?'':' disabled')+'>↓</button>'+
  '<button class="ic'+(ui.arm==='s'+s.id?' armed':'')+'" type="button" data-a="srm" data-s="'+s.id+'" aria-label="Remove step" title="Remove step">'+(ui.arm==='s'+s.id?'Tap again to remove':'×')+'</button></div>'}
+function onlyMap(){const m={};S.steps.forEach(s=>s.outs.forEach(o=>(o.only||[]).forEach(id=>{(m[id]=m[id]||[]).push(o.label||'New outcome')})));return m}
+const tr=p=>p&&(p[0]||p[1])?' style="transform:translate('+p[0]+'px,'+p[1]+'px)"':'';
+function rmPt(a,key,title,x){const ask=ui.arm===key;return '<button type="button" class="pt x'+(ask?' ask':'')+(x?' '+x:'')+'" data-a="'+a+'"'+title[1]+' title="'+title[0]+'" aria-label="'+title[0]+'">'+(ask?'Remove?':'×')+'</button>'}
+function stepPts(s,i){const A=' data-s="'+s.id+'"';return '<button class="pt t" type="button" data-a="sadd" data-i="'+i+'" aria-label="Add a step before step '+(i+1)+'" title="Add a step above">+</button>'+
+ '<button class="pt b" type="button" data-a="sadd" data-i="'+(i+1)+'" aria-label="Add a step after step '+(i+1)+'" title="Add a step below">+</button>'+
+ '<button class="pt l" type="button" data-a="oadd"'+A+' data-side="l" aria-label="Add an outcome on the left" title="Add an outcome on the left">+</button><button class="pt r" type="button" data-a="oadd"'+A+' data-side="r" aria-label="Add an outcome on the right" title="Add an outcome on the right">+</button>'+
+ rmPt('srm','s'+s.id,['Remove this step',A])}
 function web(){if(!S.steps.length)return '<div class="empty"><p>No steps yet. Start with the first thing an agent checks.</p><button class="btn pri" type="button" data-a="sadd" data-i="0">+ Add the first step</button></div>';
- let h='<div class="dg" id="dg"><svg class="dgsvg" id="dgsvg" aria-hidden="true"></svg><div class="cap">Member gets in touch</div>';
- S.steps.forEach((s,i)=>{const open=ui.open.has(s.id),L=[],R=[];
+ const OM=onlyMap();
+ let h='<div class="cvw" id="cvw"'+(ui.cvW?' style="width:'+ui.cvW+'px"':'')+'><div class="cv" id="cv"'+(ui.cvH?' style="height:'+ui.cvH+'px"':'')+'><div class="dg" id="dg"><svg class="dgsvg" id="dgsvg" aria-hidden="true"></svg><div class="cap" id="dgcap">Member gets in touch</div>';
+ S.steps.forEach((s,i)=>{const open=ui.open.has(s.id),L=[],R=[],q=s.outs.length?' q':'',only=OM[s.id]?'<span class="onlyb">only when '+esc(OM[s.id].join(' or '))+'</span>':'';
   if(open)s.outs.forEach((o,j)=>(sideOf(o,j)==='l'?L:R).push(oBox(s,o)));
   h+=spine(i);
-  const box=open?'<div class="nw s"><div class="dgn op" id="n-'+s.id+'"><div class="dgh"><span class="num">'+(i+1)+'</span><input class="st" data-f="s.name" data-s="'+s.id+'" value="'+esc(s.name)+'" placeholder="What the agent checks (3 to 7 words)" aria-label="Step '+(i+1)+' name"><button class="ic" type="button" data-a="sfold" data-s="'+s.id+'" aria-label="Fold step '+(i+1)+'" title="Fold">▾</button></div>'+stepEdit(s,i)+'</div>'+
-   '<button class="pt l" type="button" data-a="oadd" data-s="'+s.id+'" data-side="l" aria-label="Add an outcome on the left" title="Add an outcome">+</button><button class="pt r" type="button" data-a="oadd" data-s="'+s.id+'" data-side="r" aria-label="Add an outcome on the right" title="Add an outcome">+</button></div>'
-   :'<div class="nw s"><button class="dgn" type="button" id="n-'+s.id+'" data-a="sopen" data-s="'+s.id+'" aria-expanded="false"><span class="num">'+(i+1)+'</span><span class="dgt"><b data-sn="'+s.id+'">'+esc(s.name||'New step')+'</b><small>'+stepSub(s)+dots(s)+'</small></span><span class="cv">▸</span></button></div>';
-  h+='<div class="row'+(open?' open':'')+'"><div class="wl">'+L.join('')+'</div>'+box+'<div class="wr">'+R.join('')+'</div></div>'});
- h+=spine(S.steps.length)+okBox()+'</div>';return h}
-function spine(i){return '<div class="spine"><button type="button" data-a="sadd" data-i="'+i+'" aria-label="Add a step here'+(i<S.steps.length?' (before step '+(i+1)+')':' (at the end)')+'" title="Add a step here">+</button></div>'}
-function oBox(s,o){const c=cons(o),sel=ui.sel&&ui.sel.o===o.id;
- return '<div class="nw o"><button class="dob '+o.kind+(sel?' sel':'')+'" type="button" data-a="osel" data-s="'+s.id+'" data-o="'+o.id+'" data-k="'+o.kind+'" aria-expanded="'+sel+'"><b data-ol="'+o.id+'">'+esc(o.label||'New outcome')+'</b><small data-oc="'+o.id+'" class="'+(c.w?'warn':'')+'">'+esc(c.t)+'</small></button>'+(sel?oEd(s,o):'')+'</div>'}
+  const box=open?'<div class="nw s"><div class="dgn op'+q+'" id="n-'+s.id+'" data-s="'+s.id+'"><div class="dgh"><span class="num" title="Drag to move">'+(i+1)+'</span><input class="st" data-f="s.name" data-s="'+s.id+'" value="'+esc(s.name)+'" placeholder="What the agent checks (3 to 7 words)" aria-label="Step '+(i+1)+' name"><button class="ic" type="button" data-a="sfold" data-s="'+s.id+'" aria-label="Fold step '+(i+1)+'" title="Fold">▾</button></div>'+only+stepEdit(s,i)+'</div>'+stepPts(s,i)+'</div>'
+   :'<div class="nw s"><button class="dgn'+q+'" type="button" id="n-'+s.id+'" data-a="sopen" data-s="'+s.id+'" aria-expanded="false"><span class="num">'+(i+1)+'</span><span class="dgt"><b data-sn="'+s.id+'">'+esc(s.name||'New step')+'</b><small>'+stepSub(s)+dots(s)+'</small>'+only+'</span><span class="chv">▸</span></button>'+stepPts(s,i)+'</div>';
+  h+='<div class="row'+(open?' open':'')+'" data-row="'+s.id+'"'+tr(s.pos)+'><div class="wl">'+L.join('')+'</div>'+box+'<div class="wr">'+R.join('')+'</div></div>'});
+ h+=spine(S.steps.length)+okBox()+'</div></div><span class="rs l" data-rs="l" title="Drag to resize" aria-hidden="true"></span><span class="rs r" data-rs="r" title="Drag to resize" aria-hidden="true"></span></div>';return h}
+function spine(i){return '<div class="spine" aria-hidden="true"></div>'}
+function oBox(s,o){const c=cons(o),op=ui.oOpen.has(o.id),sel=ui.sel&&ui.sel.o===o.id,A=' data-s="'+s.id+'" data-o="'+o.id+'"';
+ let h='<div class="ow" data-ow="'+o.id+'"'+tr(o.pos)+'><div class="nw o"><button class="dob '+o.kind+(sel||op?' sel':'')+'" type="button" data-a="otog"'+A+' data-k="'+o.kind+'" aria-expanded="'+op+'"><b><span data-ol="'+o.id+'">'+esc(o.label||'New outcome')+'</span><span class="chev">'+(op?'▾':'▸')+'</span></b><small data-oc="'+o.id+'" class="'+(c.w?'warn':'')+'">'+esc(c.t)+'</small></button>'+
+  '<button class="pt o" type="button" data-a="omenu"'+A+' aria-label="Add or change something on this outcome" aria-expanded="'+(ui.menu===o.id)+'" title="Add email, result, do now, what happens next">+</button>'+
+  rmPt('orm','o'+o.id,['Remove this outcome',A],'xo')+
+  '<button class="pt lk" type="button" data-lk="1"'+A+' title="Drag to the step this answer leads to, or tap it and then tap a step" aria-label="Link this answer to a step">↓</button>'+
+  (ui.menu===o.id?oMenu(s,o):'')+'</div>';
+ if(op||(sel&&ui.sel.k)){h+='<div class="kids">'+(sel&&ui.sel.k==='label'?kEd(s,o,'label'):'')+['email','donow','result','then','words'].map(k=>sel&&ui.sel.k===k?kEd(s,o,k):kid(s,o,k)).join('')+'</div>'}
+ return h+'</div>'}
+function oMenu(s,o){const A=' data-s="'+s.id+'" data-o="'+o.id+'"',it=(k,t,n,x)=>'<button type="button" role="menuitem" data-a="mk" data-m="'+k+'"'+A+(x?' class="'+x+'"':'')+'>'+t+(n?'<small>'+n+'</small>':'')+'</button>';
+ return '<div class="pm" role="menu" aria-label="Outcome options"><div class="pmh">'+esc(o.label||'New outcome')+'</div>'+it('email','Email template','Name an Evo template or edit this email')+it('new','New email template','Name it and write the text')+it('donow','Do now','What the agent must do right away')+it('result','Result','Send an email, choose a path, or no email')+it('then','What happens next','Continue, stop here, or go to a step')+it('words','Words','Words that point to this outcome')+it('side','Move to the other side')+it('label','Rename')+
+  it('rm',ui.arm==='o'+o.id?'Tap again to remove':'Remove outcome','', 'danger'+(ui.arm==='o'+o.id?' armed':''))+'</div>'}
+function stepNo(id){return S.steps.findIndex(x=>x.id===id)+1}
+function thenLbl(o){const v=o.then||'',a=[];if(v==='stop')a.push('Stop here: send the reply');else if(/^sop:/.test(v))a.push('Open SOP “'+v.slice(4)+'”');else if(v){const n=stepNo(v);if(n)a.push('Go to step '+n+' · '+(S.steps[n-1].name||'New step'))}
+ const on=(o.only||[]).map(stepNo).filter(n=>n>0).sort((x,y)=>x-y);if(on.length)a.push('Step'+(on.length>1?'s ':' ')+on.join(', ')+' only for this answer');return a.join(' · ')}
+function kid(s,o,k){const A=' data-s="'+s.id+'" data-o="'+o.id+'" data-kk="'+k+'"';let t='',v='',cl='',has=false;
+ if(k==='email'){t='Email';cl='doc';if(o.kind!=='email'){v='No email · tap to add';cl+=' emp'}else{has=true;if(!o.tpl.trim()){v='Needs a name';cl+=' warn'}else v='✉ '+o.tpl+(o.text.trim()?'':' (existing)')+(o.ticket.trim()?' · ticket':'')}}
+ else if(k==='result'){t='Result';v=o.kind==='email'?'Send an email':o.kind==='path'?'Choose a path':'No email';cl='end k-res '+o.kind}
+ else if(k==='donow'){t='Do now';v=o.doNow.trim()||'None · tap to add';if(!o.doNow.trim())cl='emp';else has=true}
+ else if(k==='then'){t='What happens next';v=thenLbl(o);cl='thn';if(!v){v='Continue to the next step';cl+=' emp'}else has=true}
+ else{t='Words';v=o.words.trim()||'None · tap to add';if(!o.words.trim())cl='emp';else has=true}
+ return '<span class="kw"><button class="kid '+cl+'" type="button" data-a="kid"'+A+' data-k="'+o.kind+'"><small>'+t+'<i>✎</i></small><span>'+esc(v)+'</span></button>'+(has?rmPt('krm','k'+o.id+k,['Remove this box',A]):'')+'</span>'}
+function thenEd(s,o){const i=S.steps.indexOf(s),A=' data-s="'+s.id+'" data-o="'+o.id+'"',v=o.then||'',only=o.only||[],later=S.steps.slice(i+1);
+ const op=(val,t)=>'<option value="'+esc(val)+'"'+(v===val?' selected':'')+'>'+esc(t)+'</option>',nm=x=>(S.steps.indexOf(x)+1)+' · '+(x.name||'New step');
+ const go=later.slice();if(v&&v!=='stop'&&!/^sop:/.test(v)){const t=findStep(v);if(t&&!go.includes(t))go.unshift(t)}
+ let h='<label class="l" for="oe-then">After this answer</label><select class="f" id="oe-then" data-f="o.then"'+A+'>'+op('','Continue to the next step')+op('stop','Stop here: send the reply')+
+  (go.length?'<optgroup label="Go to step">'+go.map(x=>op(x.id,nm(x))).join('')+'</optgroup>':'')+(/^sop:/.test(v)?op(v,'Open SOP “'+v.slice(4)+'”'):'')+'</select>'+
+  '<p class="help">'+(v==='stop'?'The checks after this one are greyed out for the agent.':/^sop:/.test(v)?'The agent is told to open that SOP.':v?'The steps in between are greyed out for the agent.':'Nothing changes: the agent goes on with the next step.')+' You can also drag the dashed ↓ under the answer onto a step.</p>';
+ if(later.length)h+='<details class="onlyd"'+(ui.onlyOpen?' open':'')+'><summary>Steps only for this answer'+(only.length?' · '+only.filter(id=>later.some(x=>x.id===id)).length:'')+'</summary><p class="help">Ticked steps show to the agent only when this answer is picked.</p>'+
+  later.map(x=>'<label class="cb"><input type="checkbox" data-f="o.only" data-st="'+x.id+'"'+A+(only.includes(x.id)?' checked':'')+'> '+esc(nm(x))+'</label>').join('')+'</details>';
+ return h}
+function kEd(s,o,k){const A=' data-s="'+s.id+'" data-o="'+o.id+'"',done='<div class="row2"><span style="flex:1"></span><button class="btn pri sm" type="button" data-a="odone">Done</button></div>';let h='<div class="oed" role="group" aria-label="Edit outcome" data-k="'+o.kind+'">';
+ if(k==='label')h+='<label class="l" for="oe-label">What the agent finds</label><input class="f" id="oe-label" data-f="o.label"'+A+' value="'+esc(o.label)+'" placeholder="e.g. Record over 3 months old"><div class="row2"><button class="btn sm danger'+(ui.arm==='o'+o.id?' armed':'')+'" type="button" data-a="orm"'+A+'>'+(ui.arm==='o'+o.id?'Tap again to remove':'Remove outcome')+'</button><span style="flex:1"></span><button class="btn pri sm" type="button" data-a="odone">Done</button></div>';
+ else if(k==='email'){const sh=users(o.tpl,o);h+='<label class="l" for="oe-tpl">Email name</label><input class="f" id="oe-tpl" list="tplList" data-f="o.tpl"'+A+' value="'+esc(o.tpl)+'" placeholder="Exact Evo template name, or a short new name"><datalist id="tplList">'+emailNames().map(n=>'<option value="'+esc(n)+'">').join('')+'</datalist>'+
+  '<label class="l" for="oe-text">Email text <span class="mut" style="font-weight:400">(empty for an existing Evo template)</span></label><textarea class="f" id="oe-text" data-f="o.text"'+A+' placeholder="Hi XXX,&#10;&#10;Thanks for…">'+esc(o.text)+'</textarea>'+
+  '<div class="share" id="oe-share"'+(sh.length?'':' hidden')+'>Also used by: '+esc(sh.join(', '))+'. Changing the text changes it for all of them.</div>'+
+  '<label class="l" for="oe-ticket">Ticket note <span class="mut" style="font-weight:400">(optional)</span></label><textarea class="f" id="oe-ticket" data-f="o.ticket"'+A+' placeholder="What happened, the issue, and how it was resolved or what we are waiting for">'+esc(o.ticket)+'</textarea>'+
+  '<div class="row2"><button class="btn sm" type="button" data-a="okind" data-k="none"'+A+'>No email for this</button><span style="flex:1"></span><button class="btn pri sm" type="button" data-a="odone">Done</button></div>'}
+ else if(k==='result'){const K=[['email','Send an email'],['path','Choose a path'],['none','No email']];h+='<label class="l">Result</label><div class="kinds" role="group" aria-label="Result">'+K.map(([x,t])=>'<button type="button" data-a="okind" data-k="'+x+'"'+A+' aria-pressed="'+(o.kind===x)+'">'+t+'</button>').join('')+'</div><p class="help">'+{email:'The agent sends this email for this problem. P2A joins it with the others.',path:'Only picks the way forward, like BC or non-BC. Adds nothing to the reply.',none:'No email is sent. Use Do now to say what the agent must do.'}[o.kind]+'</p>'+done}
+ else if(k==='then')h+=thenEd(s,o)+done;
+ else if(k==='donow')h+='<label class="l" for="oe-do">Do now, shown on top for the agent</label><textarea class="f" id="oe-do" data-f="o.doNow"'+A+' placeholder="e.g. Do not approve from this copy.">'+esc(o.doNow)+'</textarea>'+done;
+ else h+='<label class="l" for="oe-words">Words in the member\'s message that point to this</label><input class="f" id="oe-words" data-f="o.words"'+A+' value="'+esc(o.words)+'" placeholder="e.g. old abstract, expired record">'+done;
+ return h+'</div>'}
 function oEd(s,o){const sh=o.kind==='email'?users(o.tpl,o):[],K=[['email','Send an email'],['path','Choose a path'],['none','No email']];
  const help={email:'The agent sends this email for this problem. P2A joins it with the others if the member has more than one problem.',path:'Tells the agent which way to go, like BC or non-BC. No email. Use the words box to say what points to each path.',none:'No email is sent. Use Do now to say what the agent must do.'}[o.kind];
  let h='<div class="oed" role="group" aria-label="Edit outcome"><div class="h">Outcome at step '+(S.steps.indexOf(s)+1)+'</div>'+
@@ -390,7 +487,7 @@ function oEd(s,o){const sh=o.kind==='email'?users(o.tpl,o):[],K=[['email','Send 
   '<label class="l" for="oe-ticket">Ticket note <span class="mut" style="font-weight:400">(optional)</span></label><textarea class="f" id="oe-ticket" data-f="o.ticket" data-s="'+s.id+'" data-o="'+o.id+'" placeholder="What happened, the issue, and how it was resolved or what we are waiting for">'+esc(o.ticket)+'</textarea>';
  h+='<label class="l" for="oe-do">Do now <span class="mut" style="font-weight:400">(optional)</span></label><textarea class="f" id="oe-do" data-f="o.doNow" data-s="'+s.id+'" data-o="'+o.id+'" placeholder="What the agent must do, or must not do, right away">'+esc(o.doNow)+'</textarea>'+
  '<label class="l" for="oe-words">Words that point to this <span class="mut" style="font-weight:400">(optional)</span></label><input class="f" id="oe-words" data-f="o.words" data-s="'+s.id+'" data-o="'+o.id+'" value="'+esc(o.words)+'" placeholder="Words members use, e.g. old abstract, expired record">'+
- '<div class="row2">'+(ui.view==='web'?'<button class="btn sm" type="button" data-a="oside" data-s="'+s.id+'" data-o="'+o.id+'">Move to the other side</button>':'')+
+ thenEd(s,o)+'<div class="row2">'+(ui.view==='web'?'<button class="btn sm" type="button" data-a="oside" data-s="'+s.id+'" data-o="'+o.id+'">Move to the other side</button>':'')+
  '<button class="btn sm danger'+(ui.arm==='o'+o.id?' armed':'')+'" type="button" data-a="orm" data-s="'+s.id+'" data-o="'+o.id+'">'+(ui.arm==='o'+o.id?'Tap again to remove':'Remove outcome')+'</button><span style="flex:1"></span><button class="btn pri sm" type="button" data-a="odone">Done</button></div></div>';
  return h}
 function okBox(){const sel=ui.sel&&ui.sel.ok,on=S.ok.only&&findStep(S.ok.only);
@@ -457,43 +554,117 @@ function toast(m){const t=$('#toast');t.textContent=m;t.className='show';clearTi
 function render(keep){const y=scrollY;renderTop();const m=$('#main');
  m.innerHTML=ui.tab==='howto'?howto():ui.tab==='details'?details():build();
  if(keep!==false)scrollTo(0,y);
- if(ui.tab==='build'&&ui.view==='web')requestAnimationFrame(lines);
- if(ui.focus){const el=document.querySelector(ui.focus);ui.focus=null;if(el){el.focus({preventScroll:true});const r=el.getBoundingClientRect();if(r.top<80||r.bottom>innerHeight-20)el.scrollIntoView({block:'center'})}}}
-function lines(){const g=$('#dg'),sv=$('#dgsvg');if(!g||!sv)return;if(innerWidth<=860){sv.innerHTML='';return}
- const G=g.getBoundingClientRect();sv.setAttribute('width',g.scrollWidth);sv.setAttribute('height',g.scrollHeight);let p='';
+ const web_=ui.tab==='build'&&ui.view==='web'&&$('#cv');if(web_){applyV();lines()}
+ if(ui.menu){const m=document.querySelector('#cv .pm');if(m)showIn(m)}
+ if(ui.show){const el=document.querySelector(ui.show);ui.show=null;if(el&&el.closest('#cv'))showIn(el)}
+ if(ui.focus){const el=document.querySelector(ui.focus);ui.focus=null;if(el){el.focus({preventScroll:true});const cv=el.closest('#cv');if(cv){cv.scrollTop=0;cv.scrollLeft=0;showIn(el)}else{const r=el.getBoundingClientRect();if(r.top<80||r.bottom>innerHeight-20)el.scrollIntoView({block:'center'})}}}}
+/* canvas: pan, zoom at the pointer, grid follows, Fit, resize by a corner */
+const V={x:null,y:16,z:1};
+function applyV(){const cv=$('#cv'),dg=$('#dg');if(!cv||!dg)return;if(V.x==null)V.x=Math.round(cv.clientWidth/2-dg.offsetWidth/2*V.z);
+ dg.style.transform='translate('+V.x+'px,'+V.y+'px) scale('+V.z+')';const g=20*V.z;cv.style.backgroundSize=g+'px '+g+'px';cv.style.backgroundPosition=V.x+'px '+V.y+'px';const p=$('#zpct');if(p)p.textContent=Math.round(V.z*100)+'%'}
+function zoomAt(f,cx,cy){const z=Math.max(.15,Math.min(2,V.z*f)),k=z/V.z;V.x=cx-(cx-V.x)*k;V.y=cy-(cy-V.y)*k;V.z=z;applyV()}
+function zoomC(f){const cv=$('#cv');if(cv)zoomAt(f,cv.clientWidth/2,cv.clientHeight/2)}
+function bounds(){const dg=$('#dg'),G=dg.getBoundingClientRect();let a=1e9,b=1e9,c=-1e9,d=-1e9;dg.querySelectorAll('.cap,.dgn,.dob,.kid,.oed,.dgend>button,.spine').forEach(e=>{const r=e.getBoundingClientRect();if(!r.width)return;a=Math.min(a,r.left);b=Math.min(b,r.top);c=Math.max(c,r.right);d=Math.max(d,r.bottom)});
+ return{x:(a-G.left)/V.z,y:(b-G.top)/V.z,w:(c-a)/V.z,h:(d-b)/V.z}}
+function fit(){const cv=$('#cv');if(!cv)return;const B=bounds(),cw=cv.clientWidth,ch=cv.clientHeight;const z=Math.max(.15,Math.min(1.5,(cw-24)/B.w,(ch-24)/B.h));V.z=z;V.x=(cw-B.w*z)/2-B.x*z;V.y=(ch-B.h*z)/2-B.y*z;applyV()}
+function showIn(el){const cv=$('#cv');if(!cv)return;const r=el.getBoundingClientRect(),c=cv.getBoundingClientRect();let dx=0,dy=0;
+ if(r.bottom>c.bottom-16)dy=c.bottom-16-r.bottom;if(r.top+dy<c.top+16)dy=c.top+16-r.top;if(r.right>c.right-16)dx=c.right-16-r.right;if(r.left+dx<c.left+16)dx=c.left+16-r.left;if(dx||dy){V.x+=dx;V.y+=dy;applyV()}}
+let PD=null,moved=false,LK=null;const PTS=new Map();
+/* link an answer to a step: drag the dashed ↓ onto a step, or tap it and then tap a step */
+function lkCancel(){if(LK&&LK.svg)LK.svg.remove();LK=null;const h=$('#lkhint');if(h)h.remove();const cv=$('#cv');if(cv)cv.classList.remove('linking');document.querySelectorAll('.dgn.tg').forEach(x=>x.classList.remove('tg'))}
+function lkFinish(el){const L=LK;lkCancel();if(!L)return;const s=findStep(L.s),o=s&&s.outs.find(x=>x.id===L.o),t=findStep(el.dataset.s);if(!o||!t)return;
+ if(t===s){toast('That is the step this answer belongs to. Pick another step.');return}o.then=t.id;ui.oOpen.add(o.id);ch();toast('“'+(o.label||'New outcome')+'” now leads to step '+stepNo(t.id))}
+function lkPick(){if(!LK)return;LK.mode='pick';if(LK.svg){LK.svg.remove();LK.svg=null}if(!$('#lkhint')){const h=document.createElement('div');h.id='lkhint';h.setAttribute('role','status');h.innerHTML='Tap the step this answer leads to <button type="button" data-lkx="1">Cancel</button>';document.body.appendChild(h)}}
+const stepAt=(x,y)=>{const e=document.elementFromPoint(x,y);return e&&e.closest?e.closest('#dg .dgn'):null};
+document.addEventListener('pointerdown',e=>{const rs=e.target.closest('[data-rs]');if(rs){const w=$('#cvw'),cv=$('#cv');PD={rs:rs.dataset.rs,x:e.clientX,y:e.clientY,w:w.offsetWidth,h:cv.offsetHeight,max:w.parentElement.clientWidth};e.preventDefault();return}
+ const lk=e.target.closest('.pt.lk');if(lk&&(e.pointerType!=='mouse'||e.button===0)){e.preventDefault();lkCancel();const r=lk.getBoundingClientRect(),sx=r.left+r.width/2,sy=r.top+r.height/2,svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.id='lkline';svg.innerHTML='<line x1="'+sx+'" y1="'+sy+'" x2="'+sx+'" y2="'+sy+'"/>';document.body.appendChild(svg);
+  LK={s:lk.dataset.s,o:lk.dataset.o,x0:e.clientX,y0:e.clientY,moved:false,svg,mode:'drag'};$('#cv').classList.add('linking');return}
+ if(LK&&LK.mode==='pick')return;
+ const cv=e.target.closest('#cv');if(!cv)return;PTS.set(e.pointerId,{x:e.clientX,y:e.clientY});
+ if(PTS.size===2){const [a,b]=[...PTS.values()];PD={pinch:Math.hypot(a.x-b.x,a.y-b.y),z:V.z};return}
+ if(e.button!==0)return;
+ const bx=e.target.closest('.dgn,.dob');
+ if(bx&&!e.target.closest('.pt,input,textarea,select,label,.sd,.stools,.slinks,.chips,.oed,.pm,.dgh .ic')){const st=bx.classList.contains('dgn'),w=st?bx.closest('.row'):bx.closest('.ow'),it=st?findStep(bx.dataset.s):(()=>{const s=findStep(bx.dataset.s);return s&&s.outs.find(x=>x.id===bx.dataset.o)})();
+  if(w&&it){const p=it.pos||[0,0];PD={box:1,w,it,x:e.clientX,y:e.clientY,px:p[0],py:p[1]};moved=false;return}}
+ if(e.target.closest('input,textarea,select,.oed,.pm,label,.dgn.op'))return;PD={x:e.clientX,y:e.clientY,vx:V.x,vy:V.y};moved=false});
+document.addEventListener('pointermove',e=>{
+ if(LK&&LK.mode==='drag'){if(Math.hypot(e.clientX-LK.x0,e.clientY-LK.y0)>5)LK.moved=true;const ln=LK.svg.firstChild;ln.setAttribute('x2',e.clientX);ln.setAttribute('y2',e.clientY);const s=stepAt(e.clientX,e.clientY);document.querySelectorAll('.dgn.tg').forEach(x=>{if(x!==s)x.classList.remove('tg')});if(s)s.classList.add('tg');return}
+ if(!PD)return;
+ if(PD.rs){const dx=e.clientX-PD.x,dy=e.clientY-PD.y,w=Math.max(320,Math.min(PD.max,PD.w+(PD.rs==='r'?dx:-dx)*2)),h=Math.max(280,PD.h+dy);$('#cvw').style.width=w+'px';$('#cv').style.height=h+'px';ui.cvW=w>=PD.max-2?0:Math.round(w);ui.cvH=Math.round(h);return}
+ if(PD.box){const dx=e.clientX-PD.x,dy=e.clientY-PD.y;if(!moved&&Math.hypot(dx,dy)>4){moved=true;$('#cv').classList.add('pan')}if(moved){PD.nx=Math.round(PD.px+dx/V.z);PD.ny=Math.round(PD.py+dy/V.z);PD.w.style.transform='translate('+PD.nx+'px,'+PD.ny+'px)';lines()}return}
+ if(PTS.has(e.pointerId))PTS.set(e.pointerId,{x:e.clientX,y:e.clientY});
+ if(PD.pinch!=null&&PTS.size===2){const [a,b]=[...PTS.values()],r=$('#cv').getBoundingClientRect(),d=Math.hypot(a.x-b.x,a.y-b.y);zoomAt(PD.z*d/PD.pinch/V.z,(a.x+b.x)/2-r.left,(a.y+b.y)/2-r.top);moved=true;return}
+ if(PD.vx==null)return;const dx=e.clientX-PD.x,dy=e.clientY-PD.y;if(!moved&&Math.hypot(dx,dy)>4){moved=true;$('#cv').classList.add('pan')}if(moved){V.x=PD.vx+dx;V.y=PD.vy+dy;applyV()}});
+function pUp(e){
+ if(LK&&LK.mode==='drag'){const s=stepAt(e.clientX,e.clientY);if(s){lkFinish(s);moved=true;setTimeout(()=>{moved=false},0);return}if(LK.moved){lkCancel();return}lkPick();moved=true;setTimeout(()=>{moved=false},0);return}
+ PTS.delete(e.pointerId);if(PD&&PD.rs){saveUi();lines()}
+ if(PD&&PD.box&&moved){PD.it.pos=Math.abs(PD.nx)<1&&Math.abs(PD.ny)<1?null:[PD.nx,PD.ny];if(!PD.it.pos)delete PD.it.pos;save();const t=$('#tidy');if(t)t.hidden=!anyPos()}
+ if(PD&&PTS.size<2)PD=null;const cv=$('#cv');if(cv)cv.classList.remove('pan');setTimeout(()=>{moved=false},0)}
+document.addEventListener('pointerup',pUp);document.addEventListener('pointercancel',e=>{if(LK&&LK.mode==='drag'){lkCancel();return}pUp(e)});
+document.addEventListener('click',e=>{
+ if(LK&&LK.mode==='pick'){e.stopPropagation();e.preventDefault();if(e.target.closest('.pt.lk'))return;if(e.target.closest('[data-lkx]')){lkCancel();return}const s=e.target.closest('#dg .dgn');if(s)lkFinish(s);else lkCancel();return}
+ if(e.target.closest('.pt.lk')){e.stopPropagation();e.preventDefault();return}
+ if(moved&&e.target.closest('#cv')){e.stopPropagation();e.preventDefault();moved=false}},true);
+document.addEventListener('wheel',e=>{const cv=e.target.closest('#cv');if(!cv)return;e.preventDefault();const r=cv.getBoundingClientRect();zoomAt(Math.exp(-e.deltaY*(e.deltaMode===1?0.05:0.0015)),e.clientX-r.left,e.clientY-r.top)},{passive:false});
+function anyPos(){return S.steps.some(s=>s.pos||s.outs.some(o=>o.pos))}
+const MK=['email','path','none','spine','then'];
+function lines(){const g=$('#dg'),sv=$('#dgsvg');if(!g||!sv)return;
+ const G=g.getBoundingClientRect(),z=V.z,X=v=>+((v-G.left)/z).toFixed(1),Y=v=>+((v-G.top)/z).toFixed(1);sv.setAttribute('width',g.offsetWidth);sv.setAttribute('height',g.offsetHeight);
+ let p='<defs>'+MK.map(k=>'<marker id="mk-'+k+'" class="mk '+k+'" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z"/></marker>').join('')+'</defs>';
+ const pth=(k,d)=>{p+='<path class="'+k+'" marker-end="url(#mk-'+k+')" d="'+d+'"/>'};
+ const cur=(k,a,ay,b,by)=>{const x1=X(a),x2=X(b),y1=Y(ay),y2=Y(by),dx=(x2-x1)/2;pth(k,'M'+x1+' '+y1+' C'+(x1+dx).toFixed(1)+' '+y1+' '+(x2-dx).toFixed(1)+' '+y2+' '+x2+' '+y2)};
+ /* the line down the middle: member gets in touch, each step, everything OK */
+ const chain=[$('#dgcap'),...S.steps.map(s=>document.getElementById('n-'+s.id)),g.querySelector('.dgend>button')].filter(Boolean);
+ for(let i=0;i<chain.length-1;i++){const a=chain[i].getBoundingClientRect(),b=chain[i+1].getBoundingClientRect(),x1=X(a.left+a.width/2),y1=Y(a.bottom),x2=X(b.left+b.width/2),y2=Y(b.top)-1,m=(y1+y2)/2;pth('spine','M'+x1+' '+y1+' C'+x1+' '+m.toFixed(1)+' '+x2+' '+m.toFixed(1)+' '+x2+' '+y2)}
  g.querySelectorAll('.row.open').forEach(r=>{const se=r.querySelector('.dgn');if(!se)return;const sb=se.getBoundingClientRect();
-  r.querySelectorAll('.dob').forEach(b=>{const ob=b.getBoundingClientRect(),left=ob.right<=sb.left+2,x1=(left?sb.left:sb.right)-G.left,y1=sb.top+22-G.top,x2=(left?ob.right:ob.left)-G.left,y2=ob.top+Math.min(ob.height/2,22)-G.top,dx=(x2-x1)/2;
-   p+='<path class="'+esc(b.dataset.k)+'" d="M'+x1.toFixed(1)+' '+y1.toFixed(1)+' C'+(x1+dx).toFixed(1)+' '+y1.toFixed(1)+' '+(x2-dx).toFixed(1)+' '+y2.toFixed(1)+' '+x2.toFixed(1)+' '+y2.toFixed(1)+'"/>'})});
+  r.querySelectorAll('.ow').forEach(w=>{const b=w.querySelector('.dob');if(!b)return;const ob=b.getBoundingClientRect(),left=ob.left+ob.width/2<sb.left+sb.width/2;
+   cur(b.dataset.k,left?sb.left:sb.right,sb.top+Math.min(sb.height/2,22*z),left?ob.right:ob.left,ob.top+ob.height/2);
+   w.querySelectorAll('.kids>.kw>.kid,.kids>.oed').forEach(k=>{const kb=k.getBoundingClientRect();cur(b.dataset.k,left?ob.left:ob.right,ob.top+ob.height/2,left?kb.right:kb.left,kb.top+Math.min(kb.height/2,20*z))})})});
+ /* dashed arrows: an answer that goes to another step */
+ S.steps.forEach(s=>s.outs.forEach(o=>{if(!o.then||o.then==='stop'||/^sop:/.test(o.then))return;const tg=document.getElementById('n-'+o.then);if(!tg)return;let el=g.querySelector('.dob[data-o="'+o.id+'"]');const via=!el;if(via)el=document.getElementById('n-'+s.id);if(!el||el===tg)return;
+  const a=el.getBoundingClientRect(),b=tg.getBoundingClientRect(),r=via?true:(a.left+a.width/2)>=(b.left+b.width/2),x1=via?X(r?a.right:a.left):X(a.left+a.width/2),y1=via?Y(a.top+a.height/2):Y(a.bottom)+12,x2=X(r?b.right:b.left),y2=Y(b.top+b.height/2),cx=r?Math.max(x1,x2)+70:Math.min(x1,x2)-70;
+  p+='<path class="then" marker-end="url(#mk-then)" d="M'+x1+' '+y1+' C'+(via?cx:x1).toFixed(1)+' '+(via?y1:(y1+y2)/2).toFixed(1)+' '+cx.toFixed(1)+' '+y2+' '+(x2+(r?2:-2)).toFixed(1)+' '+y2+'"/>'}));
  sv.innerHTML=p}
-addEventListener('resize',()=>requestAnimationFrame(lines));
+addEventListener('resize',()=>{if($('#cv'))lines()});
+function depthNow(){if(!ui.open.size)return 0;return S.steps.every(s=>!s.outs.length||s.outs.every(o=>ui.oOpen.has(o.id)))&&S.steps.some(s=>s.outs.length)&&S.steps.every(s=>ui.open.has(s.id))?2:1}
 
 /* ---------- actions ---------- */
 function ch(){save();render()}
 function arm(key){if(ui.arm===key){ui.arm=null;clearTimeout(arm.t);return true}ui.arm=key;clearTimeout(arm.t);arm.t=setTimeout(()=>{if(ui.arm===key){ui.arm=null;render()}},3500);render();return false}
-function switchTo(id){S=DB.sops[id];DB.cur=id;ui.open.clear();ui.sel=null;ui.arm=null;save();render(false);scrollTo(0,0)}
+function switchTo(id){lkCancel();S=DB.sops[id];DB.cur=id;ui.open.clear();ui.sel=null;ui.arm=null;save();render(false);scrollTo(0,0)}
 function newSop(from){const n=from||blank();DB.sops[n.id]=n;ui.tab='build';saveUi();switchTo(n.id);if(!from&&!n.steps.length){ui.focus=null}}
 document.addEventListener('click',e=>{
  if(e.target.id==='ov'){$('#ov').hidden=true;return}
  const b=e.target.closest('[data-a]');if(!b)return;const a=b.dataset.a,s=b.dataset.s?findStep(b.dataset.s):null,o=s&&b.dataset.o?s.outs.find(x=>x.id===b.dataset.o):null;
- if(a!=='srm'&&a!=='orm'&&a!=='delsop')ui.arm=null;
+ if(a!=='srm'&&a!=='orm'&&a!=='krm'&&a!=='delsop'&&!(a==='mk'&&b.dataset.m==='rm'))ui.arm=null;if(a!=='omenu'&&a!=='mk')ui.menu=null;
  switch(a){
  case 'tab':ui.tab=b.dataset.t;saveUi();render(false);scrollTo(0,0);break;
  case 'view':ui.view=b.dataset.v;saveUi();render();break;
  case 'new':newSop();break;
- case 'sopen':ui.open.add(s.id);ui.focus='[data-f="s.name"][data-s="'+s.id+'"]';render();break;
- case 'sfold':ui.open.delete(s.id);if(ui.sel&&ui.sel.s===s.id)ui.sel=null;render();break;
- case 'foldall':ui.open.clear();ui.sel=null;render();break;
- case 'openall':S.steps.forEach(x=>ui.open.add(x.id));render();break;
- case 'sadd':{const n=mkStep();S.steps.splice(+b.dataset.i,0,n);ui.open.add(n.id);ui.focus='[data-f="s.name"][data-s="'+n.id+'"]';ch();break}
+ case 'sopen':ui.open.add(s.id);ui.show='.row:has(#n-'+s.id+')';render();break;
+ case 'sfold':ui.open.delete(s.id);s.outs.forEach(x=>ui.oOpen.delete(x.id));if(ui.sel&&ui.sel.s===s.id)ui.sel=null;render();break;
+ case 'depth':{const v=+b.dataset.v;ui.sel=null;ui.open.clear();ui.oOpen.clear();if(v>=1)S.steps.forEach(x=>ui.open.add(x.id));if(v===2)S.steps.forEach(x=>x.outs.forEach(o=>ui.oOpen.add(o.id)));render();requestAnimationFrame(()=>{if(v===0){V.x=null;V.y=16;V.z=1;applyV()}else fit();lines()});break}
+ case 'zin':zoomC(1.2);break;case 'zout':zoomC(1/1.2);break;case 'fit':fit();break;
+ case 'otog':if(ui.oOpen.has(o.id)){ui.oOpen.delete(o.id);if(ui.sel&&ui.sel.o===o.id)ui.sel=null}else{ui.oOpen.add(o.id);ui.show='.dob[data-o="'+o.id+'"]~.kids,.ow:has(.dob[data-o="'+o.id+'"]) .kids'}render();break;
+ case 'kid':ui.oOpen.add(o.id);ui.sel={s:s.id,o:o.id,k:b.dataset.kk};if(b.dataset.kk==='email'&&o.kind!=='email'){o.kind='email';save()}ui.focus='#oe-'+({email:'tpl',donow:'do',words:'words',result:'x',then:'then'}[b.dataset.kk]);render();break;
+ case 'omenu':ui.menu=ui.menu===o.id?null:o.id;render();break;
+ case 'mk':{const k=b.dataset.m;if(k==='rm'){if(!arm('o'+o.id)){ui.menu=o.id;render();return}s.outs.splice(s.outs.indexOf(o),1);ui.sel=null;ui.menu=null;ch();toast('Outcome removed');break}
+  ui.menu=null;ui.oOpen.add(o.id);if(k==='new'){o.kind='email';o.tpl='';o.text='';o.ticket='';ui.sel={s:s.id,o:o.id,k:'email'};ui.focus='#oe-tpl';ch();toast('Name the new email and write its text');break}
+  if(k==='side'){o.side=sideOf(o,s.outs.indexOf(o))==='l'?'r':'l';delete o.pos;ch();break}
+  if(k==='email'&&o.kind!=='email')o.kind='email';ui.sel={s:s.id,o:o.id,k};ui.focus='#oe-'+({email:'tpl',donow:'do',words:'words',label:'label',result:'x',then:'then'}[k]);ch();break}
+ case 'krm':{const k=b.dataset.kk;if(!arm('k'+o.id+k))return;if(k==='email'){o.kind='none';o.tpl='';o.text='';o.ticket=''}else if(k==='donow')o.doNow='';else if(k==='words')o.words='';else if(k==='then'){o.then='';o.only=[]}if(ui.sel&&ui.sel.o===o.id)ui.sel=null;ch();toast('Removed');break}
+ case 'tidy':S.steps.forEach(x=>{delete x.pos;x.outs.forEach(y=>delete y.pos)});ch();toast('Boxes are back in place');break;
+ case 'full':ui.full=!ui.full;document.documentElement.classList.toggle('lock',ui.full);render(false);requestAnimationFrame(()=>{fit();if(!ui.full){const c=$('#dgcard');if(c)c.scrollIntoView({block:'start'})}});break;
+  case 'sadd':{const n=mkStep();S.steps.splice(+b.dataset.i,0,n);ui.open.add(n.id);ui.focus='[data-f="s.name"][data-s="'+n.id+'"]';ch();break}
  case 'sup':case 'sdn':{const i=S.steps.indexOf(s),j=a==='sup'?i-1:i+1;if(j<0||j>=S.steps.length)return;[S.steps[i],S.steps[j]]=[S.steps[j],S.steps[i]];ch();break}
- case 'srm':if(!arm('s'+s.id))return;S.steps.splice(S.steps.indexOf(s),1);S.links.forEach(k=>{if(k.step===s.id)k.step=''});if(S.ok.only===s.id)S.ok.only='';if(ui.sel&&ui.sel.s===s.id)ui.sel=null;ch();toast('Step removed');break;
- case 'oadd':{const n=mkOut({side:b.dataset.side||''});s.outs.push(n);ui.open.add(s.id);ui.sel={s:s.id,o:n.id};ui.focus='#oe-label';ch();break}
+ case 'srm':if(!arm('s'+s.id))return;S.steps.splice(S.steps.indexOf(s),1);S.steps.forEach(x=>x.outs.forEach(y=>{if(y.then===s.id)y.then='';if(y.only)y.only=y.only.filter(id=>id!==s.id)}));S.links.forEach(k=>{if(k.step===s.id)k.step=''});if(S.ok.only===s.id)S.ok.only='';if(ui.sel&&ui.sel.s===s.id)ui.sel=null;ch();toast('Step removed');break;
+ case 'oadd':{const n=mkOut({side:b.dataset.side||''});s.outs.push(n);ui.open.add(s.id);ui.oOpen.add(n.id);ui.sel={s:s.id,o:n.id,k:'label'};ui.focus='#oe-label';ch();break}
  case 'osel':ui.sel=ui.sel&&ui.sel.o===o.id?null:{s:s.id,o:o.id};render();break;
  case 'oksel':ui.sel=ui.sel&&ui.sel.ok?null:{ok:1};render();break;
  case 'odone':ui.sel=null;render();break;
  case 'okind':o.kind=b.dataset.k;ch();break;
- case 'oside':o.side=sideOf(o,s.outs.indexOf(o))==='l'?'r':'l';ch();break;
- case 'orm':if(!arm('o'+o.id))return;s.outs.splice(s.outs.indexOf(o),1);ui.sel=null;ch();toast('Outcome removed');break;
+ case 'oside':o.side=sideOf(o,s.outs.indexOf(o))==='l'?'r':'l';delete o.pos;ch();break;
+ case 'orm':if(!arm('o'+o.id))return;ui.oOpen.delete(o.id);s.outs.splice(s.outs.indexOf(o),1);ui.sel=null;ch();toast('Outcome removed');break;
  case 'wadd':{const v=$('#wnew').value.trim();if(!v){$('#wnew').focus();return}S.watch.push(v);ui.secs.watch=true;ui.focus='#wnew';ch();break}
  case 'wrm':S.watch.splice(+b.dataset.i,1);ch();break;
  case 'ladd':{const n={id:uid(),name:'',url:'',step:s?s.id:''};S.links.push(n);if(!s)ui.secs.links=true;else ui.open.add(s.id);ui.focus='[data-f="l.name"][data-l="'+n.id+'"]';ch();break}
@@ -502,9 +673,9 @@ document.addEventListener('click',e=>{
  case 'dl':download();break;
  case 'close':$('#ov').hidden=true;break;
  case 'copy':copy(exportText(S),$('#sendTxt'),'Copied. Paste it into a new file saved as .md.');break;
-  case 'go':{$('#ov').hidden=true;ui.tab=b.dataset.g==='details'?'details':'build';saveUi();if(b.dataset.s){ui.open.add(b.dataset.s);if(b.dataset.o)ui.sel={s:b.dataset.s,o:b.dataset.o}}
+  case 'go':{$('#ov').hidden=true;ui.tab=b.dataset.g==='details'?'details':'build';saveUi();if(b.dataset.s){ui.open.add(b.dataset.s);if(b.dataset.o){ui.sel={s:b.dataset.s,o:b.dataset.o,k:'label'};ui.oOpen.add(b.dataset.o)}}
    render(false);const el=b.dataset.o?document.querySelector('[data-o="'+b.dataset.o+'"]'):b.dataset.s?document.getElementById('n-'+b.dataset.s)||document.querySelector('[data-ls="'+b.dataset.s+'"]'):(ui.tab==='details'?$('#d-title'):null);
-   if(el){el.scrollIntoView({block:'center'});if(el.focus)el.focus({preventScroll:true})}break}
+   if(el){const cv=el.closest('#cv');if(cv){cv.closest('.card').scrollIntoView({block:'start'});showIn(el)}else el.scrollIntoView({block:'center'});if(el.focus)el.focus({preventScroll:true})}break}
  case 'imp':{const v=$('#impTxt').value;const n=parseAny(v);if(!n.steps.length){$('#impMsg').textContent='No steps found. The text needs a "Steps:" list with numbered steps.';return}newSop(n);toast('Opened "'+(n.title||'Untitled SOP')+'" with '+n.steps.length+' steps');break}
  case 'delsop':if(!arm('sop'))return;delete DB.sops[S.id];if(!Object.keys(DB.sops).length){const e2=fresh();DB.cur=e2.id}switchTo(Object.values(DB.sops).sort((x,y)=>y.updated-x.updated)[0].id);toast('SOP removed');break;
  }});
@@ -520,22 +691,26 @@ document.addEventListener('input',e=>{const el=e.target,f=el.dataset.f;if(!f)ret
  case 'o.tpl':{o.tpl=v;const sh=users(v,o),box=$('#oe-share');if(box){box.hidden=!sh.length;box.textContent='Also used by: '+sh.join(', ')+'. Changing the text changes it for all of them.'}cn();break}
  case 'o.text':case 'o.ticket':{const k=f.slice(2);o[k]=v;const key=low(o.tpl);if(key){S.steps.forEach(x=>x.outs.forEach(y=>{if(y!==o&&y.kind==='email'&&low(y.tpl)===key)y[k]=v}));if(low(S.ok.tpl)===key)S.ok[k]=v}cn();break}
  case 'o.doNow':case 'o.words':o[f.slice(2)]=v;cn();break;
+ case 'o.then':case 'o.only':return;
  case 'ok.tpl':case 'ok.text':case 'ok.ticket':{const k=f.slice(3);S.ok[k]=v;if(k!=='tpl'){const key=low(S.ok.tpl);if(key)S.steps.forEach(x=>x.outs.forEach(y=>{if(y.kind==='email'&&low(y.tpl)===key)y[k]=v}))}break}
  case 'w':S.watch[+el.dataset.i]=v;break;
  case 'l.name':case 'l.url':{const k=S.links.find(x=>x.id===el.dataset.l);if(k)k[f.slice(2)]=v;break}
  default:if(f.startsWith('S.')){S[f.slice(2)]=v;if(f==='S.title')renderTop()}}
- save();if(ui.tab==='build'&&ui.view==='web')requestAnimationFrame(lines)});
+ save();if(ui.tab==='build'&&ui.view==='web'&&$('#cv'))requestAnimationFrame(lines)});
 document.addEventListener('change',e=>{const el=e.target;
  if(el.id==='sopPick'){switchTo(el.value);return}
  if(el.id==='impFile'){const file=el.files[0];el.value='';if(!file)return;const r=new FileReader();r.onload=()=>{$('#impTxt').value=String(r.result||'');$('#impMsg').textContent='Loaded '+file.name+'. Press "Open as a new SOP".'};r.onerror=()=>{$('#impMsg').textContent='Could not read that file. Copy its text and paste it here instead.'};r.readAsText(file);return}
  const f=el.dataset.f;if(!f)return;
  if(f==='l.step'){const k=S.links.find(x=>x.id===el.dataset.l);if(k){k.step=el.value;if(k.step)ui.open.add(k.step)}ch();return}
  if(f==='ok.only'){S.ok.only=el.value;ch();return}
+ if(f==='o.then'||f==='o.only'){const s=findStep(el.dataset.s),o=s&&s.outs.find(x=>x.id===el.dataset.o);if(!o)return;if(S.example)S.example=false;
+  if(f==='o.then'){o.then=el.value;if(!el.value)o.only=[];ui.focus='#oe-then'}else{const id=el.dataset.st;o.only=(o.only||[]).filter(x=>x!==id);if(el.checked)o.only.push(id);ui.onlyOpen=true}ch();return}
  if(f==='o.tpl'){const s=findStep(el.dataset.s),o=s&&s.outs.find(x=>x.id===el.dataset.o);if(o&&!o.text.trim()){let src=null;S.steps.forEach(x=>x.outs.forEach(y=>{if(!src&&y!==o&&y.kind==='email'&&low(y.tpl)===low(o.tpl)&&(y.text||y.ticket))src=y}));if(src){o.text=src.text;o.ticket=src.ticket;ch()}}}});
 document.addEventListener('toggle',e=>{const d=e.target;if(!(d instanceof HTMLDetailsElement))return;
+ if(d.classList.contains('onlyd')){ui.onlyOpen=d.open;return}
  if(d.dataset.sec){ui.secs[d.dataset.sec]=d.open;saveUi()}
  if(d.dataset.ls){const id=d.dataset.ls,was=ui.open.has(id);if(d.open&&!was){ui.open.add(id);render()}else if(!d.open&&was){ui.open.delete(id);if(ui.sel&&ui.sel.s===id)ui.sel=null;render()}}},true);
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(!$('#ov').hidden){$('#ov').hidden=true;return}if(ui.sel){ui.sel=null;render()}}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(LK){lkCancel();return}if(!$('#ov').hidden){$('#ov').hidden=true;return}if(ui.full&&!e.target.closest('input,textarea,select')){ui.full=false;document.documentElement.classList.remove('lock');render(false);requestAnimationFrame(fit);return}if(ui.menu){ui.menu=null;render();return}if(ui.sel){ui.sel=null;render()}}
  if(e.key==='Enter'&&e.target.id==='wnew'){e.preventDefault();document.querySelector('[data-a="wadd"]').click()}});
 
 window.__sopb={parseAny,exportText,get S(){return S},get DB(){return DB}};
