@@ -1018,7 +1018,7 @@ const shown=L.filter(x=>(filt==='all'||x.status===filt)&&(!tagF||(x.tags||[]).so
 const grp=x=>k==='sop'||k==='resource'?(x.topic||'No topic'):(x.group||sopOf(x)?.title||'Not linked to an SOP');
 const groups=new Map();shown.sort(byTitle).forEach(x=>{const g=grp(x);if(!groups.has(g))groups.set(g,[]);groups.get(g).push(x)});
 const cur=sel[k];
-const row=x=>k==='sop'?`<li class="acc-row ${x.id===cur?'open':''}"><button class="acch" data-id="${esc(x.id)}" aria-expanded="${x.id===cur}"><span class="chev" aria-hidden="true">▶</span><span class="nm">${esc(x.title||'Untitled')}</span><span class="meta">${pill(x.status)}<span>${linkedTo(x.id).length} template${linkedTo(x.id).length===1?'':'s'}</span><span>${(x.links||[]).length} link${(x.links||[]).length===1?'':'s'}</span>${(x.tags||[]).slice(0,3).map(t=>'<span>#'+esc(t)+'</span>').join('')}</span></button><button type="button" class="rmx ed-only p210x" data-rmres="${esc(x.id)}" aria-label="Remove ${esc(x.title||'SOP')}" title="Remove">×</button>${x.id===cur?'<div class="accbody" data-slot></div>':''}</li>`:`<li><button class="it" data-id="${esc(x.id)}" aria-current="${x.id===cur}"><span class="nm">${esc(x.title||'Untitled')}</span><span class="meta">${pill(x.status)}${(x.tags||[]).slice(0,3).map(t=>'<span>#'+esc(t)+'</span>').join('')}</span></button>${k!=='sop'?`<button type="button" class="rmx ed-only" data-rmres="${esc(x.id)}" aria-label="Remove ${esc(x.title||'link or file')}" title="Remove">×</button>`:''}</li>`;
+const row=x=>k==='sop'?`<li class="acc-row ${x.id===cur?'open':''}"><button class="acch" data-id="${esc(x.id)}" aria-expanded="${x.id===cur}"><span class="chev" aria-hidden="true">▶</span><span class="nm">${esc(x.title||'Untitled')}</span><span class="meta">${pill(x.status)}<span>${(n=>n+' template'+(n===1?'':'s'))(window.__p255?window.__p255.tplsOf(x.id).length:linkedTo(x.id).length)}</span><span>${(x.links||[]).length} link${(x.links||[]).length===1?'':'s'}</span>${(x.tags||[]).slice(0,3).map(t=>'<span>#'+esc(t)+'</span>').join('')}</span></button><button type="button" class="rmx ed-only p210x" data-rmres="${esc(x.id)}" aria-label="Remove ${esc(x.title||'SOP')}" title="Remove">×</button>${x.id===cur?'<div class="accbody" data-slot></div>':''}</li>`:`<li><button class="it" data-id="${esc(x.id)}" aria-current="${x.id===cur}"><span class="nm">${esc(x.title||'Untitled')}</span><span class="meta">${pill(x.status)}${(x.tags||[]).slice(0,3).map(t=>'<span>#'+esc(t)+'</span>').join('')}</span></button>${k!=='sop'?`<button type="button" class="rmx ed-only" data-rmres="${esc(x.id)}" aria-label="Remove ${esc(x.title||'link or file')}" title="Remove">×</button>`:''}</li>`;
 document.body.classList.toggle('p210sop',k==='sop');$('bldBtn').classList.remove('sec');document.body.classList.toggle('p210ag',!!(window.EVO&&EVO.settings&&EVO.settings.role&&EVO.settings.role!=='admin'));
 $('items').innerHTML=!ready?'<li class="mut">Loading…</li>':shown.length?[...groups.keys()].sort((a,b)=>/^No |^Not /.test(a)-/^No |^Not /.test(b)||a.localeCompare(b)).map(g=>(k==='sop'?`<li class="grp-h">${esc(g)}<button type="button" class="rmx ed-only" data-rmgrp="${esc(g)}" title="Remove every SOP in this topic" aria-label="Remove all in ${esc(g)}">×</button></li>`:`<li class="grp-h"><button class="grp-t" data-grp="${esc(g)}" aria-expanded="${!isColl(k,g)}"><span class="chev" aria-hidden="true">${isColl(k,g)?'▸':'▾'}</span>${esc(g)}<span class="n">${groups.get(g).length}</span></button><button type="button" class="rmx ed-only" data-rmgrp="${esc(g)}" title="Remove everything in this group" aria-label="Remove all in ${esc(g)}">×</button></li>`)+(k==='sop'?groups.get(g).map(row).join(''):(isColl(k,g)?'':groups.get(g).map(row).join('')))).join(''):`<li class="mut" style="padding:8px">${L.length?'Nothing matches.':'No '+KIND[k].many.toLowerCase()+' yet.'+(EDIT?' Use + Add or import a Rovo document on the Overview.':' Turn on Edit mode to add one.')}</li>`;
 $('items').querySelectorAll('[data-grp]').forEach(b=>b.onclick=()=>{const key=k+'|'+b.dataset.grp,c=S.get('coll',{});c[key]=!c[key];S.set('coll',c);renderList()});
@@ -1390,7 +1390,7 @@ foldSections(E);fitBody();{const fb=$('f_body');if(fb)fb.addEventListener('input
 renderAi()}
 document.addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.key==='s'&&(modalId||['sop','email','ticket','resource'].includes(view))&&EDIT){e.preventDefault();save()}});
 
-async function save(note){if(!draft||!EDIT)return;const old=ITEMS.get(draft.id)||{},now=Date.now();
+async function save(note){if(!draft||!(EDIT||(CAN&&draft.kind==='sop')))return;const old=ITEMS.get(draft.id)||{},now=Date.now();
 const d=clone(draft);d.links=(d.links||[]).filter(l=>l.u);if(d.kind==='sop'&&d.stepDiagram){const P=stepsParse(d.body),lb=sdLabels(sdEnsure(d));delete d.stepDiagram.fresh;if(P.has)d.body=stepsCompose(P.text,P.steps,lb)}d.title=String(d.title||'').trim()||'Untitled';d.updatedAt=now;
 if(old.body!=null&&old.body!==d.body){d.history=[...(old.history||[]),{at:old.updatedAt||now,body:old.body,note:note||'Before edit on '+new Date(now).toLocaleDateString()}].slice(-5)}
 const {id,...data}=d;if(await write(id,data)){ITEMS.set(id,{id,...data});draft=clone(ITEMS.get(id));dirty=false;const nl=d.kind==='sop'?await linksToRes(ITEMS.get(id)):0;toast(nl?'Saved. '+nl+' new link'+(nl===1?'':'s')+' added to Links & files':'Saved');renderAll()}}
@@ -3517,6 +3517,7 @@ const css=document.createElement('style');css.textContent=`#p230auto{margin-left
 try{if(KT.includes(view))renderList()}catch(e){}
 })();
 
+window.SOPED=window.SOPED||(()=>EDIT||CAN);
 /* ---------- P2A 2.42: "Flow" tab on each SOP (Architecture). Same SOP text, shown as stages, steps and outcomes.
    Reads and writes Steps / Outcomes / Do now / Watch out for in the SOP text; links live in the SOP's links. ---------- */
 (function(){
@@ -3543,7 +3544,7 @@ const oAtt=o=>({need:'needs a template',lost:'template not found'})[kindOf(o)]||
 function sAtt(s){const a=[],n=s.outs.filter(o=>oAtt(o)).length;if(n)a.push(n+' outcome'+(n>1?'s':''));if(/\[CHECK/i.test(s.name+' '+s.detail))a.push('not confirmed');if(s.outs.length>6)a.push('too many outcomes');return a}
 function unused(M){const used=new Set(M.O.list.map(o=>p217Low(o.tpl)).concat(p217Low(M.O.def)));return emails().filter(x=>x.sopId===draft.id&&!used.has(p217Low(x.title)))}
 const A=(k,v)=>' data-a="'+k+'"'+(v==null?'':' data-v="'+esc(v)+'"');
-function draw(keep){if(!$('f42')&&$('f44')&&window.__p244)return window.__p244.draw(true);const root=$('f42');if(!root||!draft)return;const d=draft,ro=!EDIT,RO=ro?' readonly':'',M=model(d);if(F.forId!==d.id){F.forId=d.id;F.sel=null;F.fold=new Map();F.nt=null}
+function draw(keep){if(!$('f42')&&$('f44')&&window.__p244)return window.__p244.draw(true);const root=$('f42');if(!root||!draft)return;const d=draft,ro=!SOPED(),RO=ro?' readonly':'',M=model(d);if(F.forId!==d.id){F.forId=d.id;F.sel=null;F.fold=new Map();F.nt=null}
  const y=keep?scrollY:null,need=M.steps.filter(s=>sAtt(s).length).length,nOut=M.O.list.length,nNeed=M.O.list.filter(o=>kindOf(o)==='need').length,nLost=M.O.list.filter(o=>kindOf(o)==='lost').length,U=unused(M),conf=String(d.confluence||'').trim();
  const sec=(id,cls,title,note,body,open)=>'<details class="f42card '+cls+'" data-sec="'+id+'"'+((F.sec[id]!==undefined?F.sec[id]:open)?' open':'')+'><summary>'+title+' <span>'+note+'</span></summary>'+body+'</details>';
  let h='<div class="f42card"><div class="f42stg"><div class="f42sg '+(conf?'ok':'warn')+'"><b>1 Scope</b><span>'+(conf?'Confluence page linked'+(d.sourceChecked?' · checked '+esc(d.sourceChecked):' · not checked yet'):'no Confluence page linked')+'</span></div>'+
@@ -3579,7 +3580,7 @@ function draw(keep){if(!$('f42')&&$('f44')&&window.__p244)return window.__p244.d
  h+='<div class="f42leg"><span><i class="h"></i>problem, adds its email</span><span><i class="r"></i>path only, changes nothing in the reply</span></div></div>';
  root.innerHTML=h;if(y!=null)scrollTo(0,y)}
 function mark(){dirty=true;const s=$('saveState');if(s){s.textContent='Unsaved changes';s.classList.add('dirty')}if($('discardBtn'))$('discardBtn').hidden=false;syncModalState()}
-function tlist(q){const L=$('f42tl');if(!L||!EDIT)return;const w=String(q||'').toLowerCase().split(/\s+/).filter(Boolean),all=emails().sort((a,b)=>(b.sopId===draft.id)-(a.sopId===draft.id)||String(a.title).localeCompare(String(b.title)));
+function tlist(q){const L=$('f42tl');if(!L||!SOPED())return;const w=String(q||'').toLowerCase().split(/\s+/).filter(Boolean),all=emails().sort((a,b)=>(b.sopId===draft.id)-(a.sopId===draft.id)||String(a.title).localeCompare(String(b.title)));
  const m=all.filter(x=>{const t=(x.title+' '+(x.body||'')).toLowerCase();return w.every(k=>t.includes(k))}).slice(0,60),hl=t=>{let h=esc(t);w.forEach(k=>{h=h.replace(new RegExp('('+k.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')(?![^<]*>)','ig'),'<mark>$1</mark>')});return h};
  L.innerHTML='<div class="mut">'+(w.length?m.length+' of '+all.length+' email templates · searches titles and text':all.length+' email templates · this SOP\'s first')+'</div>'+m.map(x=>'<button type="button"'+A('tpick',x.title)+'>'+hl(x.title)+(x.sopId===draft.id?'':' <i>other SOP</i>')+'</button>').join('')+(w.length&&!all.some(x=>p217Low(x.title)===p217Low(q))?'<button type="button" class="c"'+A('tnew',q.trim())+'>+ Create “'+esc(q.trim())+'” as a new template</button>':'');L.hidden=false}
 function act(a,v,t){const d=draft,M=model(d);let o=F.sel?M.O.list[F.sel[1]]:null;
@@ -3588,7 +3589,7 @@ function act(a,v,t){const d=draft,M=model(d);let o=F.sel?M.O.list[F.sel[1]]:null
  if(a==='unfold'||a==='fold'){const s=M.steps[+v];F.fold.set(s.name,a==='fold');if(a==='fold'&&F.sel&&F.sel[0]===+v)F.sel=null;return draw(true)}
  if(a==='fall'){M.steps.forEach(s=>F.fold.set(s.name,v==='fold'));if(v==='fold')F.sel=null;return draw(true)}
  if(a==='topen'){if(dirty){toast('Save or discard your changes first');return}if(typeof openModal==='function')openModal(v);return}
- if(!EDIT)return;
+ if(!SOPED())return;
  if(a==='wx'){M.watch.splice(+v,1);d.body=secSet(d.body,'Watch out for',M.watch)}
  else if(a==='wadd'){const x=$('f42wn').value.trim();if(!x)return;M.watch.push(x);d.body=secSet(d.body,'Watch out for',M.watch)}
  else if(a==='ladd'){d.links=[...(d.links||[]),{l:'',u:'',step:+v||0}];F.sec.tl=true;mark();draw(true);const n=document.querySelectorAll('#f42 [data-ln]');n[n.length-1]?.focus();return}
@@ -3608,7 +3609,7 @@ function act(a,v,t){const d=draft,M=model(d);let o=F.sel?M.O.list[F.sel[1]]:null
   t.disabled=true;write(id,x).then(ok=>{if(!ok){t.disabled=false;return}ITEMS.set(id,{id,...x});const M3=model(draft),o3=M3.O.list[F.sel[1]];if(o3){o3.tpl=ti;wOuts(M3)}F.nt=null;mark();try{renderList()}catch(e){}draw(true);toast('Template created as a draft and linked to this outcome')});return}
  else return;
  mark();draw(true)}
-function onInput(e){const t=e.target,ds=t.dataset,d=draft;if(t.id==='f42ot'){tlist(t.value);return}if(!EDIT||t.id==='f42wn'||t.id==='f42nt'||t.id==='f42nb')return;const M=model(d);
+function onInput(e){const t=e.target,ds=t.dataset,d=draft;if(t.id==='f42ot'){tlist(t.value);return}if(!SOPED()||t.id==='f42wn'||t.id==='f42nt'||t.id==='f42nb')return;const M=model(d);
  if(ds.w!=null){M.watch[+ds.w]=t.value;d.body=secSet(d.body,'Watch out for',M.watch.map(x=>x.trim()?x:'…'))}
  else if(ds.sn!=null){const s=M.steps[+ds.sn],was=s.name;s.name=t.value.replace(SPLIT,' - ');if(F.fold.has(was)){F.fold.set(s.name,F.fold.get(was));F.fold.delete(was)}wSteps(M)}
  else if(ds.sd!=null){M.steps[+ds.sd].detail=t.value;wSteps(M)}
@@ -3620,7 +3621,7 @@ function onInput(e){const t=e.target,ds=t.dataset,d=draft;if(t.id==='f42ot'){tli
   else if(ds.of==='donow'){let x=M.dn.find(z=>p217Low(z.label)===p217Low(o.label));if(!x){x={label:o.label,text:''};M.dn.push(x)}x.text=t.value;wDn(M)}}
  else if(t.id==='f42def'){M.O.def=t.value.trim();wOuts(M)}
  else return;mark()}
-function onChange(e){const t=e.target,ds=t.dataset;if(ds.a==='only'){F.only=t.checked;F.fold=new Map();return draw(true)}if(!EDIT)return;
+function onChange(e){const t=e.target,ds=t.dataset;if(ds.a==='only'){F.only=t.checked;F.fold=new Map();return draw(true)}if(!SOPED())return;
  if(ds.a==='route'&&F.sel){const M=model(draft),o=M.O.list[F.sel[1]];if(!o)return;o.tpl=t.checked?'-':'';F.nt=null;wOuts(M);mark();return draw(true)}
  if(ds.ls!=null){draft.links[+ds.ls].step=+t.value;mark();return draw(true)}
  if(t.id==='f42oko'){const M=model(draft);M.O.okOnly=+t.value?[+t.value]:[];wOuts(M);mark();return draw(true)}}
@@ -3630,7 +3631,7 @@ function mount(){const E=$('editor'),d=draft;
  $('saveBtn').onclick=()=>save('Edited in the Flow view');$('discardBtn').onclick=()=>{draft=clone(ITEMS.get(draft.id));dirty=false;F.sel=null;F.nt=null;renderEditor()};
  const R=$('f42');R.onclick=e=>{const t=e.target.closest('[data-a]');if(t&&t.tagName!=='INPUT')act(t.dataset.a,t.dataset.v,t)};R.oninput=onInput;R.onchange=onChange;
  R.addEventListener('toggle',e=>{const k=e.target.dataset&&e.target.dataset.sec;if(k)F.sec[k]=e.target.open},true);
- R.addEventListener('focusin',e=>{if(e.target.id==='f42ot'&&EDIT){e.target.select();tlist('')}});
+ R.addEventListener('focusin',e=>{if(e.target.id==='f42ot'&&SOPED()){e.target.select();tlist('')}});
  R.addEventListener('focusout',e=>{if(e.target.id==='f42ot')setTimeout(()=>{const L=$('f42tl');if(L&&!L.contains(document.activeElement)){L.hidden=true;const M=model(draft),o=F.sel&&M.O.list[F.sel[1]];if(o&&$('f42ot'))$('f42ot').value=o.tpl}},150)});
  R.onkeydown=e=>{const t=e.target;if(e.key==='Enter'&&t.id==='f42wn'){e.preventDefault();act('wadd')}else if(t.id==='f42ot'){const L=$('f42tl');if(e.key==='Enter'){e.preventDefault();const b=L&&!L.hidden&&L.querySelector('button');if(b)b.click()}else if(e.key==='Escape'){L.hidden=true;t.blur()}else if(e.key==='ArrowDown'){e.preventDefault();L.querySelector('button')?.focus()}}
   else if(t.closest&&t.closest('#f42tl')&&(e.key==='ArrowDown'||e.key==='ArrowUp')){e.preventDefault();const n=e.key==='ArrowDown'?t.nextElementSibling:t.previousElementSibling;if(n&&n.tagName==='BUTTON')n.focus();else if(e.key==='ArrowUp')$('f42ot').focus()}
@@ -3719,7 +3720,7 @@ ${clip(x.body,24000)}
 
 Answer with JSON only, no code fence:
 {"body":"the full rewritten SOP text","changes":["up to 10 short lines: what you changed and why it helps the agent"],"questions":["points only the admin can settle, each as a pick-one or short question; empty if none"]}`}
-async function run(){const x=draft;if(!x||x.kind!=='sop'||!EDIT||(AI&&AI.busy))return;const s=await getSample();if(!s){AI={forId:x.id,err:'AI is not available in this view. Open P2A on claude.ai to use it.'};return paint()}
+async function run(){const x=draft;if(!x||x.kind!=='sop'||!SOPED()||(AI&&AI.busy))return;const s=await getSample();if(!s){AI={forId:x.id,err:'AI is not available in this view. Open P2A on claude.ai to use it.'};return paint()}
  AI={forId:x.id,busy:true};paint();
  try{const r=await s.json(prompt(x),{modelTier:'complex',cache:false});if(!draft||draft.id!==x.id)return;
   const body=String(r&&r.body||'').replace(/\r/g,'').trim();if(!body||!stepsParse(body).steps.length)throw{message:'The answer had no Steps section.'};
@@ -3727,7 +3728,7 @@ async function run(){const x=draft;if(!x||x.kind!=='sop'||!EDIT||(AI&&AI.busy))r
  catch(e){AI={forId:x.id,err:e&&e.code==='not_granted'?'Claude was not allowed for this page. Allow it in the page\'s Permissions menu, then try again.':e&&e.code==='rate_limited'?'Your Claude usage limit was reached. Try again later.':e&&e.code==='invalid_json'?'Claude\'s answer could not be read. Try again.':'It did not work: '+((e&&(e.message||e.code))||'unknown error')+'. Nothing was changed.'}}
  paint()}
 function paint(){const R=$('f42');if(!R||!draft||draft.kind!=='sop')return;let box=$('f43');if(!box){box=document.createElement('div');box.id='f43';box.className='f42card';R.prepend(box)}
- if(AI&&AI.forId!==draft.id)AI=null;const ro=!EDIT;
+ if(AI&&AI.forId!==draft.id)AI=null;const ro=!SOPED();
  let h='<div class="f42h">Optimize for P2A <span>Claude reviews the whole SOP and reshapes it for agents · '+(typeof EVO!=='undefined'?'uses the AI key in Settings':'uses your Claude account')+'</span></div>';
  if(ro)h+='<p class="mut">Turn on Edit mode to use it.</p>';
  else if(AI&&AI.busy)h+='<div class="f43busy" role="status"><span class="f43dot"></span>Claude is reading the SOP and its templates. This can take a minute. Nothing changes until you accept.</div>';
@@ -3786,20 +3787,20 @@ function kidEd(M,o,i,j,id,side,c,kind){const p=P(),d=draft,F=p.F,R=p.isR(o),t=o.
  else if(kind==='then')b=window.__p253.ed(M,o);
  else b='<label class="l" for="f42oh">Words in notes or the message that pick it</label><input class="t" id="f42oh" data-of="hint" value="'+esc(o.hint)+'" placeholder="e.g. forwarded, attached, screenshot">'+done;
  return '<div class="f42pan f44pan k-'+kind+'" data-p="'+id+'" data-side="'+side+'" data-c="'+c+'">'+b+'</div>'}
-function oBox(M,o,i,side){const p=P(),F=p.F,j=M.O.list.indexOf(o),k=p.kindOf(o),c=k==='route'?'route':'hold',at=({need:'needs a template',lost:'template not found'})[k]||'',open=oOpen(o),id='f44o'+j,sel=EDIT&&open&&F.sel&&F.sel[1]===j,ek=sel?D.ek:null,mn=EDIT&&D.om===j;
+function oBox(M,o,i,side){const p=P(),F=p.F,j=M.O.list.indexOf(o),k=p.kindOf(o),c=k==='route'?'route':'hold',at=({need:'needs a template',lost:'template not found'})[k]||'',open=oOpen(o),id='f44o'+j,sel=SOPED()&&open&&F.sel&&F.sel[1]===j,ek=sel?D.ek:null,mn=SOPED()&&D.om===j;
  let head='<button type="button" class="f44o '+c+(sel&&ek?' ed':'')+'" id="'+id+'" data-p="f44s'+i+'" data-side="'+side+'" data-c="'+c+'" data-o="'+i+'.'+j+'" aria-expanded="'+open+'"><b>'+esc(o.label)+'</b>'+(open?'':'<small>'+(k==='route'?'path only':o.tpl?'✉':'no email')+'</small>'+window.__p253.mark(M,o))+(at?'<em>'+at+'</em>':'')+'<span class="cv">'+(open?'▾':'▸')+'</span></button>';
- if(EDIT){const it=(kk,t,n)=>'<button type="button" role="menuitem" data-omi="'+i+'.'+j+'.'+kk+'"><b>'+t+'</b><small>'+n+'</small></button>';
+ if(SOPED()){const it=(kk,t,n)=>'<button type="button" role="menuitem" data-omi="'+i+'.'+j+'.'+kk+'"><b>'+t+'</b><small>'+n+'</small></button>';
   head='<span class="f44ow'+(mn?' on':'')+'">'+head+'<button type="button" class="f44pt o" data-om="'+j+'" aria-expanded="'+mn+'" title="Add to this outcome" aria-label="Add to outcome '+esc(o.label)+'">+</button>'+rmPt('o.'+i+'.'+j,'Remove this outcome')+'<button type="button" class="f44pt lk" data-lk="'+j+'" title="Drag to a step to link this answer to it. Or tap, then tap the step." aria-label="Link '+esc(o.label)+' to a step">→</button>'+(mn?'<div class="f44pm" role="menu"><div class="f44pmh">Add to this outcome</div>'+it('email','An email template','Search the templates you already have.')+it('newt','A new email template','Write a new email for this outcome.')+it('result','A result','Problem, or only a path choice.')+it('donow','A Do now','An instruction shown on top for the agent.')+it('words','Words that pick it','Words in notes or the message.')+it('then','What happens next','Go to a step, stop here, open another SOP, or give it its own steps.')+it('side','Move to the other side','Show this outcome on the other side of its step.')+it('label','Rename or remove','Change what the agent finds.')+'</div>':'')+'</span>'}
  if(!open)return head;
  const dn=M.dn.find(x=>p217Low(x.label)===p217Low(o.label)),
-  kid=(kind,cl,cap,tx)=>ek===kind?kidEd(M,o,i,j,id,side,c,kind):EDIT?'<span class="f44kw"><button type="button" class="f44k '+cl+'" data-ek="'+i+'.'+j+'.'+kind+'" data-p="'+id+'" data-side="'+side+'" data-c="'+c+'" title="Edit"><small>'+cap+' <i>✎</i></small>'+tx+'</button>'+(kind==='result'||(kind==='email'&&!o.tpl)?'':rmPt('k.'+i+'.'+j+'.'+kind,'Remove this box'))+'</span>':'<div class="f44k '+cl+'" data-p="'+id+'" data-side="'+side+'" data-c="'+c+'"><small>'+cap+'</small>'+tx+'</div>';
+  kid=(kind,cl,cap,tx)=>ek===kind?kidEd(M,o,i,j,id,side,c,kind):SOPED()?'<span class="f44kw"><button type="button" class="f44k '+cl+'" data-ek="'+i+'.'+j+'.'+kind+'" data-p="'+id+'" data-side="'+side+'" data-c="'+c+'" title="Edit"><small>'+cap+' <i>✎</i></small>'+tx+'</button>'+(kind==='result'||(kind==='email'&&!o.tpl)?'':rmPt('k.'+i+'.'+j+'.'+kind,'Remove this box'))+'</span>':'<div class="f44k '+cl+'" data-p="'+id+'" data-side="'+side+'" data-c="'+c+'"><small>'+cap+'</small>'+tx+'</div>';
  return '<div class="f44ox '+side+'">'+head+'<div class="f44kids">'+(ek==='label'?kidEd(M,o,i,j,id,side,c,'label'):'')+
   (k==='route'&&ek!=='email'?'':kid('email','doc'+(k==='ok'?'':' no'),'Email',k==='ok'?'✉ '+esc(o.tpl):k==='lost'?'✉ '+esc(o.tpl)+' · template not found':k==='route'?'no email':'needs a template'))+
   (dn&&dn.text||ek==='donow'?kid('donow','','Do now',esc(dn?dn.text:'')):'')+
   kid('result','end'+(k==='route'?' route':''),'Result',k==='route'?'Path only. Adds nothing to the reply.':'Problem. Its email joins the reply.')+
   (o.hint||ek==='words'?kid('words','','Words that pick it',esc(o.hint)):'')+(o.then||window.__p253.grp(M,o)||ek==='then'?kid('then','thn','Then',window.__p253.txt(M,o)):'')+'</div></div>'}
 function linkRow(l,i){return '<div class="f44lk"><input class="f42in" data-ln="'+i+'" value="'+esc(l.l||'')+'" placeholder="Name" aria-label="Link name"><input class="f42in f42u" data-lu="'+i+'" value="'+esc(l.u||'')+'" placeholder="Paste the link" aria-label="Link address"><button type="button" class="f42x"'+A('lx',i)+' aria-label="Remove link">×</button></div>'}
-function draw(keep){const root=$('f44');if(!root||!draft||!P())return;const d=draft,p=P(),M=p.model(d),y=keep?scrollY:null,ro=!EDIT;
+function draw(keep){const root=$('f44');if(!root||!draft||!P())return;const d=draft,p=P(),M=p.model(d),y=keep?scrollY:null,ro=!SOPED();
  if(D.forId!==d.id){D.forId=d.id;D.depth=0;D.S.clear();D.O.clear();D.menu=null;D.sec={};D.et=null;p.F.sel=null;p.F.nt=null}
  if(ro){p.F.sel=null;p.F.nt=null;D.et=null}
  const DN=['Overview','Outcomes','Full detail'],LK=d.links||[],sec=(id,cls,title,note,body)=>'<details class="f42card f44sec '+cls+'" data-sec="'+id+'"'+(D.sec[id]?' open':'')+'><summary>'+title+' <span>'+note+'</span></summary>'+body+'</details>';
@@ -3824,7 +3825,7 @@ function draw(keep){const root=$('f44');if(!root||!draft||!P())return;const d=dr
  root.innerHTML=h;const ab=root.parentElement.querySelector('.actions');if(ab)ab.hidden=false;window.__p248&&window.__p248.after();lines();requestAnimationFrame(lines);if(y!=null)scrollTo(0,y)}
 function click(e){if(window.__p248&&window.__p248.eat())return;const t=e.target.closest('button');if(!t)return;window.__p248&&window.__p248.anchor(t);const d=t.dataset,p=P(),F=p.F;
  {const FO={label:'f42ol',email:'f42ot',donow:'f42od',words:'f42oh',then:'f53t'},go=k=>{const n=$(FO[k]);if(n){n.focus();if(k!=='email'&&n.select)n.select()}};
- if(d.rm){if(!EDIT)return;if(D.rm!==d.rm){D.rm=d.rm;return draw(true)}D.rm=null;const a=d.rm.split('.'),M=p.model(draft);
+ if(d.rm){if(!SOPED())return;if(D.rm!==d.rm){D.rm=d.rm;return draw(true)}D.rm=null;const a=d.rm.split('.'),M=p.model(draft);
   if(a[0]==='s'){const s=M.steps[+a[1]];if(s)D.S.delete(s.name);F.sel=null;p.act('srm',a[1]);return}
   F.sel=[+a[1],+a[2]];F.nt=null;D.et=null;D.ek=null;
   if(a[0]==='o'){const o=M.O.list[+a[2]];if(o)D.O.delete(o.label);p.act('orm');return}
@@ -3843,14 +3844,14 @@ function click(e){if(window.__p248&&window.__p248.eat())return;const t=e.target.
  if(d.menu!=null){D.menu=D.menu===+d.menu?null:+d.menu;draw(true);const f=document.querySelector('.f44pm button');if(f)f.focus();return}
  if(d.s!=null){const M=p.model(draft),s=M.steps[+d.s];if(!s)return;if(sOpen(s)){setS(s.name,false);s.outs.forEach(o=>setO(o.label,false));if(F.sel&&F.sel[0]===+d.s){F.sel=null;F.nt=null;D.et=null}}else setS(s.name,true);D.menu=null;return draw(true)}
  if(d.o!=null||d.sel){const [i,j]=(d.o||d.sel).split('.').map(Number),o=p.model(draft).O.list[j];if(!o)return;const was=oOpen(o),on=F.sel&&F.sel[1]===j;F.nt=null;D.et=null;
-  if(d.sel||!was){setO(o.label,true);F.sel=EDIT?[i,j]:null}else{setO(o.label,false);if(on)F.sel=null}return draw(true)}
+  if(d.sel||!was){setO(o.label,true);F.sel=SOPED()?[i,j]:null}else{setO(o.label,false);if(on)F.sel=null}return draw(true)}
  if(d.et){D.et=d.et;draw(true);const n=$('f44eb');if(n)n.focus();return}
  if(d.etno){D.et=null;return draw(true)}
- if(d.etok){const x0=ITEMS.get(D.et),body=$('f44eb').value;if(!x0||!EDIT)return;if(body===x0.body){D.et=null;return draw(true)}const now=Date.now(),x={...x0,body,updatedAt:now,history:[...(x0.history||[]),{at:x0.updatedAt||now,body:x0.body,note:'Before edit in the SOP diagram'}].slice(-5)},{id,...data}=x;
+ if(d.etok){const x0=ITEMS.get(D.et),body=$('f44eb').value;if(!x0||!SOPED())return;if(body===x0.body){D.et=null;return draw(true)}const now=Date.now(),x={...x0,body,updatedAt:now,history:[...(x0.history||[]),{at:x0.updatedAt||now,body:x0.body,note:'Before edit in the SOP diagram'}].slice(-5)},{id,...data}=x;
   t.disabled=true;write(id,data).then(ok=>{if(!ok){t.disabled=false;return}ITEMS.set(id,x);D.et=null;try{renderList()}catch(e){}draw(true);toast('Email saved')});return}
  const a=d.a,v=d.v;if(!a)return;
  if(a==='odone'){F.sel=null;F.nt=null;D.et=null;return draw(true)}
- if(!EDIT)return;const M=p.model(draft);D.menu=null;
+ if(!SOPED())return;const M=p.model(draft);D.menu=null;
  if(a==='sadd'){setS('New check',true);p.act(a,v);draw(true);const n=document.querySelector('#f44 [data-sn="'+v+'"]');if(n){n.focus();n.select()}return}
  if(a==='oadd'){const s=M.steps[+v];if(s)setS(s.name,true);setO('New outcome',true);D.et=null;p.act(a,v);return}
  if(a==='ladd'){if(+v){const s=M.steps[+v-1];if(s)setS(s.name,true)}else D.sec.tl=true;const was=F.sec.tl;p.act(a,v);F.sec.tl=was;const n=[...document.querySelectorAll('#f44 [data-ln]')].pop();if(n)n.focus();return}
@@ -3868,7 +3869,7 @@ function mount(){const E=$('editor'),d=draft,p=P();
  const R=$('f44');R.onclick=click;R.oninput=input;window.__p248&&window.__p248.bind(R);R.onchange=e=>{p.onChange(e);const ab=E.querySelector('.actions');if(ab)ab.hidden=false};
  R.addEventListener('input',()=>{const ab=E.querySelector('.actions');if(ab)ab.hidden=false});
  R.addEventListener('toggle',e=>{const k=e.target.dataset&&e.target.dataset.sec;if(k)D.sec[k]=e.target.open},true);
- R.addEventListener('focusin',e=>{if(e.target.id==='f42ot'&&EDIT){e.target.select();p.tlist('')}});
+ R.addEventListener('focusin',e=>{if(e.target.id==='f42ot'&&SOPED()){e.target.select();p.tlist('')}});
  R.addEventListener('focusout',e=>{if(e.target.id==='f42ot')setTimeout(()=>{const L=$('f42tl');if(L&&!L.contains(document.activeElement)){L.hidden=true;const M=p.model(draft),o=p.F.sel&&M.O.list[p.F.sel[1]];if(o&&$('f42ot'))$('f42ot').value=o.tpl}},150)});
  R.onkeydown=e=>{const t=e.target;if(e.key==='Enter'&&t.id==='f42wn'){e.preventDefault();p.act('wadd')}else if(t.id==='f42ot'){const L=$('f42tl');if(e.key==='Enter'){e.preventDefault();const b=L&&!L.hidden&&L.querySelector('button');if(b)b.click()}else if(e.key==='Escape'){L.hidden=true;t.blur()}else if(e.key==='ArrowDown'){e.preventDefault();L.querySelector('button')?.focus()}}
   else if(t.closest&&t.closest('#f42tl')&&(e.key==='ArrowDown'||e.key==='ArrowUp')){e.preventDefault();const n=e.key==='ArrowDown'?t.nextElementSibling:t.previousElementSibling;if(n&&n.tagName==='BUTTON')n.focus();else if(e.key==='ArrowUp')$('f42ot').focus()}
@@ -3968,7 +3969,7 @@ function bind(R){
  R.addEventListener('pointerdown',e=>{const h=e.target.closest('.f48rs');if(h){const v=vp(),b=v.getBoundingClientRect();e.preventDefault();e.stopPropagation();try{h.setPointerCapture(e.pointerId)}catch(_){}
   const L=h.classList.contains('l'),x0=e.clientX,y0=e.clientY,max=v.parentElement.clientWidth,mv=m=>{const hh=Math.max(260,b.height+m.clientY-y0),ww=Math.max(320,Math.min(max,b.width+(L?-1:1)*2*(m.clientX-x0)));v.style.height=hh+'px';v.style.width=ww>=max-4?'':ww+'px';S.set('dgSize',{h:Math.round(hh),w:ww>=max-4?0:Math.round(ww)})},
   up=()=>{h.removeEventListener('pointermove',mv);h.removeEventListener('pointerup',up);h.removeEventListener('pointercancel',up);V.moved=true;setTimeout(()=>{V.moved=false},0)};h.addEventListener('pointermove',mv);h.addEventListener('pointerup',up);h.addEventListener('pointercancel',up);return}
-  const v=e.target.closest('#f44vp');if(!v||e.target.closest('input,textarea,select,.f42tsl')||(e.pointerType==='mouse'&&e.button!==0))return;V.pts.set(e.pointerId,[e.clientX,e.clientY]);const bxe=EDIT&&!e.target.closest('.f44pt,.f44pm,.f44pan,.f44k')&&e.target.closest('.f44s,.f44o');
+  const v=e.target.closest('#f44vp');if(!v||e.target.closest('input,textarea,select,.f42tsl')||(e.pointerType==='mouse'&&e.button!==0))return;V.pts.set(e.pointerId,[e.clientX,e.clientY]);const bxe=SOPED()&&!e.target.closest('.f44pt,.f44pm,.f44pan,.f44k')&&e.target.closest('.f44s,.f44o');
   if(V.pts.size===2){const [a,b]=[...V.pts.values()];V.pinch=Math.hypot(a[0]-b[0],a[1]-b[1]);V.drag=null;V.moved=true}else{V.drag={x:e.clientX,y:e.clientY,ox:V.x,oy:V.y,bx:bxe?window.__p251.boxOf(bxe):null};V.moved=false}});
  R.addEventListener('pointermove',e=>{if(!V.pts.has(e.pointerId))return;V.pts.set(e.pointerId,[e.clientX,e.clientY]);const v=vp();if(!v)return;
   if(V.pts.size===2&&V.pinch){const [a,b]=[...V.pts.values()],dd=Math.hypot(a[0]-b[0],a[1]-b[1]),r=v.getBoundingClientRect();if(dd>0){zoomAt(V.z*dd/V.pinch,(a[0]+b[0])/2-r.left,(a[1]+b[1])/2-r.top);V.pinch=dd}return}
@@ -4075,7 +4076,7 @@ function ed(M,o){const g=grp(M,o),later=M.steps.map((s,i)=>i+1).filter(n=>n>o.n)
   '<div class="f42row" style="margin-top:10px"><button type="button" class="btn sm sec" data-a="odone">Done</button></div>'}
 function write(M){draft.body=p217Write(draft.body,M.O);P2().mark();window.__p244.draw(true)}
 function setThen(j,v){const M=P2().model(draft),o=M.O.list[j];if(!o)return;o.then=v===''?'':v==='stop'?'stop':/^\d+$/.test(String(v))?+v:v;if(v===''){M.O.only=(M.O.only||[]).filter(g=>p217Low(g.label)!==p217Low(o.label))}write(M)}
-document.addEventListener('change',e=>{const t=e.target;if(!t.closest||!t.closest('#f44')||!EDIT)return;const F=P2().F;if(!F.sel)return;
+document.addEventListener('change',e=>{const t=e.target;if(!t.closest||!t.closest('#f44')||!SOPED())return;const F=P2().F;if(!F.sel)return;
  if(t.dataset.then){const M=P2().model(draft),o=M.O.list[F.sel[1]];if(!o)return;const v=t.value;o.then=v==='stop'?'stop':/^\d+$/.test(v)?+v:v;write(M);const n=$('f53t');if(n)n.focus()}
  else if(t.dataset.only){const M=P2().model(draft),o=M.O.list[F.sel[1]];if(!o)return;M.O.only=M.O.only||[];let g=grp(M,o);if(!g){g={label:o.label,steps:[]};M.O.only.push(g)}const n=+t.dataset.only;g.steps=g.steps.filter(x=>x!==n);if(t.checked)g.steps.push(n);S.open=true;write(M)}},true);
 document.addEventListener('toggle',e=>{if(e.target.classList&&e.target.classList.contains('f53d'))S.open=e.target.open},true);
@@ -4111,7 +4112,7 @@ function finish(el){const L=st.link;if(!L)return;const idx=+el.id.slice(4),M=P2(
  window.__p253.setThen(L.j,idx+1);toast('“'+o.label+'” now leads to step '+(idx+1))}
 const stepAt=(x,y)=>{const e=document.elementFromPoint(x,y);return e&&e.closest?e.closest('#f44web .f44s'):null};
 function pick(){const L=st.link;if(!L)return;L.mode='pick';if(L.svg){L.svg.remove();L.svg=null}if(!$('f54hint')){const h=document.createElement('div');h.id='f54hint';h.setAttribute('role','status');h.innerHTML='Tap the step this answer leads to <button type="button">Cancel</button>';document.body.appendChild(h);h.querySelector('button').onclick=e=>{e.stopPropagation();cancel()}}}
-window.addEventListener('pointerdown',e=>{const t=e.target.closest&&e.target.closest('.f44pt.lk');if(!t||!EDIT||(e.pointerType==='mouse'&&e.button!==0))return;e.stopPropagation();e.preventDefault();cancel();
+window.addEventListener('pointerdown',e=>{const t=e.target.closest&&e.target.closest('.f44pt.lk');if(!t||!SOPED()||(e.pointerType==='mouse'&&e.button!==0))return;e.stopPropagation();e.preventDefault();cancel();
  const r=t.getBoundingClientRect(),sx=r.left+r.width/2,sy=r.top+r.height/2,svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.id='f54line';svg.innerHTML='<line x1="'+sx+'" y1="'+sy+'" x2="'+sx+'" y2="'+sy+'"/>';document.body.appendChild(svg);
  st.link={j:+t.dataset.lk,sx,sy,x0:e.clientX,y0:e.clientY,moved:false,svg,mode:'drag'};$('f44').classList.add('f54linking')},true);
 window.addEventListener('pointermove',e=>{const L=st.link;if(!L||L.mode!=='drag')return;if(Math.hypot(e.clientX-L.x0,e.clientY-L.y0)>5)L.moved=true;const ln=L.svg.firstChild;ln.setAttribute('x2',e.clientX);ln.setAttribute('y2',e.clientY);
@@ -4123,7 +4124,7 @@ window.addEventListener('click',e=>{const t=e.target;if(!t.closest)return;
  if(t.closest('.f44pt.lk')){e.stopPropagation();e.preventDefault();return}
  if(st.link&&st.link.mode==='pick'){if(t.closest('#f54hint'))return;e.stopPropagation();e.preventDefault();const s=t.closest('#f44web .f44s');if(s)finish(s);else cancel();return}
  const ms=t.closest('[data-ms]');if(ms)st.ms=ms.dataset.ms;
- if(!EDIT||!draft)return;
+ if(!SOPED()||!draft)return;
  if(t.closest('.f44pm [data-a="oadd"]'))setSide('New outcome',st.ms);
  const sw=t.closest('[data-omi$=".side"]');if(sw){e.stopPropagation();e.preventDefault();const a=sw.dataset.omi.split('.'),M=P2().model(draft),o=M.O.list[+a[1]];if(!o)return;const q=M.steps[+a[0]].outs.indexOf(o);setSide(o.label,side(o,q)==='l'?'r':'l');window.__p244.D.om=null;window.__p244.draw(true)}},true);
 /* a menu that opens near the edge of the diagram area pulls the diagram so the whole menu shows */
@@ -4140,6 +4141,273 @@ const css=document.createElement('style');css.textContent=`
 .f44s.f54tg{border-color:var(--k-sop,var(--link))!important;box-shadow:0 0 0 3px color-mix(in srgb,var(--k-sop,var(--link)) 35%,transparent)}.f44s.q.f54tg{background:var(--k-sop,var(--link))!important}.f44s.q.f54tg::before{background:var(--k-sop-bg,var(--accbg))}
 #f54hint{position:fixed;left:50%;top:14px;transform:translateX(-50%);z-index:1600;background:var(--ink);color:var(--card);border-radius:999px;padding:8px 8px 8px 16px;font-size:14px;box-shadow:0 8px 24px rgba(0,0,0,.3);display:flex;gap:12px;align-items:center}
 #f54hint button{font:inherit;font-size:13px;border:1px solid currentColor;background:transparent;color:inherit;border-radius:999px;padding:3px 10px;cursor:pointer}`;document.head.appendChild(css);
+})();
+
+/* ---------- P2A 2.55: New SOP = blank, copy an existing SOP, or import. "+ Add SOP" (SOPs tab) and "SOP" in the
+   diagram menus open one small chooser instead of making an empty SOP straight away. ---------- */
+(function(){
+const st={topic:'',res:null};
+const steps=x=>{try{return window.__p242.model(x).steps.length}catch(e){return (String(x.body||'').match(/^\s*\d+[.)]\s/gm)||[]).length}};
+const tplsOf=sid=>[...ITEMS.values()].filter(t=>isTpl(t)&&(t.sopId===sid||(t.parents||[]).includes(sid)));
+function close(v){const d=$('p255dlg');if(d)d.remove();document.removeEventListener('keydown',key,true);const r=st.res;st.res=null;if(r)r(v===undefined?null:v)}
+function key(e){if(e.key==='Escape'&&$('p255dlg')){e.stopPropagation();e.preventDefault();close(null)}}
+function open(topic){if($('p255dlg'))close(null);st.topic=topic||'';
+ return new Promise(res=>{st.res=res;const d=document.createElement('div');d.id='p255dlg';
+  d.innerHTML='<div class="p255box" role="dialog" aria-modal="true" aria-labelledby="p255t"><div class="p255hd"><h3 id="p255t">New SOP'+(st.topic?' <span>in '+esc(st.topic)+'</span>':'')+'</h3><button type="button" class="p255x" data-k="x" aria-label="Close">×</button></div>'+
+  '<p class="p255sub">How do you want to start?</p><div class="p255ways" role="list">'+
+  way('blank','▢','Blank','Empty steps to fill in.')+way('copy','⧉','Copy an existing SOP','Same steps, answers and templates. Change what differs.')+way('imp','⤓','Import','From a Word or Markdown file, Rovo, or the SOP Builder.')+
+  '</div><div class="p255pane" id="p255pane" hidden></div></div>';
+  d.addEventListener('mousedown',e=>{if(e.target===d)close(null)});
+  d.querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>pick(b.dataset.k));
+  document.body.appendChild(d);document.addEventListener('keydown',key,true);d.querySelector('[data-k="blank"]').focus()})}
+const way=(k,i,t,s)=>'<button type="button" class="p255way" data-k="'+k+'" role="listitem" aria-expanded="false"><i aria-hidden="true">'+i+'</i><b>'+t+'</b><span>'+s+'</span></button>';
+function pick(k){if(k==='x')return close(null);if(k==='blank')return close('blank');
+ const P=$('p255pane');document.querySelectorAll('.p255way').forEach(b=>{const on=b.dataset.k===k;b.classList.toggle('on',on);b.setAttribute('aria-expanded',String(on))});P.hidden=false;
+ if(k==='imp'){P.innerHTML='<div class="p255h">Import from</div><div class="p255row"><button type="button" class="btn sm" data-i="file">⤓ Word or Markdown file</button><button type="button" class="btn sm sec" data-i="bld">SOP Builder (type or dictate)</button></div><p class="p255note">For Rovo: copy Rovo\'s answer into a .md file, or paste it in the SOP Builder.</p>';
+  P.querySelectorAll('[data-i]').forEach(b=>b.onclick=()=>{const i=b.dataset.i;close(null);if(i==='file'){if(view!=='sop'){view='sop';S.set('tab',view);renderAll()}$('impKindFile').click()}else $('bldBtn').click()});P.querySelector('button').focus();return}
+ /* copy */
+ P.innerHTML='<label class="p255h" for="p255q">Which SOP do you want to copy?</label><input class="t" id="p255q" type="search" placeholder="Search SOPs by name or topic" autocomplete="off"><div class="p255list" id="p255l" role="listbox" aria-label="SOPs"></div><div id="p255cfg"></div>';
+ const q=$('p255q'),L=$('p255l');
+ const fill=()=>{const v=q.value.trim().toLowerCase(),A=list('sop').filter(x=>x.status!=='retired'&&(!v||(x.title+' '+(x.topic||'')).toLowerCase().includes(v))).sort((a,b)=>(st.topic&&(b.topic===st.topic)-(a.topic===st.topic))||byTitle(a,b));
+  L.innerHTML=A.map(x=>'<button type="button" role="option" data-s="'+esc(x.id)+'"><b>'+esc(x.title||'Untitled')+'</b><span>'+[x.topic||'No topic',steps(x)+' step'+(steps(x)===1?'':'s'),tplsOf(x.id).length+' template'+(tplsOf(x.id).length===1?'':'s'),x.status].map(esc).join(' · ')+'</span></button>').join('')||'<div class="p255note">No SOP matches.</div>';
+  L.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>cfg(b.dataset.s))};
+ q.oninput=fill;fill();q.focus()}
+function cfg(sid){const s=ITEMS.get(sid);if(!s)return;document.querySelectorAll('#p255l [data-s]').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.s===sid)));const n=tplsOf(sid).length,C=$('p255cfg');
+ C.innerHTML='<label class="p255h" for="p255n">Name of the new SOP</label><input class="t" id="p255n" value="'+esc('Copy of '+s.title)+'">'+
+  (n?'<label class="p255ck"><input type="checkbox" id="p255tp" checked> Use the same '+n+' email and ticket template'+(n===1?'':'s')+' <span>(shared, not duplicated)</span></label>':'')+
+  '<div class="p255row"><button type="button" class="btn sm" id="p255go">Make the copy</button><button type="button" class="btn sm sec" id="p255no">Cancel</button></div>';
+ const nm=$('p255n');nm.focus();nm.select();nm.onkeydown=e=>{if(e.key==='Enter')$('p255go').click()};$('p255no').onclick=()=>close(null);
+ $('p255go').onclick=async()=>{const t=nm.value.trim();if(!t){nm.focus();toast('Give the new SOP a name');return}
+  if(list('sop').some(x=>x.title.trim().toLowerCase()===t.toLowerCase())){toast('An SOP with that name already exists. Pick another name.');nm.focus();return}
+  $('p255go').disabled=true;const id=await copySop(sid,t,!$('p255tp')||$('p255tp').checked);close(id)}}
+async function copySop(sid,title,keepT){const s=ITEMS.get(sid);if(!s)return null;const id=newId('sop'),now=Date.now(),x=clone(s);delete x.id;
+ Object.assign(x,{title,status:'draft',createdAt:now,updatedAt:now,reviewedAt:0,history:[],copiedFrom:sid,notes:('Copied from “'+s.title+'” on '+new Date(now).toLocaleDateString()+'.'+(s.notes?'\n'+s.notes:'')).trim()});
+ if(st.topic)x.topic=st.topic;
+ if(!await write(id,x))return null;ITEMS.set(id,{id,...x});
+ if(keepT){for(const t of tplsOf(sid)){const p=[...(t.parents||[])];if(!p.includes(id)){p.push(id);const u={parents:p,updatedAt:now};if(await patch(t.id,u))ITEMS.set(t.id,{...ITEMS.get(t.id),...u})}}}
+ return id}
+function show(id,msg){const x=ITEMS.get(id);if(!x)return;if(modalId||view==='diagram'){openItem(id)}else{view='sop';S.set('tab',view);sel.sop=id;S.set('sel',sel);draft=clone(x);dirty=false;ai=null;renderAll()}
+ toast(msg);setTimeout(()=>{const e=$('f_title');if(e){e.focus();e.select()}},60)}
+/* "+ Add SOP" on the SOPs tab */
+const add0=$('addBtn').onclick;
+$('addBtn').onclick=async function(){if(view!=='sop')return add0.apply(this,arguments);if(dirty)return confirmLeave();const r=await open('');
+ if(r==='blank')return add0.call(this);if(r)show(r,'Copied. Rename it if needed and change what differs, then Save.')};
+/* "SOP" in the diagram menus (topic dots and Add to the diagram) */
+const new0=newIn;
+newIn=async function(kind,s,topic,quiet){if(kind!=='sop')return new0.apply(this,arguments);const r=await open(topic||'');
+ if(r==='blank')return new0.apply(this,arguments);if(r){show(r,'Copied'+(topic?' into '+topic:'')+'. Change what differs, then Save.');return r}return null};
+/* 2.10 hid "+ Add SOP" on the SOPs tab; bring it back in Edit mode as "+ New SOP", the one place to start an SOP */
+const lab=()=>{document.body.classList.toggle('sopedit',!!(EDIT||CAN));const b=$('addBtn');if(b&&view==='sop'){b.textContent='+ New SOP';b.title='Start a new SOP: blank, a copy of an existing SOP, or an import'}};
+{const _ra=renderAll;renderAll=function(){const r=_ra.apply(this,arguments);try{lab()}catch(e){}return r}}lab();
+window.__p255={open,copySop,tplsOf};
+const css=document.createElement('style');css.textContent=`
+body.p210sop.sopedit #addBtn,body.sopedit #f44 .ed-only,body.sopedit .f44act .ed-only,body.sopedit #f42 .ed-only{display:inline-flex!important}
+body.sopedit .f44act #discardBtn[hidden]{display:none!important}
+#p255dlg{position:fixed;inset:0;z-index:2000;background:rgba(10,20,30,.45);display:flex;align-items:flex-start;justify-content:center;padding:8vh 16px 16px;overflow:auto}
+.p255box{background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.35);padding:18px 20px 20px;max-width:560px;width:100%;font-family:var(--font)}
+.p255hd{display:flex;align-items:center;gap:8px}.p255hd h3{margin:0;font-size:18px;color:var(--title);flex:1}.p255hd h3 span{font-weight:500;color:var(--mut);font-size:14px}
+.p255x{border:0;background:none;font-size:22px;line-height:1;color:var(--mut);cursor:pointer;padding:4px 8px;border-radius:8px}.p255x:hover{background:var(--bg)}
+.p255sub{margin:4px 0 12px;color:var(--mut)}
+.p255ways{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.p255way{display:flex;flex-direction:column;align-items:flex-start;gap:4px;text-align:left;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:12px;padding:12px;cursor:pointer;font:inherit;min-height:44px}
+.p255way i{font-style:normal;font-size:18px;color:var(--k-sop)}.p255way b{font-size:14px;color:var(--title)}.p255way span{font-size:12.5px;color:var(--mut);line-height:1.35}
+.p255way:hover{border-color:var(--k-sop)}.p255way.on{border-color:var(--k-sop);background:var(--k-sop-bg);box-shadow:inset 0 0 0 1px var(--k-sop)}
+.p255way:focus-visible,.p255list button:focus-visible{outline:2px solid var(--k-sop);outline-offset:2px}
+.p255pane{margin-top:14px;border-top:1px solid var(--line);padding-top:12px}
+.p255h{display:block;font-weight:600;font-size:13px;color:var(--title);margin:0 0 6px}
+.p255list{max-height:240px;overflow:auto;border:1px solid var(--line);border-radius:10px;margin:8px 0 12px}
+.p255list button{display:block;width:100%;text-align:left;border:0;border-bottom:1px solid var(--line);background:none;color:var(--ink);padding:8px 10px;cursor:pointer;font:inherit}
+.p255list button:last-child{border-bottom:0}.p255list button:hover{background:var(--bg)}.p255list button[aria-selected="true"]{background:var(--k-sop-bg)}
+.p255list b{display:block;font-size:13.5px;color:var(--title)}.p255list span{font-size:12px;color:var(--mut)}
+.p255ck{display:flex;gap:8px;align-items:center;margin:10px 0 12px;font-size:13.5px}.p255ck span{color:var(--mut)}
+.p255row{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}.p255note{color:var(--mut);font-size:12.5px;margin:8px 0 0}
+#p255cfg .t{width:100%;box-sizing:border-box}
+@media (max-width:560px){.p255ways{grid-template-columns:1fr}.p255way{flex-direction:row;flex-wrap:wrap;align-items:center}.p255way span{flex-basis:100%}}`;
+document.head.appendChild(css);
+})();
+
+/* ---------- P2A 2.56: a calm SOP page (Hick's law). SOPs tab = search picker + an info strip + the diagram.
+   Everything else sits in one Tools menu. Grigor 2026-11-20: status, name, edited by (name + date), tags + when they
+   were optimized (amber when never), topic, Confluence link (+ admin-only "checked for updates"), notes (send to admin;
+   admins get a separate "Notes to review" box, done notes kept in a folded history). Only admins can approve.
+   Strip changes wait for the same Save as the diagram. ---------- */
+(function(){
+const ADMIN=()=>!!OWNER,CANED=()=>!!(EDIT||CAN),on=()=>view==='sop';
+const F=Object.assign({conf:false,notes:false},S.get('p256fold',{}));
+let PICK=false,PQ='',BUSYTAGS=false;
+function me(){try{const s=JSON.parse(localStorage.getItem('evop2a.session')||'null');if(s&&s.name)return s.name}catch(e){}
+ try{const u=USER;for(const k of ['name','displayName','fullName']){const v=u&&u[k];if(typeof v==='string'&&v)return v}}catch(e){}return OWNER?'Admin':'Editor'}
+const day=t=>t?new Date(t).toLocaleDateString(undefined,{day:'numeric',month:'short'})+(new Date(t).getFullYear()!==new Date().getFullYear()?' '+new Date(t).getFullYear():''):'';
+const today=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
+const dot=s=>'<i class="p256dot '+esc(s||'draft')+'" aria-hidden="true"></i>';
+const SL={draft:'Draft',review:'Pending',approved:'Approved',retired:'Retired'};
+function markD(){if(!dirty){dirty=true;const s=$('saveState');if(s){s.textContent='Unsaved changes';s.classList.add('dirty')}if($('discardBtn'))$('discardBtn').hidden=false}try{syncModalState()}catch(e){}}
+function chg(f){if(!draft||!CANED())return;f(draft);markD();strip()}
+/* ---------- picker ---------- */
+function pickHtml(){const cur=draft&&draft.kind==='sop'?draft:null,open=PICK||!cur;
+ const q=PQ.trim().toLowerCase(),L=list('sop').filter(x=>!q||(x.title+' '+(x.tags||[]).join(' ')).toLowerCase().includes(q)).sort((a,b)=>(a.status==='retired')-(b.status==='retired')||byTitle(a,b));
+ return (cur?'<button type="button" class="p256cur" id="p256cur" aria-expanded="'+open+'" aria-haspopup="listbox">'+dot(cur.status)+'<b>'+esc(cur.title||'Untitled')+'</b><span class="cv" aria-hidden="true">▾</span><span class="sr">Change SOP</span></button>':'')+
+  (open?'<div class="p256pp'+(cur?' pop':'')+'"><input class="t" id="p256q" type="search" placeholder="Search SOPs" aria-label="Search SOPs" autocomplete="off" value="'+esc(PQ)+'"><ul class="p256pl" role="listbox" aria-label="SOPs">'+
+   (L.map(x=>'<li><button type="button" role="option" data-p256="'+esc(x.id)+'" aria-selected="'+(cur&&cur.id===x.id)+'" title="'+esc(SL[x.status]||'')+'">'+dot(x.status)+'<span>'+esc(x.title||'Untitled')+'</span></button></li>').join('')||'<li class="mut p256none">No SOP matches “'+esc(PQ)+'”.</li>')+'</ul></div>':'')}
+function choose(id){if(dirty&&draft&&draft.id!==id)return confirmLeave();PICK=false;PQ='';const x=ITEMS.get(id);if(!x)return;sel.sop=id;S.set('sel',sel);draft=clone(x);dirty=false;ai=null;armRm=false;renderAll();scrollTo({top:0})}
+/* ---------- info strip ---------- */
+function stripHtml(){const d=draft,ro=!CANED(),ad=ADMIN(),RO=ro?' disabled':'';
+ const by=d.p256by?'Edited by <b>'+esc(d.p256by)+'</b>, '+day(d.p256at):d.updatedAt?'Edited '+day(d.updatedAt)+' <span class="mut">(name not recorded yet)</span>':'Not edited yet';
+ const T=TAGAI&&TAGAI.forId===d.id?TAGAI:null,tags=d.tags||[];
+ const st=['draft','review','approved'].concat(d.status==='retired'?['retired']:[]).map(k=>'<button type="button" class="p256st '+k+'" data-st="'+k+'" aria-pressed="'+(d.status===k)+'"'+(ro||(k==='approved'&&!ad&&d.status!=='approved')?' disabled':'')+(k==='approved'&&!ad?' title="Only an admin can approve"':'')+'>'+dot(k)+SL[k]+'</button>').join('');
+ const notes=d.p256notes||[],open=notes.filter(n=>!n.done);
+ const sec=(k,title,sum,body)=>'<div class="p256sec'+(F[k]?' open':'')+'"><button type="button" class="p256sh" data-fold="'+k+'" aria-expanded="'+!!F[k]+'"><span class="cv" aria-hidden="true">▸</span>'+title+'<span class="p256sum">'+sum+'</span></button>'+(F[k]?'<div class="p256sb">'+body+'</div>':'')+'</div>';
+ const conf=d.url?'<a class="lk" href="'+esc(d.url)+'" target="_blank" rel="noopener">Open the Confluence page ↗</a>':'<span class="mut">No link yet</span>';
+ const chk=d.sourceChecked?'Checked for updates '+day(Date.parse(d.sourceChecked+'T12:00:00')):'<span class="p256amb">Not checked yet</span>';
+ return '<div class="p256row1"><div class="p256seg" role="group" aria-label="Status">'+st+'</div>'+
+  '<span class="p256by">'+by+'</span></div>'+
+  '<div class="p256row2"><span class="p256lab">Topic</span><input class="t p256topic" id="p256topic" list="p256tl" aria-label="Topic" placeholder="No topic" value="'+esc(d.topic||'')+'"'+(ro?' readonly':'')+'><datalist id="p256tl">'+[...new Set(list('sop').map(x=>x.topic).filter(Boolean))].sort().map(t=>'<option value="'+esc(t)+'">').join('')+'</datalist>'+
+  '<span class="p256lab">Tags</span><span class="p256tags">'+tags.slice(0,F.allTags?tags.length:6).map((t,i)=>'<span class="p256tag">#'+esc(t)+(ro?'':'<button type="button" data-tx="'+i+'" aria-label="Remove tag '+esc(t)+'">×</button>')+'</span>').join('')+
+   (tags.length>6?'<button type="button" class="lnkbtn" data-fold="allTags">'+(F.allTags?'Show fewer':'+'+(tags.length-6)+' more')+'</button>':'')+
+   (ro?'':'<input class="p256tin" id="p256tin" placeholder="+ tag" aria-label="Add a tag">')+'</span>'+
+  '<span class="p256opt">'+(d.p256tagsAt?'Tags optimized '+day(d.p256tagsAt):'<span class="p256amb">Tags not optimized yet</span>')+(ro?'':' <button type="button" class="lnkbtn" id="p256sug"'+(T&&T.busy?' disabled':'')+'>'+(T&&T.busy?'Suggesting…':'✨ Optimize tags')+'</button>')+'</span></div>'+
+  (T&&!T.busy&&(T.err||(T.list&&T.list.length))?'<div class="p256row2 p256tsug">'+(T.err?'<span class="mut">'+esc(T.err)+'</span>':T.list.map((s,i)=>'<button type="button" class="p256tag sug" data-ts="'+i+'">+ #'+esc(s)+'</button>').join('')+'<button type="button" class="lnkbtn" id="p256tall">Add all</button>')+'<button type="button" class="lnkbtn" id="p256tno">Dismiss</button></div>':'')+
+  sec('conf','Confluence',d.url?'linked'+(ad?' · '+(d.sourceChecked?'checked '+day(Date.parse(d.sourceChecked+'T12:00:00')):'not checked'):''):'no link',
+   '<label class="p256lab" for="p256url">Page link</label><input class="t" id="p256url" type="url" placeholder="https://… the Confluence page" value="'+esc(d.url||'')+'"'+(ro?' readonly':'')+'><div class="p256line">'+conf+'</div>'+
+   (ad?'<div class="p256line p256adm"><span class="p256badge">Admin</span>'+chk+' <input type="date" class="t p256date" id="p256chkd" aria-label="Date the page was checked" value="'+esc(d.sourceChecked||'')+'"><button type="button" class="btn sm sec" id="p256chk">✓ Checked today</button></div>':''))+
+  sec('notes','Notes',notes.length?open.length+' open'+(open.some(n=>n.sent)?' · '+open.filter(n=>n.sent).length+' sent to admin':''):'none',
+   (open.length?'<ul class="p256nl">'+open.map(n=>noteLi(n,ro)).join('')+'</ul>':'<p class="mut">No open notes.</p>')+
+   (ro?'':'<textarea class="t" id="p256nt" rows="2" placeholder="A quick note to deal with later"></textarea><div class="p256line"><button type="button" class="btn sm sec" id="p256nadd">Add note</button><button type="button" class="btn sm sec" id="p256nsend">Add and send to admin for review</button></div>')+
+   (notes.some(n=>n.done)?'<details class="p256hist"><summary>Done ('+notes.filter(n=>n.done).length+')</summary><ul class="p256nl">'+notes.filter(n=>n.done).map(n=>noteLi(n,true)).join('')+'</ul></details>':''))}
+function noteLi(n,ro){return '<li><span class="p256nx">'+esc(n.text)+'</span><span class="p256nm">'+esc(n.by||'')+', '+day(n.at)+(n.sent&&!n.done?' · <b>sent to admin</b>':'')+(n.done?' · done by '+esc(n.doneBy||'')+', '+day(n.doneAt):'')+'</span>'+
+ (ro?'':'<span class="p256na">'+(n.sent?'':'<button type="button" class="lnkbtn" data-ns="'+esc(n.id)+'">Send to admin</button>')+(ADMIN()?'<button type="button" class="lnkbtn" data-nd="'+esc(n.id)+'">Mark done</button>':'')+'<button type="button" class="lnkbtn" data-nr="'+esc(n.id)+'">Remove</button></span>')+'</li>'}
+function strip(){const w=$('p256strip');if(!w)return;if(!draft||draft.kind!=='sop'){w.hidden=true;return}w.hidden=false;const a=document.activeElement,aid=a&&a.id,ss=a&&a.selectionStart;w.innerHTML=stripHtml();if(aid&&$(aid)&&w.contains($(aid))){$(aid).focus();try{if(ss!=null)$(aid).setSelectionRange(ss,ss)}catch(e){}}}
+function addNote(send){const t=($('p256nt').value||'').trim();if(!t){$('p256nt').focus();return}chg(d=>{d.p256notes=[...(d.p256notes||[]),{id:'n'+Date.now().toString(36),text:t,by:me(),at:Date.now(),sent:!!send}]});F.notes=true;strip();toast(send?'Note added for the admin. Save to send it.':'Note added. Save to keep it.')}
+/* ---------- Tools menu ---------- */
+const HIDE=new Set(['addBtn','p256tw']);
+function toolItems(){const R=document.querySelector('#listTitle .r'),out=[];if(!R)return out;
+ [...R.children].forEach(b=>{if(b.tagName!=='BUTTON'||HIDE.has(b.id)||b.hidden||b.id==='p210mw')return;if(b.classList.contains('ed-only')&&!CANED())return;out.push([b.id,b.textContent.trim(),b.title||''])});
+ document.querySelectorAll('#p210mp [data-p210]').forEach(b=>{const t=$(b.dataset.p210);if(t&&!out.some(o=>o[0]===t.id))out.push([t.id,b.textContent.trim(),t.title||''])});
+ return out}
+function nrev(){let n=0;list('sop').forEach(x=>(x.p256notes||[]).forEach(o=>{if(o.sent&&!o.done)n++}));return n}
+function toolsMenu(e){e.stopPropagation();const old=$('p256tm');if(old){old.remove();$('p256tb').setAttribute('aria-expanded','false');return}
+ const m=document.createElement('div');m.id='p256tm';m.className='p256tm';m.setAttribute('role','menu');const n=nrev();
+ m.innerHTML=(ADMIN()?'<button type="button" role="menuitem" data-t="notes">Notes to review'+(n?' <span class="p256n">'+n+'</span>':'')+'</button><hr>':'')+
+  toolItems().map(([id,t,ti])=>'<button type="button" role="menuitem" data-t="'+esc(id)+'" title="'+esc(ti)+'">'+esc(t)+'</button>').join('')+
+  '<hr><button type="button" role="menuitem" data-t="classic">'+(document.body.classList.contains('p256classic')?'Hide the full list and filters':'Show the full list and filters')+'</button>';
+ $('p256tw').appendChild(m);$('p256tb').setAttribute('aria-expanded','true');m.querySelector('button')?.focus();
+ m.onclick=ev=>{const b=ev.target.closest('[data-t]');if(!b)return;m.remove();$('p256tb').setAttribute('aria-expanded','false');const t=b.dataset.t;
+  if(t==='notes')return notesBox();if(t==='classic'){document.body.classList.toggle('p256classic');S.set('p256classic',document.body.classList.contains('p256classic'));renderAll();return}
+  const x=$(t);if(x)x.click()}}
+document.addEventListener('click',e=>{const m=$('p256tm');if(m&&!e.target.closest('#p256tw')){m.remove();$('p256tb')?.setAttribute('aria-expanded','false')}
+ if(PICK&&draft&&!e.target.closest('#p256pick')){PICK=false;PQ='';pick()}});
+document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;const m=$('p256tm');if(m){m.remove();$('p256tb').focus();return}if(PICK&&draft){PICK=false;PQ='';pick();$('p256cur')?.focus()}});
+/* ---------- Notes to review (admins) ---------- */
+function notesBox(){const ex=$('p256nb');if(ex)ex.remove();const d=document.createElement('div');d.id='p256nb';
+ const all=[];list('sop').forEach(x=>(x.p256notes||[]).forEach(n=>{if(n.sent)all.push({x,n})}));const open=all.filter(a=>!a.n.done).sort((a,b)=>a.n.at-b.n.at),done=all.filter(a=>a.n.done).sort((a,b)=>b.n.doneAt-a.n.doneAt);
+ const li=(a,isDone)=>'<li><b class="p256nbt">'+esc(a.x.title)+'</b><span class="p256nx">'+esc(a.n.text)+'</span><span class="p256nm">'+esc(a.n.by||'')+', '+day(a.n.at)+(isDone?' · done by '+esc(a.n.doneBy||'')+', '+day(a.n.doneAt):'')+'</span><span class="p256na"><button type="button" class="lnkbtn" data-o="'+esc(a.x.id)+'">Open SOP</button>'+(isDone?'':'<button type="button" class="btn sm" data-d="'+esc(a.x.id)+'|'+esc(a.n.id)+'">Mark done</button>')+'</span></li>';
+ d.innerHTML='<div class="p256nbx" role="dialog" aria-modal="true" aria-labelledby="p256nbh"><div class="p256hd"><h3 id="p256nbh">Notes to review</h3><button type="button" class="p255x" data-c="1" aria-label="Close">×</button></div>'+
+  (open.length?'<ul class="p256nl">'+open.map(a=>li(a,false)).join('')+'</ul>':'<p class="mut">No notes waiting. Notes people send to the admin from an SOP show up here.</p>')+
+  (done.length?'<details class="p256hist"><summary>Done ('+done.length+')</summary><ul class="p256nl">'+done.map(a=>li(a,true)).join('')+'</ul></details>':'')+'</div>';
+ document.body.appendChild(d);d.querySelector('[data-c]').focus();
+ const close=()=>{d.remove();document.removeEventListener('keydown',k,true)},k=e=>{if(e.key==='Escape'){e.stopPropagation();close()}};document.addEventListener('keydown',k,true);
+ d.onclick=async e=>{if(e.target===d||e.target.closest('[data-c]'))return close();const o=e.target.closest('[data-o]');if(o){close();if(view!=='sop'){view='sop';S.set('tab',view)}return choose(o.dataset.o)}
+  const b=e.target.closest('[data-d]');if(!b)return;const [sid,nid]=b.dataset.d.split('|'),x=ITEMS.get(sid);if(!x)return;b.disabled=true;
+  const upd=n=>n.id===nid?{...n,done:true,doneBy:me(),doneAt:Date.now()}:n,notes=(x.p256notes||[]).map(upd);
+  if(await patch(sid,{p256notes:notes})){ITEMS.set(sid,{...x,p256notes:notes});if(draft&&draft.id===sid)draft.p256notes=(draft.p256notes||[]).map(upd);toast('Marked done. It stays in the Done list.');notesBox();strip()}else b.disabled=false}}
+/* ---------- layout ---------- */
+function ensure(){const card=$('listTitle')&&$('listTitle').closest('.card');if(!card)return;
+ if(!$('p256tw')){const w=document.createElement('span');w.id='p256tw';w.innerHTML='<button type="button" class="btn sm sec" id="p256tb" aria-haspopup="menu" aria-expanded="false">Tools ▾</button>';$('addBtn').before(w);$('p256tb').onclick=toolsMenu}
+ if(!$('p256pick')){const p=document.createElement('div');p.id='p256pick';$('listTitle').after(p);const m=document.createElement('div');m.id='p256main';m.innerHTML='<div id="p256strip" class="p256strip" hidden></div>';p.after(m)}}
+function pick(){const p=$('p256pick');if(!p)return;const a=document.activeElement&&document.activeElement.id==='p256q';p.innerHTML=pickHtml();const q=$('p256q');if(q){if(a||PICK){q.focus();q.setSelectionRange(q.value.length,q.value.length)}}}
+function layout(){document.body.classList.toggle('p256',on()&&!document.body.classList.contains('p256classic'));if(!on())return;ensure();
+ if(document.body.classList.contains('p256classic')){$('p256main').hidden=true;$('p256pick').hidden=true;return}$('p256main').hidden=false;$('p256pick').hidden=false;
+ pick();const E=$('editor');if(draft&&draft.kind==='sop'&&!modalId){if(E.parentElement!==$('p256main'))$('p256main').appendChild(E);E.hidden=false}strip()}
+/* keep the editor in the visible spot BEFORE it draws, so the diagram centres on the real width */
+const _rl=renderList;renderList=function(){const r=_rl.apply(this,arguments);try{if(on()&&!document.body.classList.contains('p256classic')&&draft&&draft.kind==='sop'&&!modalId){document.body.classList.add('p256');ensure();const E=$('editor');if(E.parentElement!==$('p256main'))$('p256main').appendChild(E)}}catch(e){}return r};
+const _ra=renderAll;renderAll=function(){const r=_ra.apply(this,arguments);try{layout()}catch(e){console.error('p256',e)}return r};
+{const _re=renderEditor;renderEditor=function(){const r=_re.apply(this,arguments);try{if(on())strip()}catch(e){}return r}}
+/* picker + strip events (delegated) */
+document.addEventListener('click',e=>{const t=e.target;if(!t.closest)return;
+ if(t.closest('#p256cur')){PICK=!PICK;PQ='';pick();return}
+ const o=t.closest('[data-p256]');if(o)return choose(o.dataset.p256);
+ if(!t.closest('#p256strip'))return;const d=draft;if(!d)return;
+ const f=t.closest('[data-fold]');if(f){F[f.dataset.fold]=!F[f.dataset.fold];S.set('p256fold',F);return strip()}
+ const s=t.closest('[data-st]');if(s&&!s.disabled){const k=s.dataset.st;if(k==='approved'&&!ADMIN())return toast('Only an admin can approve an SOP');return chg(x=>{x.status=k})}
+ const tx=t.closest('[data-tx]');if(tx)return chg(x=>{x.tags=(x.tags||[]).filter((_,i)=>i!==+tx.dataset.tx)});
+ if(t.closest('#p256sug')){if(typeof tagSuggest==='function')tagSuggest();return}
+ const ts=t.closest('[data-ts]');if(ts&&TAGAI&&TAGAI.list){const v=TAGAI.list[+ts.dataset.ts];TAGAI.list=TAGAI.list.filter((_,i)=>i!==+ts.dataset.ts);return chg(x=>{x.tags=normTags([...(x.tags||[]),v]);x.p256tagsAt=Date.now()})}
+ if(t.closest('#p256tall')&&TAGAI&&TAGAI.list){const L=TAGAI.list;TAGAI.list=[];return chg(x=>{x.tags=normTags([...(x.tags||[]),...L]);x.p256tagsAt=Date.now()})}
+ if(t.closest('#p256tno')){TAGAI=null;return chg(x=>{x.p256tagsAt=Date.now()})}
+ if(t.closest('#p256chk'))return chg(x=>{x.sourceChecked=today()});
+ if(t.closest('#p256nadd'))return addNote(false);if(t.closest('#p256nsend'))return addNote(true);
+ const ns=t.closest('[data-ns]');if(ns)return chg(x=>{x.p256notes=(x.p256notes||[]).map(n=>n.id===ns.dataset.ns?{...n,sent:true}:n)});
+ const nd=t.closest('[data-nd]');if(nd)return chg(x=>{x.p256notes=(x.p256notes||[]).map(n=>n.id===nd.dataset.nd?{...n,done:true,doneBy:me(),doneAt:Date.now()}:n)});
+ const nr=t.closest('[data-nr]');if(nr)return chg(x=>{x.p256notes=(x.p256notes||[]).filter(n=>n.id!==nr.dataset.nr)})});
+document.addEventListener('input',e=>{const t=e.target;if(t.id==='p256q'){PQ=t.value;pick();return}if(!draft||!CANED())return;
+ if(t.id==='p256name'){draft.title=t.value;markD();const h=document.querySelector('#editor h2');if(h&&h.childElementCount===0)h.textContent=t.value}
+ else if(t.id==='p256topic'){draft.topic=t.value.trim();markD()}else if(t.id==='p256url'){draft.url=t.value.trim();markD()}});
+document.addEventListener('change',e=>{const t=e.target;if(t.id==='p256chkd'&&draft&&ADMIN())chg(x=>{x.sourceChecked=t.value})});
+document.addEventListener('keydown',e=>{const t=e.target;if(t.id==='p256q'&&e.key==='Enter'){const b=document.querySelector('#p256pick [data-p256]');if(b)b.click()}
+ if(t.id==='p256tin'&&(e.key==='Enter'||e.key===',')){e.preventDefault();const n=normTags(String(t.value).split(','));if(n.length)chg(x=>{x.tags=normTags([...(x.tags||[]),...n])});setTimeout(()=>$('p256tin')?.focus(),0)}});
+/* who edited it last, on every save; only admins approve */
+const _sv=save;save=async function(note){if(draft&&draft.kind==='sop'&&(EDIT||CAN)){draft.p256by=me();draft.p256at=Date.now()}return _sv.apply(this,arguments)};
+const _ss=setStatus;setStatus=async function(s){if(s==='approved'&&!ADMIN()){toast('Only an admin can approve an SOP');return}return _ss.apply(this,arguments)};
+/* tags accepted from the Details tab count as optimized too */
+document.addEventListener('click',e=>{if(e.target.closest&&e.target.closest('[data-tsug],#tagAll')&&draft)setTimeout(()=>{if(draft){draft.p256tagsAt=Date.now();strip()}},0)},true);
+if(S.get('p256classic',false))document.body.classList.add('p256classic');
+window.__p256={layout,strip,me,notesBox,nrev};
+const css=document.createElement('style');css.textContent=`
+body.p256 #listTitle .r>*:not(#addBtn):not(#p256tw){display:none!important}
+body.p256 #q,body.p256 #filters,body.p256 #items,body.p256 #impKindMsg:empty{display:none!important}
+body.p256 #listTitle{font-size:13px}
+body.p256 #p256main .sdhead{display:none}
+#p256tw{position:relative;display:inline-block}
+.p256tm{position:absolute;right:0;top:calc(100% + 6px);z-index:40;min-width:240px;background:var(--card);border:1px solid var(--line);border-radius:10px;box-shadow:0 10px 30px rgba(13,19,26,.2);padding:6px;display:flex;flex-direction:column;text-transform:none;letter-spacing:0;font-weight:400}
+.p256tm button{text-align:left;border:0;background:none;color:var(--ink);font:inherit;font-size:13px;padding:9px 10px;border-radius:8px;cursor:pointer;min-height:36px}
+.p256tm button:hover,.p256tm button:focus-visible{background:var(--accbg);color:var(--title)}.p256tm hr{border:0;border-top:1px solid var(--line);margin:4px 2px}
+.p256n{display:inline-block;min-width:20px;padding:0 6px;border-radius:999px;background:var(--warnbg);color:var(--warn);font-weight:650;font-size:12px;text-align:center}
+#p256pick{position:relative}
+.p256cur{display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:1px solid var(--line);background:var(--card);border-radius:10px;padding:10px 14px;font:inherit;color:var(--title);cursor:pointer;min-height:44px}
+.p256cur:hover,.p256cur[aria-expanded=true]{border-color:var(--cyan)}.p256cur b{font-size:16px;font-weight:650;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.p256cur .cv{color:var(--link)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.p256pp.pop{position:absolute;left:0;right:0;top:calc(100% + 6px);z-index:35;background:var(--card);border:1px solid var(--line);border-radius:10px;box-shadow:0 12px 32px rgba(13,19,26,.2);padding:10px}
+.p256pl{list-style:none;margin:8px 0 0;padding:0;max-height:min(420px,55vh);overflow:auto}
+.p256pl button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:0;background:none;font:inherit;font-size:14px;color:var(--ink);padding:9px 10px;border-radius:8px;cursor:pointer;min-height:40px}
+.p256pl button:hover,.p256pl button:focus-visible{background:var(--accbg);color:var(--title)}.p256pl button[aria-selected=true]{background:var(--accbg);font-weight:600;color:var(--title)}
+.p256none{padding:10px}
+.p256dot{flex:none;width:10px;height:10px;border-radius:50%;background:var(--mut);display:inline-block}.p256dot.review{background:var(--rev)}.p256dot.approved{background:var(--ok)}.p256dot.retired{background:transparent;border:1.5px dashed var(--mut)}
+#p256main{display:flex;flex-direction:column;gap:12px;margin-top:4px}#p256main>#editor{border:0;box-shadow:none;padding:0;background:transparent}
+.p256strip{border:1px solid var(--line);border-radius:10px;padding:10px 14px;display:flex;flex-direction:column;gap:8px;background:var(--card)}
+.p256row1,.p256row2{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px}
+.p256seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden}
+.p256st{display:inline-flex;align-items:center;gap:6px;border:0;background:var(--card);color:var(--mut);font:inherit;font-size:13px;padding:5px 12px;cursor:pointer;min-height:32px}
+.p256st+.p256st{border-left:1px solid var(--line)}.p256st[aria-pressed=true]{background:var(--accbg);color:var(--title);font-weight:650}.p256st:disabled{cursor:not-allowed;opacity:.55}
+.p256name{flex:1 1 260px;width:auto;font-size:16px!important;font-weight:650;color:var(--title)!important;border-color:transparent!important;background:transparent!important;padding:4px 6px!important}
+.p256name:hover,.p256name:focus{border-color:var(--input-bd)!important;background:var(--input-bg)!important}
+.p256by{font-size:13px;color:var(--mut)}.p256by b{color:var(--title);font-weight:600}
+.p256lab{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--mut)}
+.p256topic{width:180px!important;padding:4px 8px!important;font-size:13px!important}
+.p256tags{display:inline-flex;flex-wrap:wrap;gap:6px;align-items:center}
+.p256tag{display:inline-flex;align-items:center;gap:2px;border:1px solid var(--cyan);background:var(--accbg);border-radius:999px;padding:1px 4px 1px 10px;font-size:13px;color:var(--title);font-weight:600}
+.p256tag button{border:0;background:none;color:var(--mut);cursor:pointer;width:22px;height:22px;border-radius:50%;font-size:14px;line-height:1}.p256tag button:hover{background:var(--badbg);color:var(--bad)}
+.p256tag.sug{border-style:dashed;background:transparent;padding:2px 10px;cursor:pointer;font:inherit;font-size:13px;font-weight:600}
+.p256tin{border:1px dashed var(--input-bd);background:transparent;border-radius:999px;padding:3px 10px;font:inherit;font-size:13px;width:90px;color:var(--ink)}
+.p256opt{font-size:13px;color:var(--mut);margin-left:auto}
+.p256amb{color:var(--warn);background:var(--warnbg);border-radius:999px;padding:1px 9px;font-size:12px;font-weight:600}
+.p256sec{border-top:1px solid var(--line);padding-top:6px}
+.p256sh{display:flex;align-items:center;gap:8px;width:100%;border:0;background:none;font:inherit;font-size:12px;font-weight:650;text-transform:uppercase;letter-spacing:.07em;color:var(--title);cursor:pointer;padding:6px 0;text-align:left;min-height:32px}
+.p256sh .cv{color:var(--link);transition:transform .15s}.p256sec.open .p256sh .cv{transform:rotate(90deg)}
+.p256sum{font-weight:400;text-transform:none;letter-spacing:0;color:var(--mut);font-size:13px}
+.p256sb{display:flex;flex-direction:column;gap:8px;padding:4px 0 6px}
+.p256line{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:13px}
+.p256adm{background:var(--bg);border-radius:8px;padding:6px 8px}.p256badge{font-size:11px;font-weight:650;text-transform:uppercase;letter-spacing:.07em;color:var(--rev);background:var(--revbg);border-radius:999px;padding:1px 8px}
+.p256date{width:auto!important;padding:3px 8px!important;font-size:13px!important}
+.p256nl{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.p256nl li{display:flex;flex-direction:column;gap:2px;border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+.p256nx{font-size:14px;color:var(--title);white-space:pre-wrap}.p256nm{font-size:12px;color:var(--mut)}.p256na{display:flex;gap:12px;flex-wrap:wrap;margin-top:2px}.p256nbt{font-size:12px;color:var(--link)}
+.p256hist summary{cursor:pointer;font-size:13px;color:var(--mut);padding:4px 0}
+#p256nb{position:fixed;inset:0;z-index:2000;background:rgba(10,20,30,.45);display:flex;align-items:flex-start;justify-content:center;padding:8vh 16px 16px;overflow:auto}
+.p256nbx{background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.35);padding:18px 20px;max-width:620px;width:100%;display:flex;flex-direction:column;gap:12px}
+.p256hd{display:flex;align-items:center}.p256hd h3{margin:0;flex:1;font-size:18px;color:var(--title)}
+@media (max-width:640px){.p256opt{margin-left:0}.p256name{flex-basis:100%}.p256topic{width:140px!important}}`;
+document.head.appendChild(css);
+layout();
 })();
 
 </script>
