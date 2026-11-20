@@ -3790,7 +3790,7 @@ function kidEd(M,o,i,j,id,side,c,kind){const p=P(),d=draft,F=p.F,R=p.isR(o),t=o.
 function oBox(M,o,i,side){const p=P(),F=p.F,j=M.O.list.indexOf(o),k=p.kindOf(o),c=k==='route'?'route':'hold',at=({need:'needs a template',lost:'template not found'})[k]||'',open=oOpen(o),id='f44o'+j,sel=SOPED()&&open&&F.sel&&F.sel[1]===j,ek=sel?D.ek:null,mn=SOPED()&&D.om===j;
  let head='<button type="button" class="f44o '+c+(sel&&ek?' ed':'')+'" id="'+id+'" data-p="f44s'+i+'" data-side="'+side+'" data-c="'+c+'" data-o="'+i+'.'+j+'" aria-expanded="'+open+'"><b>'+esc(o.label)+'</b>'+(open?'':'<small>'+(k==='route'?'no email':'✉')+'</small>'+window.__p253.mark(M,o))+(at?'<em>'+at+'</em>':'')+'<span class="cv">'+(open?'▾':'▸')+'</span></button>';
  if(SOPED()){const it=(kk,t,n)=>'<button type="button" role="menuitem" data-omi="'+i+'.'+j+'.'+kk+'"><b>'+t+'</b><small>'+n+'</small></button>';
-  head='<span class="f44ow'+(mn?' on':'')+'">'+head+'<button type="button" class="f44pt o" data-om="'+j+'" aria-expanded="'+mn+'" title="Add to this outcome" aria-label="Add to outcome '+esc(o.label)+'">+</button>'+rmPt('o.'+i+'.'+j,'Remove this outcome')+'<button type="button" class="f44pt lk" data-lk="'+j+'" title="Drag to a step to link this answer to it. Or tap, then tap the step." aria-label="Link '+esc(o.label)+' to a step">→</button>'+(mn?'<div class="f44pm" role="menu"><div class="f44pmh">Add to this outcome</div>'+it('email','An email template','Search the templates you already have.')+it('newt','A new email template','Write a new email for this outcome.')+it('donow','A Do now','An instruction shown on top for the agent.')+it('words','Words that pick it','Words in notes or the message.')+it('then','What happens next','Go to a step, stop here, open another SOP, or give it its own steps.')+it('side','Move to the other side','Show this outcome on the other side of its step.')+it('label','Rename or remove','Change what the agent finds.')+'</div>':'')+'</span>'}
+  head='<span class="f44ow'+(mn?' on':'')+'">'+head+'<button type="button" class="f44pt o" data-om="'+j+'" aria-expanded="'+mn+'" title="Add to this outcome" aria-label="Add to outcome '+esc(o.label)+'">+</button>'+rmPt('o.'+i+'.'+j,'Remove this outcome')+'<button type="button" class="f44pt lk" data-lk="'+j+'" title="Drag to a step to link this answer to it, or tap, then tap the step. Let go in empty space to remove the link: the answer then ends the case." aria-label="Link '+esc(o.label)+' to a step">→</button>'+(mn?'<div class="f44pm" role="menu"><div class="f44pmh">Add to this outcome</div>'+it('email','An email template','Search the templates you already have.')+it('newt','A new email template','Write a new email for this outcome.')+it('donow','A Do now','An instruction shown on top for the agent.')+it('words','Words that pick it','Words in notes or the message.')+it('then','What happens next','Go to a step, stop here, open another SOP, or give it its own steps.')+it('side','Move to the other side','Show this outcome on the other side of its step.')+it('label','Rename or remove','Change what the agent finds.')+'</div>':'')+'</span>'}
  if(!open)return head;
  const dn=M.dn.find(x=>p217Low(x.label)===p217Low(o.label)),
   kid=(kind,cl,cap,tx)=>ek===kind?kidEd(M,o,i,j,id,side,c,kind):SOPED()?'<span class="f44kw"><button type="button" class="f44k '+cl+'" data-ek="'+i+'.'+j+'.'+kind+'" data-p="'+id+'" data-side="'+side+'" data-c="'+c+'" title="Edit"><small>'+cap+' <i>✎</i></small>'+tx+'</button>'+(kind==='result'||(kind==='email'&&!o.tpl)?'':rmPt('k.'+i+'.'+j+'.'+kind,'Remove this box'))+'</span>':'<div class="f44k '+cl+'" data-p="'+id+'" data-side="'+side+'" data-c="'+c+'"><small>'+cap+'</small>'+tx+'</div>';
@@ -4117,7 +4117,7 @@ window.addEventListener('pointerdown',e=>{const t=e.target.closest&&e.target.clo
  st.link={j:+t.dataset.lk,sx,sy,x0:e.clientX,y0:e.clientY,moved:false,svg,mode:'drag'};$('f44').classList.add('f54linking')},true);
 window.addEventListener('pointermove',e=>{const L=st.link;if(!L||L.mode!=='drag')return;if(Math.hypot(e.clientX-L.x0,e.clientY-L.y0)>5)L.moved=true;const ln=L.svg.firstChild;ln.setAttribute('x2',e.clientX);ln.setAttribute('y2',e.clientY);
  const s=stepAt(e.clientX,e.clientY);document.querySelectorAll('.f54tg').forEach(x=>{if(x!==s)x.classList.remove('f54tg')});if(s)s.classList.add('f54tg')},true);
-window.addEventListener('pointerup',e=>{const L=st.link;if(!L||L.mode!=='drag')return;e.stopPropagation();const s=stepAt(e.clientX,e.clientY);if(s)return finish(s);if(L.moved)return cancel();pick()},true);
+window.addEventListener('pointerup',e=>{const L=st.link;if(!L||L.mode!=='drag')return;e.stopPropagation();const s=stepAt(e.clientX,e.clientY);if(s)return finish(s);if(L.moved){const j=L.j;cancel();if(window.__p261)window.__p261.drop(j,e);return}pick()},true);
 window.addEventListener('pointercancel',()=>{if(st.link&&st.link.mode==='drag')cancel()},true);
 window.addEventListener('keydown',e=>{if(e.key==='Escape'&&st.link){e.stopPropagation();cancel()}},true);
 window.addEventListener('click',e=>{const t=e.target;if(!t.closest)return;
@@ -4985,6 +4985,15 @@ const css=document.createElement('style');css.textContent=`
 .p60row{border:1px solid var(--line);border-radius:10px;padding:8px;margin-bottom:8px}.p60r1{display:flex;gap:8px;align-items:center}.p60r1 .t{flex:1}
 .p60nr{display:flex;gap:5px;align-items:center;white-space:nowrap;font-size:13px}.p60c{margin-top:6px;width:100%;font-size:13px}`;document.head.appendChild(css);
 })();
+
+
+/* ---------- P2A 2.61 (2026-11-20, Grigor's preview comment): drag an answer's dashed → out and let go in empty space (or on the
+   "How the case ends" box) = remove its link. The answer then ends the case (then: stop), like the ✕ on its line; ↺ links it again. ---------- */
+window.__p261={drop(j,e){if(!draft||!SOPED())return;const M=window.__p242.model(draft),o=M.O.list[j];if(!o)return;
+ const el=document.elementFromPoint(e.clientX,e.clientY),vp=document.getElementById('f44vp');
+ if(!el||!(vp&&vp.contains(el))||el.closest('.f44o,.f44pt,.f44pm,.p60cut'))return;
+ if(o.then==='stop'){try{toast('“'+o.label+'” already ends the case.')}catch(_){}return}
+ window.__p253.setThen(j,'stop');try{toast('Link removed: “'+o.label+'” now ends the case. ↺ on its line links it again.')}catch(_){}}};
 
 </script>
 <script>
