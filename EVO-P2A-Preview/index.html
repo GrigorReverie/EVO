@@ -5385,6 +5385,65 @@ window.__p266={tree,apply,get T(){return T}};
 
 </script>
 <script>
+/* P2A 3.4: "What to do" preview beside the SOP diagram. Runs the agents' own Problem2Action code in a frame,
+   fed only this SOP (as it is now, saved or not) and its emails. Nothing it does is saved: the frame gets its own
+   in-memory storage. Also: emails that are not written yet show amber (needs attention), not red (danger). */
+(function(){
+if(window.__p34)return;
+const css=document.createElement('style');css.textContent=`
+.f44k.no,button.f44k.no{color:var(--warn)!important;border-color:var(--warn)!important}
+.f44k.doc.no{background:var(--warn)!important}
+.f44o em,.f42chip em,.f42note.bad,.p57note.bad{color:var(--warn)!important}
+.p57chip.bad{border-color:var(--warn)!important}
+#f44web .f44s.p34cur{outline:3px solid var(--cyan);outline-offset:3px;box-shadow:0 0 0 6px color-mix(in srgb,var(--cyan) 25%,transparent)}
+#p34btn[aria-pressed=true]{background:var(--cyan);color:#fff;border-color:var(--cyan)}
+.p34row{display:grid;grid-template-columns:minmax(0,1fr) minmax(340px,420px);gap:12px;align-items:start}
+.p34row>#f44{min-width:0}
+#p34pv{position:sticky;top:8px;border:var(--bw,1px) solid var(--cyan);border-radius:10px;background:var(--card);display:flex;flex-direction:column;overflow:hidden;height:min(82vh,900px)}
+#p34pv .p34h{display:flex;align-items:center;gap:8px;padding:8px 10px;border-bottom:var(--bw,1px) solid var(--line);flex-wrap:wrap}
+#p34pv .p34h b{font-size:12px;letter-spacing:.07em;text-transform:uppercase;color:var(--title)}
+#p34pv .p34h .mut{font-size:12px;flex-basis:100%}
+#p34pv .p34h .r{margin-left:auto;display:flex;gap:6px}
+#p34pv iframe{flex:1;border:0;width:100%;background:var(--bg)}
+@media(max-width:1000px){.p34row{grid-template-columns:1fr}#p34pv{position:static;height:80vh}}`;
+document.head.appendChild(css);
+let on=false,fr=null,ready=false,lastSent='';
+const P=()=>window.__p242;
+function libNow(){const d=typeof draft!=='undefined'?draft:null;if(typeof libFor!=='function'||!d)return null;
+ const L=libFor({all:true}),id=d.id;
+ const me=L.sops.find(s=>s.id===id);const base=me||{id,title:d.title||'This SOP',topic:d.topic||'',tags:d.tags||[],links:[],tools:[],notNeeded:[],v2:true};
+ const sop={...base,title:d.title||base.title,body:String(d.body||''),status:'approved',tools:typeof deriveTools==='function'?deriveTools(String(d.body||'')):base.tools,v2:true};
+ return{...L,sops:[sop]}}
+function src(){const html=new TextDecoder().decode(Uint8Array.from(atob(P2A_SRC),c=>c.charCodeAt(0)));
+ const shim='<script>(function(){const m=new Map();const st={getItem:k=>m.has(k)?m.get(k):null,setItem:(k,v)=>{m.set(k,String(v))},removeItem:k=>{m.delete(k)},clear:()=>m.clear(),key:i=>[...m.keys()][i]??null,get length(){return m.size}};try{Object.defineProperty(window,"localStorage",{value:st,configurable:true})}catch(e){}window.__p34preview=true;window.name="p2a"})()<\/script><style>#p30start,#casebar,header,#syncPanel,#exampleBanner,#editBar,[data-box=field],[data-box=members],[data-box=p224],[data-box=tags],[data-box=extra],[data-box=sop],[data-box=links],.evomic{display:none!important}html body #main #answers .card[data-box=reply]{display:flex!important}html body #main #answers .card[data-box=reply] .rsub{display:block!important}</style>';
+ return html.replace(/<head[^>]*>/i,x=>x+shim)}
+const CLEAN='(()=>{const R=st.R;if(!R||R.__p34)return;R.__p34=1;(R.tools||[]).forEach(t=>{t.done=false;t.found=""});R.rtId=null;if(R.p232)R.p232.ids=[];if(R.p216){R.p216.sel={};R.p216.rt=null}renderAll();const b=document.getElementById("p238tb");if(b&&b.getAttribute("aria-expanded")!=="true")b.click()})()';
+function send(force){if(!fr||!ready||!on)return;const lib=libNow();if(!lib)return;const key=JSON.stringify(lib.sops[0])+'|'+(lib.emailTemplates||[]).length;if(!force&&key===lastSent)return;lastSent=key;
+ const w=fr.contentWindow;w.postMessage({t:'lib',lib,updated:Date.now(),learned:[]},window.origin);
+ setTimeout(()=>{try{const id=JSON.stringify(lib.sops[0].id);w.eval('if(!window.__p34case){window.__p34case=1;(typeof p24New==="function"?p24New:newCase)();const c=CASES.find(x=>x.id===CUR);if(c)c.p27real=true}(typeof st!=="undefined"&&st.R&&(st.R.sops||[]).includes('+id+'))||pickSop('+id+');try{renderAll()}catch(e){}')}catch(e){console.warn('p34 pick',e)}},60);
+ setTimeout(()=>{try{w.eval(CLEAN)}catch(e){console.warn('p34 clean',e)}},400)}
+addEventListener('message',e=>{if(!fr||e.source!==fr.contentWindow)return;const m=e.data||{};
+ if(m.t==='ready'){ready=true;const w=fr.contentWindow;w.postMessage({t:'hello'},window.origin);try{w.postMessage({t:'theme',v:THEME},window.origin)}catch(x){}w.postMessage({t:'perm',can:false},window.origin);lastSent='';send(true)}});
+function restart(){if(!fr)return;ready=false;lastSent='';fr.srcdoc=src()}
+function panel(){let p=document.getElementById('p34pv');if(p)return p;p=document.createElement('aside');p.id='p34pv';p.setAttribute('aria-label','What to do preview');
+ p.innerHTML='<div class="p34h"><b>What to do · agent view</b><span class="r"><button type="button" class="btn sm sec" id="p34re" title="Start the case again">↺ Start over</button><button type="button" class="btn sm sec" id="p34x" aria-label="Close the preview">✕</button></span><span class="mut">Exactly what an agent sees for this SOP. Pick answers to test a path. Nothing here is saved.</span></div><iframe title="What to do preview"></iframe>';
+ fr=p.querySelector('iframe');p.querySelector('#p34re').onclick=restart;p.querySelector('#p34x').onclick=()=>toggle(false);fr.srcdoc=src();return p}
+function place(){const f=document.getElementById('f44');if(!f)return;let row=f.parentElement&&f.parentElement.classList.contains('p34row')?f.parentElement:null;
+ if(on){if(!row){row=document.createElement('div');row.className='p34row';f.before(row);row.appendChild(f)}const p=panel();if(p.parentElement!==row)row.appendChild(p);send(false)}
+ else if(row){row.before(f);const p=document.getElementById('p34pv');if(p)p.remove();fr=null;ready=false;row.remove()}}
+function toggle(v){on=v==null?!on:v;const b=document.getElementById('p34btn');if(b)b.setAttribute('aria-pressed',String(on));try{localStorage.setItem('p34.on',on?'1':'0')}catch(e){}place();setTimeout(()=>{const f=[...document.querySelectorAll('#f44 button')].find(b=>b.textContent.trim()==='Fit');if(f)f.click()},250)}
+function addBtn(){const z=document.getElementById('f51fs');if(!z||document.getElementById('p34btn'))return;const b=document.createElement('button');b.type='button';b.id='p34btn';b.className='btn sm sec';b.textContent='▶ What to do preview';b.title='See this SOP the way an agent sees it, beside the diagram';b.setAttribute('aria-pressed',String(on));b.onclick=()=>toggle();z.parentElement.insertBefore(b,z)}
+let t=null;new MutationObserver(()=>{clearTimeout(t);t=setTimeout(()=>{addBtn();if(on)place();else{const f=document.getElementById('f44');if(f&&f.parentElement&&f.parentElement.classList.contains('p34row'))place()}},80)}).observe(document.documentElement,{childList:true,subtree:true});
+setInterval(()=>{if(on)send(false)},1500);
+/* the step the agent is on now is outlined in the diagram */
+function mark(){let name='';try{const d=on&&fr&&fr.contentDocument;const li=d&&d.querySelector('#tools li.p253cur .nm');name=li?li.textContent.trim().toLowerCase():''}catch(e){}
+ document.querySelectorAll('#f44web .f44s').forEach(b=>{const t=(b.querySelector('.f44t b')||b.querySelector('.f44t')||b).textContent.trim().toLowerCase();b.classList.toggle('p34cur',!!name&&t===name)})}
+setInterval(mark,500);
+window.__p34={toggle,get on(){return on},frame:()=>fr,send};
+})();
+
+</script>
+<script>
 /* EVO P2A standalone: Settings (AI, library and sync, folder), the chat-tab AI flow, update notices and admin push. */
 (function(){
 'use strict';
