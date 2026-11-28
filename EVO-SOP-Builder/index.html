@@ -9,11 +9,11 @@
    COLOUR P2A tokens: nav #0D131A, cyan #5BC2E7 (act here), link #0A6490; bands = topic cyan, review purple, act amber, finish green
    TYPE Inter, uppercase letter-spaced section titles like P2A
    LAYOUT header bar + SOP strip, canvas (scrolls/zooms) + docked edit panel on wide screens, drawer on smaller */
-:root{--nav:#0D131A;--cyan:#5BC2E7;--on-accent:#0D131A;--link:#0A6490;--title:#1A202C;--ink:#1D2633;--mut:#4A5568;--ph:#6B7785;--bg:#F7F9FB;--card:#FFFFFF;--line:#D5DCE4;--input-bg:#FFFFFF;--input-bd:#9AA6B5;--accbg:#E8F6FC;--ok:#1F7A4A;--okbg:#E6F4EC;--warn:#8A5A00;--warnbg:#FDF1D8;--warnl:#E9C46A;--bad:#C53030;--rev:#5B4BB7;--revbg:#EFECFA;--canvas:#ECEDEF;
+:root{--nav:#0D131A;--cyan:#5BC2E7;--on-accent:#0D131A;--link:#0A6490;--title:#1A202C;--ink:#1D2633;--mut:#4A5568;--ph:#6B7785;--bg:#F7F9FB;--card:#FFFFFF;--line:#D5DCE4;--input-bg:#FFFFFF;--input-bd:#9AA6B5;--accbg:#E8F6FC;--ok:#1F7A4A;--okbg:#E6F4EC;--warn:#8A5A00;--warnbg:#FDF1D8;--warnl:#E9C46A;--bad:#C53030;--rev:#5B4BB7;--revbg:#EFECFA;--canvas:#F1F3F5;--dot:#C9D1DA;
  --b-find:#E6F4FA;--b-findl:#0A6490;--b-rev:#F1EEFA;--b-revl:#5B4BB7;--b-act:#FFF6E3;--b-actl:#B07A00;--b-fin:#E9F5EE;--b-finl:#1F7A4A;--sh:0 1px 3px rgba(13,19,26,.08);color-scheme:light}
-:root[data-theme="dark"]{--link:#5BC2E7;--title:#E6EDF3;--ink:#B8C4D0;--mut:#8A99AA;--ph:#7D8B9B;--bg:#131B24;--card:#1A242F;--line:#2A3644;--input-bg:#0F161D;--input-bd:#4A5868;--accbg:rgba(91,194,231,.14);--ok:#59c98b;--okbg:#1c3a2b;--warn:#e8b855;--warnbg:#3a2f14;--warnl:#6B5520;--bad:#ff8a80;--rev:#b3a8ff;--revbg:#2a2547;--canvas:#16202A;
+:root[data-theme="dark"]{--link:#5BC2E7;--title:#E6EDF3;--ink:#B8C4D0;--mut:#8A99AA;--ph:#7D8B9B;--bg:#131B24;--card:#1A242F;--line:#2A3644;--input-bg:#0F161D;--input-bd:#4A5868;--accbg:rgba(91,194,231,.14);--ok:#59c98b;--okbg:#1c3a2b;--warn:#e8b855;--warnbg:#3a2f14;--warnl:#6B5520;--bad:#ff8a80;--rev:#b3a8ff;--revbg:#2a2547;--canvas:#16202A;--dot:#2C3A48;
  --b-find:#14293A;--b-findl:#5BC2E7;--b-rev:#211E38;--b-revl:#b3a8ff;--b-act:#2E2612;--b-actl:#e8b855;--b-fin:#15291F;--b-finl:#59c98b;--sh:0 1px 3px rgba(0,0,0,.35);color-scheme:dark}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--link:#5BC2E7;--title:#E6EDF3;--ink:#B8C4D0;--mut:#8A99AA;--ph:#7D8B9B;--bg:#131B24;--card:#1A242F;--line:#2A3644;--input-bg:#0F161D;--input-bd:#4A5868;--accbg:rgba(91,194,231,.14);--ok:#59c98b;--okbg:#1c3a2b;--warn:#e8b855;--warnbg:#3a2f14;--warnl:#6B5520;--bad:#ff8a80;--rev:#b3a8ff;--revbg:#2a2547;--canvas:#16202A;--b-find:#14293A;--b-findl:#5BC2E7;--b-rev:#211E38;--b-revl:#b3a8ff;--b-act:#2E2612;--b-actl:#e8b855;--b-fin:#15291F;--b-finl:#59c98b;--sh:0 1px 3px rgba(0,0,0,.35);color-scheme:dark}}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--link:#5BC2E7;--title:#E6EDF3;--ink:#B8C4D0;--mut:#8A99AA;--ph:#7D8B9B;--bg:#131B24;--card:#1A242F;--line:#2A3644;--input-bg:#0F161D;--input-bd:#4A5868;--accbg:rgba(91,194,231,.14);--ok:#59c98b;--okbg:#1c3a2b;--warn:#e8b855;--warnbg:#3a2f14;--warnl:#6B5520;--bad:#ff8a80;--rev:#b3a8ff;--revbg:#2a2547;--canvas:#16202A;--dot:#2C3A48;--b-find:#14293A;--b-findl:#5BC2E7;--b-rev:#211E38;--b-revl:#b3a8ff;--b-act:#2E2612;--b-actl:#e8b855;--b-fin:#15291F;--b-finl:#59c98b;--sh:0 1px 3px rgba(0,0,0,.35);color-scheme:dark}}
 *{box-sizing:border-box}
 html,body{margin:0}
 body{background:var(--bg);color:var(--ink);font:14px/1.45 Inter,system-ui,-apple-system,Segoe UI,sans-serif}
@@ -63,20 +63,21 @@ textarea.in{resize:vertical;min-height:40px;line-height:1.4}
 /* work area */
 .work{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:14px;align-items:start;padding-bottom:40px}
 .work>*{min-width:0}
-.cv{background:var(--canvas);border:1px solid var(--line);border-radius:12px;overflow:auto;max-height:calc(100vh - 190px);min-height:420px;position:relative}
-.cvi{position:relative;transform-origin:0 0}
-.band{position:absolute;border:2px solid;border-radius:16px}
+.cv{background-color:var(--canvas);background-image:radial-gradient(var(--dot) 1.1px,transparent 1.4px);background-size:20px 20px;background-attachment:local;border:1px solid var(--line);border-radius:12px;overflow:auto;max-height:calc(100vh - 190px);min-height:420px;position:relative;display:flex}
+.cvs{position:relative;flex:none;margin:auto}
+.cvi{position:absolute;left:0;top:0;transform-origin:0 0}
+.band{position:absolute;border:1.5px solid;border-radius:16px}
 .band .bh{position:absolute;display:flex;align-items:center;gap:8px}
 .band .bt{font-size:13px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
 .band .bs{font-size:12px;color:var(--mut)}
 .qbtn{width:22px;height:22px;border-radius:50%;border:1.5px solid currentColor;background:var(--card);font-weight:800;font-size:12px;cursor:pointer;display:inline-grid;place-items:center;padding:0;line-height:1}
-.band.find{background:var(--b-find);border-color:var(--b-findl);color:var(--b-findl)}
-.band.rev{background:var(--b-rev);border-color:var(--b-revl);color:var(--b-revl)}
-.band.act{background:var(--b-act);border-color:var(--b-actl);color:var(--b-actl)}
-.band.fin{background:var(--b-fin);border-color:var(--b-finl);color:var(--b-finl)}
+.band.find{background:color-mix(in srgb,var(--b-find) 55%,transparent);border-color:color-mix(in srgb,var(--b-findl) 35%,transparent);color:var(--b-findl)}
+.band.rev{background:color-mix(in srgb,var(--b-rev) 55%,transparent);border-color:color-mix(in srgb,var(--b-revl) 35%,transparent);color:var(--b-revl)}
+.band.act{background:color-mix(in srgb,var(--b-act) 55%,transparent);border-color:color-mix(in srgb,var(--b-actl) 35%,transparent);color:var(--b-actl)}
+.band.fin{background:color-mix(in srgb,var(--b-fin) 55%,transparent);border-color:color-mix(in srgb,var(--b-finl) 35%,transparent);color:var(--b-finl)}
 .band::before{content:"";position:absolute;background:currentColor;border-radius:6px}
-.down .band::before{left:-2px;top:-2px;bottom:-2px;width:9px}
-.side .band::before{left:-2px;right:-2px;top:-2px;height:9px}
+.down .band::before{left:-1.5px;top:-1.5px;bottom:-1.5px;width:5px}
+.side .band::before{left:-1.5px;right:-1.5px;top:-1.5px;height:5px}
 svg.edges{position:absolute;left:0;top:0;overflow:visible;pointer-events:none}
 .bx{position:absolute;background:var(--card);border:1.6px solid var(--line);border-radius:10px;padding:9px 12px;box-shadow:var(--sh);cursor:pointer;overflow:hidden;color:var(--title)}
 .bx:hover{border-color:var(--link)}
@@ -110,6 +111,10 @@ svg.edges{position:absolute;left:0;top:0;overflow:visible;pointer-events:none}
 .bx.gh{border:1.6px dashed var(--input-bd);background:transparent;box-shadow:none;cursor:default;padding:7px 8px}
 .bx.gh .k{color:var(--link);margin:0 0 5px 2px}
 .gbtns{display:flex;flex-wrap:wrap;gap:4px}
+.qbar{position:absolute;transform:translateX(-50%);z-index:30;display:flex;align-items:center;gap:5px;flex-wrap:nowrap;white-space:nowrap;background:var(--card);border:1.5px solid var(--cyan);border-radius:999px;padding:5px 6px 5px 12px;box-shadow:0 6px 18px rgba(13,19,26,.22)}
+.qbar span{font-size:12px;font-weight:700;color:var(--title);margin-right:2px}
+.qbar button{border:1px solid var(--link);background:var(--card);color:var(--link);border-radius:999px;font-size:12.5px;font-weight:600;padding:4px 11px;min-height:28px;cursor:pointer}
+.qbar button:hover{background:var(--accbg)}
 .gbtns button{border:1px solid var(--link);background:var(--card);color:var(--link);border-radius:999px;font-size:11.5px;font-weight:600;padding:2px 8px;cursor:pointer}
 .gbtns button:hover{background:var(--accbg)}
 .bx.gt{border:1.6px dashed var(--link);background:var(--accbg);font-size:12.5px;font-weight:600;color:var(--link);display:flex;align-items:center}
@@ -300,7 +305,7 @@ function layout(s){const dir=s.dir,D=DIM[dir];const items=[];let maxF=0,hasG=fal
  const pad=dir==='down'?56:76;const breadth=R.w*D.U+pad*2;
  const geo=T=>{const d=start[T.lv],b=pad+T.c*D.U;let w,h;
   if(T.kind==='group'){if(dir==='down'){w=T.w*D.U-28;h=groupH(T.o)}else{w=D.gw;h=Math.max(groupH(T.o),T.w*D.U-24)}}
-  else if(T.kind==='ghost'){w=D.bw;h=66}else if(T.kind==='goto'){w=D.bw;h=44}else{w=D.bw;h=D.bh}
+  else if(T.kind==='ghost'){w=D.bw;h=T.underGroup?58:86}else if(T.kind==='goto'){w=D.bw;h=44}else{w=D.bw;h=D.bh}
   if(dir==='down')return{x:b-w/2,y:d+(size[T.lv]-h)/2-(T.kind==='group'?0:0),w,h};return{x:d+(size[T.lv]-w)/2,y:b-h/2,w,h}};
  items.forEach(T=>{T.g=geo(T);if(T.kind==='end'){const f={w:dir==='down'?D.bw:D.bw+20,h:D.finh};const d=start[FL],b=pad+T.c*D.U;T.fg=dir==='down'?{x:b-f.w/2,y:d+(size[FL]-f.h)/2,...f}:{x:d+(size[FL]-f.w)/2,y:b-f.h/2,...f}}});
  const W=dir==='down'?Math.max(breadth,820):depthEnd,H=dir==='down'?depthEnd:Math.max(breadth,420)+D.head;
@@ -331,7 +336,11 @@ function canvasHtml(){const s=sop(),Lt=layout(s),dir=Lt.dir;let svg='',html='';
   if(T.kind==='end'){const o=T.o,f=T.fg;html+=`<div class="bx act${on(o)}" style="${pos}" data-s="${o.id}"><div class="k">Do</div><div class="t">${esc(o.action||'What the agent does…')}</div></div>`;
    const e=edgePath(g,f,dir);svg+=`<path d="${e.d}" fill="none" stroke="var(--mut)" stroke-width="2" marker-end="url(#ar)"/>`;
    html+=`<div class="bx fin ${o.tone==='am'?'am':'ok'}${on(o)}" style="left:${f.x}px;top:${f.y}px;width:${f.w}px;height:${f.h}px" data-s="${o.id}"><div class="t">✉ ${esc(o.combine?'Template for each problem found':(o.template||'No template yet'))}</div>${o.copilot&&!o.combine?`<div class="d">✦ ${esc(o.copilot)}</div>`:o.combine?'<div class="d">✦ Copilot combines them</div>':''}<div class="d">🎫 ${esc((o.ticket||'no ticket yet').split('\n')[0])}</div></div>`}});
- return `<div class="cv" id="cv"><div class="cvi ${dir}" id="cvi" style="width:${Lt.W}px;height:${Lt.H}px;transform:scale(${zoom})">${html.replace(/^/,'')}<svg class="edges" width="${Lt.W}" height="${Lt.H}"><defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#7D8892"/></marker></defs>${svg}</svg></div></div>`}
+ let qb='';const sT=selId&&!selSub?Lt.items.find(x=>x.o&&x.o.id===selId&&x.kind!=='ghost'):null;
+ if(sT){const k=sT.kind,g=sT.g,nm={step:'Step',question:'Question',group:'Checks',end:'End'};
+  const [lab,types]=k==='step'?['+ Then','step question group'.split(' ')]:k==='question'?['+ New answer',['step','question','group','end']]:k==='group'?['+ Then, if all pass',['step','question','group']]:['+ Before this',['step','question','group']];
+  qb=`<div class="qbar" style="left:${(g.x+g.w/2)*zoom}px;top:${(g.y+g.h)*zoom+8}px"><span>${lab}</span>${types.map(t=>`<button data-q="${sT.o.id}|${t}">${nm[t]}</button>`).join('')}</div>`}
+ return `<div class="cv" id="cv"><div class="cvs" id="cvs" style="width:${Lt.W*zoom}px;height:${Lt.H*zoom}px"><div class="cvi ${dir}" id="cvi" style="width:${Lt.W}px;height:${Lt.H}px;transform:scale(${zoom})">${html.replace(/^/,'')}<svg class="edges" width="${Lt.W}" height="${Lt.H}"><defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#7D8892"/></marker></defs>${svg}</svg></div>${qb}</div></div>`}
 // keep the SVG under the boxes
 function fixLayers(){const i=$('#cvi');if(!i)return;const sv=i.querySelector('svg.edges');const firstBox=i.querySelector('.bx,.elab');if(sv&&firstBox)i.insertBefore(sv,firstBox);const s=sop(),Lt=layout(s);i.style.width=Lt.W+'px';i.style.height=Lt.H+'px';const cv=$('#cv');if(cv){i.parentElement.style.setProperty('--w',Lt.W*zoom+'px')}
  const sizer=$('#cvs');if(sizer){sizer.style.width=Lt.W*zoom+'px';sizer.style.height=Lt.H*zoom+'px'}}
@@ -352,8 +361,7 @@ function panelHtml(){const r=selId?find(selId):null;
  ${T.length?`<div class="sec">To finish (${T.length})</div><div class="todos">${T.slice(0,8).map(t=>`<button data-s="${t.id}" ${t.sub?`data-sub="${t.sub}"`:''}>${esc(t.m)}</button>`).join('')}</div>`:'<div class="good">✓ Every box is filled in.</div>'}</aside>`}
  const o=r.o,k=r.kind,X=`<button class="x" data-do="close" aria-label="Close">×</button>`;let h='';
  const del=`<div class="acts"><span style="flex:1"></span><button class="btn danger sm" data-do="del" data-id="${o.id}">Remove</button></div>`;
- if(k==='step')h=`<div class="ph"><span class="lbl">Step · Find</span>${X}</div>${F(o.id,'name',o.name,'What the agent does','Find the member in back office')}${F(o.id,'detail',o.detail,'Detail (short)','Where to look',2)}
-  <div class="sec">Add right after this</div><div class="acts"><button class="btn sec sm" data-do="ins" data-id="${o.id}" data-t="step">+ Step</button><button class="btn sec sm" data-do="ins" data-id="${o.id}" data-t="question">+ Question</button></div>${del}`;
+ if(k==='step')h=`<div class="ph"><span class="lbl">Step · Find</span>${X}</div>${F(o.id,'name',o.name,'What the agent does','Find the member in back office')}${F(o.id,'detail',o.detail,'Detail (short)','Where to look',2)}${del}`;
  else if(k==='question')h=`<div class="ph"><span class="lbl">Question · pick one</span>${X}</div>${F(o.id,'question',o.question,'The question','What does the member say?')}${F(o.id,'detail',o.detail,'Detail (short)','',2)}
   <div class="sec">Answers</div>${o.answers.map(a=>`<details class="it" ${selSub===a.id?'open':''} data-item="${a.id}"><summary>${esc(a.label||'New answer')} <span class="muted">→ ${esc(a.next?({step:'step',question:'question',group:'checks',end:'end',goto:'continues'})[a.next.type]:'open')}</span></summary>${F(a.id,'label',a.label,'Answer','Student')}${F(a.id,'words',a.words,'Words the member uses','')}<div class="acts"><span style="flex:1"></span><button class="btn danger sm" data-do="del" data-id="${a.id}">Remove answer and its path</button></div></details>`).join('')}
   <div class="acts"><button class="btn sec sm" data-do="addans" data-id="${o.id}">+ Add answer</button></div>${del}`;
@@ -426,12 +434,19 @@ function removeObj(r){const s=sop();
  if(r.kind==='answer'){const L=r.par.answers;if(L.length<2){toast('A question keeps at least one answer');return false}L.splice(L.indexOf(r.o),1);return true}
  if(r.kind==='check'||r.kind==='problem'){r.slot.splice(r.slot.indexOf(r.o),1);return true}return false}
 document.addEventListener('click',e=>{const dd=$('#dd');if(!e.target.closest('.menu'))dd.hidden=true;if(e.target.closest('.scrim'))return;
- const t=e.target.closest('[data-do],[data-g],[data-s],[data-tab],[data-dir],[data-z],[data-help],[data-m]');if(!t)return;if(e.target.closest('textarea,input,select,summary')&&!t.dataset.do)return;const s=sop();
+ const t=e.target.closest('[data-q],[data-do],[data-g],[data-s],[data-tab],[data-dir],[data-z],[data-help],[data-m]');if(!t)return;if(e.target.closest('textarea,input,select,summary')&&!t.dataset.do)return;const s=sop();
  if(t.dataset.m){dd.hidden=true;menu(t.dataset.m);return}
  if(t.dataset.tab){tab=t.dataset.tab;render();return}
  if(t.dataset.dir){s.dir=t.dataset.dir;save();render();fitZoom();return}
  if(t.dataset.z){const cv=$('#cv');if(t.dataset.z==='fit'){fitZoom();return}else zoom=Math.max(.35,Math.min(1.6,zoom+(+t.dataset.z)*.1));zoom=Math.round(zoom*100)/100;store.set('zoom',zoom);render();return}
  if(t.dataset.help){helpDlg(t.dataset.help);return}
+ if(t.dataset.q){const [qid,type]=t.dataset.q.split('|');const r=find(qid);if(!r)return;const o=r.o;
+  const n=M[type]({});const tail=x=>{if(type==='step')n.next=x;else if(type==='question')n.answers[0].next=x;else if(type==='group')n.pass=x};
+  if(o.type==='step'){tail(o.next);o.next=n}
+  else if(o.type==='question'){const a=A('New answer',{next:n});o.answers.push(a)}
+  else if(o.type==='group'){tail(o.pass);o.pass=n}
+  else{if(!r.set)return;tail(o);r.set(n)}
+  save();select(n.id);return}
  if(t.dataset.g){const [pid,slot,type]=t.dataset.g.split('|');let set;
   if(slot==='a'){const r=find(pid);if(!r)return;set=v=>r.o.next=v}else set=holderOf(pid,slot);if(!set)return;
   const n=M[type]({});if(type==='end'&&(slot==='fail'))n.tone='am';set(n);save();if(type==='goto'){select(n.id);return}select(n.id);return}
