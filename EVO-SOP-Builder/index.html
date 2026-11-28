@@ -1,190 +1,194 @@
-<!doctype html><html><head><meta charset=utf8><title>SOP Builder</title><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"></head><body><title>SOP Builder</title>
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"></head><body><title>SOP Builder</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300..800&display=swap" rel="stylesheet">
 <style>
-/* VOICE work tool: an SOP is drawn, not filled in
-   IDEA a whiteboard process map in four lanes: Find, Review, Act, Finish (check, find the problem, act)
-   PICTURE the four-lane diagram itself, editable; the side panel edits the box you clicked
-   COLOUR P2A tokens: nav #0D131A, cyan #5BC2E7, link #0A6490; green = pass/OK, amber = problem, never red except delete
-   TYPE Inter, 600 for box names
-   LAYOUT laptop: four lanes + docked panel; tablet: lanes + panel drawer; phone: lanes stacked, panel as a sheet */
-:root{--bg:#F4F5F7;--card:#FFFFFF;--ink:#14191F;--mute:#5B6570;--line:#D9DDE2;--soft:#EEF1F4;--lane:#FBFCFD;--nav:#0D131A;--navink:#F2F5F8;--cyan:#5BC2E7;--link:#0A6490;--sel:#E3F4FB;--okc:#1F7A52;--okbg:#E6F4EC;--amb:#8A5A00;--ambbg:#FFF4DB;--ambl:#E9C46A;--dang:#B3261E;--r:10px;--sh:0 1px 2px rgba(13,19,26,.06),0 3px 10px rgba(13,19,26,.05);color-scheme:light}
-:root[data-theme="dark"]{--bg:#0F1419;--card:#182029;--ink:#E8EDF2;--mute:#9AA6B2;--line:#2C3743;--soft:#202A35;--lane:#131A21;--nav:#070B0F;--navink:#E8EDF2;--link:#7CCDEE;--sel:#173444;--okc:#7BD3A6;--okbg:#16302A;--amb:#F2C66D;--ambbg:#33290F;--ambl:#6B5520;--dang:#FF8A80;--sh:0 1px 2px rgba(0,0,0,.3);color-scheme:dark}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0F1419;--card:#182029;--ink:#E8EDF2;--mute:#9AA6B2;--line:#2C3743;--soft:#202A35;--lane:#131A21;--nav:#070B0F;--navink:#E8EDF2;--link:#7CCDEE;--sel:#173444;--okc:#7BD3A6;--okbg:#16302A;--amb:#F2C66D;--ambbg:#33290F;--ambl:#6B5520;--dang:#FF8A80;--sh:0 1px 2px rgba(0,0,0,.3);color-scheme:dark}}
+/* VOICE work tool in P2A's own look (Evo nav, cyan pills, uppercase card titles)
+   IDEA the SOP is a tree drawn across four coloured bands: Find, Review, Act, Finish
+   PICTURE the tree itself, editable in place; ghost boxes are where the next thing goes
+   COLOUR P2A tokens: nav #0D131A, cyan #5BC2E7 (act here), link #0A6490; bands = topic cyan, review purple, act amber, finish green
+   TYPE Inter, uppercase letter-spaced section titles like P2A
+   LAYOUT header bar + SOP strip, canvas (scrolls/zooms) + docked edit panel on wide screens, drawer on smaller */
+:root{--nav:#0D131A;--cyan:#5BC2E7;--on-accent:#0D131A;--link:#0A6490;--title:#1A202C;--ink:#1D2633;--mut:#4A5568;--ph:#6B7785;--bg:#F7F9FB;--card:#FFFFFF;--line:#D5DCE4;--input-bg:#FFFFFF;--input-bd:#9AA6B5;--accbg:#E8F6FC;--ok:#1F7A4A;--okbg:#E6F4EC;--warn:#8A5A00;--warnbg:#FDF1D8;--warnl:#E9C46A;--bad:#C53030;--rev:#5B4BB7;--revbg:#EFECFA;--canvas:#ECEDEF;
+ --b-find:#E6F4FA;--b-findl:#0A6490;--b-rev:#F1EEFA;--b-revl:#5B4BB7;--b-act:#FFF6E3;--b-actl:#B07A00;--b-fin:#E9F5EE;--b-finl:#1F7A4A;--sh:0 1px 3px rgba(13,19,26,.08);color-scheme:light}
+:root[data-theme="dark"]{--link:#5BC2E7;--title:#E6EDF3;--ink:#B8C4D0;--mut:#8A99AA;--ph:#7D8B9B;--bg:#131B24;--card:#1A242F;--line:#2A3644;--input-bg:#0F161D;--input-bd:#4A5868;--accbg:rgba(91,194,231,.14);--ok:#59c98b;--okbg:#1c3a2b;--warn:#e8b855;--warnbg:#3a2f14;--warnl:#6B5520;--bad:#ff8a80;--rev:#b3a8ff;--revbg:#2a2547;--canvas:#16202A;
+ --b-find:#14293A;--b-findl:#5BC2E7;--b-rev:#211E38;--b-revl:#b3a8ff;--b-act:#2E2612;--b-actl:#e8b855;--b-fin:#15291F;--b-finl:#59c98b;--sh:0 1px 3px rgba(0,0,0,.35);color-scheme:dark}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--link:#5BC2E7;--title:#E6EDF3;--ink:#B8C4D0;--mut:#8A99AA;--ph:#7D8B9B;--bg:#131B24;--card:#1A242F;--line:#2A3644;--input-bg:#0F161D;--input-bd:#4A5868;--accbg:rgba(91,194,231,.14);--ok:#59c98b;--okbg:#1c3a2b;--warn:#e8b855;--warnbg:#3a2f14;--warnl:#6B5520;--bad:#ff8a80;--rev:#b3a8ff;--revbg:#2a2547;--canvas:#16202A;--b-find:#14293A;--b-findl:#5BC2E7;--b-rev:#211E38;--b-revl:#b3a8ff;--b-act:#2E2612;--b-actl:#e8b855;--b-fin:#15291F;--b-finl:#59c98b;--sh:0 1px 3px rgba(0,0,0,.35);color-scheme:dark}}
 *{box-sizing:border-box}
 html,body{margin:0}
-body{background:var(--bg);color:var(--ink);font:15px/1.45 Inter,system-ui,-apple-system,Segoe UI,sans-serif}
+body{background:var(--bg);color:var(--ink);font:14px/1.45 Inter,system-ui,-apple-system,Segoe UI,sans-serif}
 button,input,select,textarea{font:inherit;color:inherit}
-.wrap{padding-left:max(2.5vw,16px,env(safe-area-inset-left,0px));padding-right:max(2.5vw,16px,env(safe-area-inset-right,0px));max-width:1720px;margin:0 auto}
-header{background:var(--nav);color:var(--navink);position:sticky;top:env(safe-area-inset-top,0px);z-index:30}
+::placeholder{color:var(--ph);opacity:1}
+/* header like P2A */
+header{background:var(--nav);color:#fff;position:sticky;top:env(safe-area-inset-top,0px);z-index:30}
 body::before{content:"";position:fixed;left:0;right:0;top:0;height:env(safe-area-inset-top,0px);background:var(--nav);z-index:31}
-.bar{display:flex;align-items:center;gap:8px;padding-block:10px;flex-wrap:wrap}
-.brand{font-weight:700;font-size:17px;display:flex;align-items:center;gap:8px;margin-right:auto;min-width:0}
-.brand i{width:10px;height:10px;border-radius:3px;background:var(--cyan);display:inline-block}
-.brand small{font-weight:500;color:#9AA6B2;font-size:12px}
-.hb{background:transparent;border:1px solid #33404D;color:var(--navink);border-radius:8px;padding:7px 12px;cursor:pointer;white-space:nowrap}
-.hb:hover{border-color:var(--cyan)}
-.hb.pri{background:var(--cyan);border-color:var(--cyan);color:#0D131A;font-weight:600}
-.hb.todo{border-color:var(--ambl);color:#F2C66D}
-.sopbar{display:flex;gap:10px;align-items:center;padding-block:12px 0;flex-wrap:wrap}
-.sopbar input.ttl{flex:1 1 320px;min-width:0;font-size:24px;font-weight:700;letter-spacing:-.02em;border:1px solid transparent;background:transparent;border-radius:8px;padding:4px 8px;margin-left:-8px}
-.sopbar input.ttl:hover,.sopbar input.ttl:focus{border-color:var(--line);background:var(--card);outline:none}
-.whenrow{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:4px}
-.whenrow label{font-size:13px;color:var(--mute);font-weight:600}
-.whenrow input{flex:1 1 300px;min-width:0}
-.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-top:10px}
-.tab{background:none;border:0;border-bottom:3px solid transparent;padding:9px 14px;cursor:pointer;color:var(--mute);font-weight:600}
-.tab[aria-selected="true"]{color:var(--ink);border-color:var(--cyan)}
-main{padding-block:16px 60px}
-.in,textarea.in,select.in{width:100%;border:1px solid var(--line);background:var(--card);border-radius:8px;padding:8px 10px;min-width:0}
+.hd{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px max(16px,env(safe-area-inset-right,0px)) 10px max(16px,env(safe-area-inset-left,0px))}
+.logo{display:flex;align-items:center;gap:8px;font-weight:800;letter-spacing:.06em;font-size:16px;white-space:nowrap}
+.logo i{width:11px;height:11px;background:var(--cyan);transform:rotate(45deg);border-radius:2px;display:inline-block}
+.seg{display:inline-flex;background:#1C2530;border:1px solid #2F3B48;border-radius:999px;padding:3px;gap:2px}
+.seg button{border:0;background:transparent;color:#AEBBCA;font-size:12px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;padding:6px 13px;border-radius:999px;cursor:pointer;white-space:nowrap}
+.seg button[aria-pressed="true"]{background:var(--cyan);color:var(--on-accent)}
+.sp{flex:1}
+.hbtn{border:1.4px solid #3A4755;background:transparent;color:#fff;border-radius:999px;padding:6px 13px;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;white-space:nowrap}
+.hbtn:hover{border-color:var(--cyan)}
+.hbtn.pri{background:var(--cyan);border-color:var(--cyan);color:var(--on-accent)}
+.hbtn.todo{border-color:#8A6A1E;color:#F2C66D}
+.menu{position:relative}
+.menu .dd{position:absolute;right:0;top:calc(100% + 6px);background:var(--card);color:var(--ink);border:1.5px solid var(--cyan);border-radius:10px;box-shadow:0 14px 40px rgba(0,0,0,.3);min-width:220px;padding:6px;z-index:40}
+.menu .dd button{display:block;width:100%;text-align:left;border:0;background:transparent;padding:9px 12px;border-radius:7px;cursor:pointer;font-size:14px}
+.menu .dd button:hover{background:var(--accbg)}
+.menu .dd hr{border:0;border-top:1px solid var(--line);margin:4px 0}
+/* SOP strip */
+.wrap{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.strip{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1.6fr) auto;gap:12px;align-items:end;padding-block:14px 10px}
+.strip>*{min-width:0}
+.lbl{display:block;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--title);margin:0 0 5px}
+.lbl small{text-transform:none;letter-spacing:0;font-weight:500;color:var(--mut);margin-left:6px}
+.in,textarea.in,select.in{width:100%;background:var(--input-bg);border:1px solid var(--input-bd);border-radius:8px;padding:8px 11px;min-width:0;color:var(--title)}
 textarea.in{resize:vertical;min-height:40px;line-height:1.4}
-.in:focus{outline:2px solid var(--cyan);outline-offset:-1px;border-color:var(--cyan)}
-label.f{display:block;font-size:12.5px;color:var(--mute);margin:10px 0 4px;font-weight:500}
-.btn{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:6px 11px;cursor:pointer;font-weight:500;font-size:14px}
-.btn:hover{border-color:var(--link);color:var(--link)}
-.btn.pri{background:var(--link);border-color:var(--link);color:#fff;font-weight:600}
-:root[data-theme="dark"] .btn.pri{color:#0D131A}
-.btn.del:hover{color:var(--dang);border-color:var(--dang)}
-.btn.sure{color:#fff;background:var(--dang);border-color:var(--dang)}
-.muted{color:var(--mute);font-size:13px}
-.acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px;align-items:center}
-/* canvas */
-.work{display:grid;grid-template-columns:minmax(0,1fr) 370px;gap:16px;align-items:start}
+.in:focus{outline:2px solid var(--cyan);outline-offset:0;border-color:var(--cyan)}
+.ttl{font-size:18px;font-weight:700}
+.tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.btn{background:var(--cyan);color:var(--on-accent);border:1.4px solid var(--cyan);border-radius:999px;padding:7px 16px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap}
+.btn.sec{background:transparent;color:var(--link);border-color:var(--link)}
+.btn.sm{padding:4px 11px;font-size:12px}
+.btn.danger{background:transparent;color:var(--bad);border-color:var(--bad)}
+.btn.sure{background:var(--bad);border-color:var(--bad);color:#fff}
+.btn:focus-visible,.hbtn:focus-visible,.seg button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+.zoom{display:inline-flex;border:1px solid var(--line);border-radius:999px;background:var(--card);overflow:hidden}
+.zoom button{border:0;background:transparent;padding:6px 11px;cursor:pointer;color:var(--link);font-weight:700}
+.zoom span{padding:6px 4px;font-size:12px;color:var(--mut);min-width:44px;text-align:center}
+.banner{border:1.5px dashed var(--cyan);background:var(--accbg);border-radius:10px;padding:8px 12px;font-size:13px;color:var(--title);margin-bottom:10px;display:flex;gap:10px;align-items:center}
+.banner button{margin-left:auto}
+/* work area */
+.work{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:14px;align-items:start;padding-bottom:40px}
 .work>*{min-width:0}
-.lanes{display:grid;grid-template-columns:minmax(0,.95fr) minmax(0,1.25fr) minmax(0,.85fr) minmax(0,.85fr);gap:12px;align-items:start}
-.lane{background:var(--lane);border:1px solid var(--line);border-radius:12px;padding:12px;min-width:0}
-.lh{font-size:12px;font-weight:700;letter-spacing:.04em;color:var(--mute);text-transform:uppercase;display:flex;align-items:center;gap:6px;margin:2px 2px 10px}
-.lh .k{width:20px;height:20px;border-radius:6px;background:var(--nav);color:var(--navink);display:grid;place-items:center;font-size:11px}
-.lh small{text-transform:none;letter-spacing:0;font-weight:500}
-.nd{background:var(--card);border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;cursor:pointer;box-shadow:var(--sh);position:relative}
-.nd:hover,.ck:hover{border-color:var(--link)}
-.on{outline:3px solid var(--cyan);outline-offset:1px}
-.nd .t{font-weight:600;overflow-wrap:anywhere}
-.nd .d{font-size:12.5px;color:var(--mute);overflow-wrap:anywhere}
-.nd .num{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:6px;background:var(--nav);color:var(--navink);font-size:12px;font-weight:700;margin-right:8px;vertical-align:1px}
-.nd.st{border-color:var(--ink)}
-.nd.qu{background:var(--sel);border-color:var(--link)}
-.nd.qu .t{color:var(--link)}
-.nd.qu .t::before{content:"?";display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--link);color:var(--card);font-size:12px;margin-right:7px;vertical-align:1px}
-.arr{text-align:center;color:var(--mute);font-size:16px;line-height:1;padding:5px 0}
-.chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
-.chip{font-size:12.5px;font-weight:600;border-radius:20px;padding:3px 10px;background:var(--ambbg);border:1px solid var(--ambl);color:var(--ink);cursor:pointer;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.chip.ok{background:var(--okbg);border-color:var(--okc);color:var(--okc)}
-.chip.sel{outline:2px solid var(--cyan);outline-offset:1px}
-.chip .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#D99A00;margin-left:5px;vertical-align:1px}
-.chip .end{margin-left:5px;font-size:10px}
-.br{margin-top:8px;border:1px solid var(--ambl);background:var(--card);border-radius:8px;padding:8px 10px;font-size:12.5px}
-.br.g{border-color:var(--okc)}
-.br .bh{font-weight:700;font-size:11.5px;color:var(--amb);margin-bottom:4px}
-.br.g .bh{color:var(--okc)}
-.br .ln{overflow-wrap:anywhere;margin:2px 0}
-.br .ln b{font-weight:600;color:var(--mute);font-size:11px;text-transform:uppercase;letter-spacing:.03em;margin-right:4px}
-.br .ft{margin-top:6px;font-size:11.5px;color:var(--mute)}
-.br .ft.end{color:var(--ink);font-weight:600}
-.br .sub{margin-top:6px;display:flex;flex-direction:column;gap:6px}
-.grp{border:1.8px dashed var(--link);border-radius:12px;padding:10px;background:transparent;cursor:pointer}
-.grp .gh{font-weight:700;color:var(--link);font-size:13.5px;margin:0 2px 8px;display:flex;gap:6px;align-items:baseline;flex-wrap:wrap}
-.grp .gh small{font-weight:500;color:var(--mute)}
-.grp .cks{display:flex;flex-direction:column;gap:7px}
-.ck{background:var(--card);border:1.5px solid var(--line);border-radius:10px;padding:9px 11px;cursor:pointer}
-.ck .t{font-weight:600;font-size:14px;overflow-wrap:anywhere}
-.ck .chips{margin-top:6px}
-.fu{margin:6px 0 0 10px;padding-left:10px;border-left:2px solid var(--ambl);display:flex;flex-direction:column;gap:6px}
-.fu .if{font-size:11.5px;color:var(--amb);font-weight:600}
-.addck{margin-top:8px;font-size:13px;min-height:36px;border-style:dashed}
-.adds{display:flex;gap:5px;flex-wrap:wrap;margin-top:10px}
-.adds button{flex:1 1 auto;border:1.5px dashed var(--line);background:transparent;border-radius:8px;padding:7px 8px;cursor:pointer;color:var(--link);font-weight:600;font-size:13px;white-space:nowrap}
-.adds button:hover{border-color:var(--link);background:var(--sel)}
-.act{border-radius:10px;padding:11px 12px;cursor:pointer;border:1.5px solid}
-.act+.act,.fin+.fin{margin-top:10px}
-.act.pass{background:var(--okbg);border-color:var(--okc)}
-.act.prob{background:var(--ambbg);border-color:var(--ambl)}
-.act .h,.fin .h{font-size:11.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;margin-bottom:4px}
-.act.pass .h{color:var(--okc)}.act.prob .h{color:var(--amb)}
-.act .ln,.fin .ln{font-size:13px;overflow-wrap:anywhere;margin:3px 0}
-.act .ln b,.fin .ln b{font-weight:600;color:var(--mute);font-size:11px;text-transform:uppercase;letter-spacing:.03em;margin-right:4px}
-.fin{background:var(--card);border:1.5px solid var(--line);border-radius:10px;padding:11px 12px;cursor:pointer}
-.fin .mail{font-size:12.5px;white-space:pre-wrap;color:var(--ink);background:var(--soft);border-radius:6px;padding:8px;margin-top:6px;max-height:190px;overflow:hidden}
-.fin .mail i{color:var(--amb);font-style:normal;font-weight:600}
-.try{width:100%;margin-top:10px;background:var(--link);color:#fff;border:0;border-radius:10px;padding:11px;font-weight:700;cursor:pointer}
-:root[data-theme="dark"] .try{color:#0D131A}
-.empty{font-size:12.5px;color:var(--mute);padding:6px 2px}
-/* panel */
-.panel{background:var(--card);border:2px solid var(--link);border-radius:12px;padding:16px;position:sticky;top:76px;max-height:calc(100vh - 92px);overflow:auto}
-.panel .pk{position:sticky;top:-16px;margin:-16px -16px 0;padding:14px 16px 8px;background:var(--card);z-index:2;font-size:11.5px;font-weight:700;letter-spacing:.05em;color:var(--link);text-transform:uppercase;display:flex;align-items:center}
-.panel .pk .x{margin-left:auto;border:0;background:transparent;font-size:20px;cursor:pointer;color:var(--mute);padding:0 4px}
-.panel h3{margin:4px 0 2px;font-size:18px;overflow-wrap:anywhere}
-.panel details.it{border:1px solid var(--ambl);background:var(--ambbg);border-radius:8px;padding:8px 10px;margin-top:8px}
-.panel details.it.okk{border-color:var(--okc);background:var(--okbg)}
-.panel details.it>summary{cursor:pointer;font-weight:600;list-style:none;display:flex;gap:6px;align-items:center}
-.panel details.it>summary::-webkit-details-marker{display:none}
-.panel details.it>summary::before{content:"▸";color:var(--mute)}
-.panel details.it[open]>summary::before{content:"▾"}
-.panel details.it .in{background:var(--card)}
-.panel .sec{font-size:11.5px;font-weight:700;letter-spacing:.05em;color:var(--mute);text-transform:uppercase;margin-top:16px}
-.cb{display:flex;gap:8px;align-items:center;margin-top:10px;font-size:13.5px}
-.cb input{width:18px;height:18px}
-.ph{color:var(--mute);font-size:13.5px}
-.ph ul{padding-left:18px;margin:8px 0}
-.ph li{margin-bottom:5px}
-.todos{margin-top:12px;display:flex;flex-direction:column;gap:5px}
-.todos button{text-align:left;border:1px solid var(--ambl);background:var(--ambbg);color:var(--amb);border-radius:8px;padding:6px 9px;cursor:pointer;font-size:13px}
-.good{background:var(--okbg);color:var(--okc);border-radius:8px;padding:8px 10px;font-size:13px;margin-top:10px}
-/* details tab */
-.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh);padding:18px}
-.two{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start}
-.two>*{min-width:0}
-.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.row2>*{min-width:0}
-h2{font-size:15px;margin:0 0 6px}
-.watch li{display:flex;gap:6px;margin-bottom:6px}
-.watch ol{padding:0;margin:8px 0 0;list-style:none}
+.cv{background:var(--canvas);border:1px solid var(--line);border-radius:12px;overflow:auto;max-height:calc(100vh - 190px);min-height:420px;position:relative}
+.cvi{position:relative;transform-origin:0 0}
+.band{position:absolute;border:2px solid;border-radius:16px}
+.band .bh{position:absolute;display:flex;align-items:center;gap:8px}
+.band .bt{font-size:13px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+.band .bs{font-size:12px;color:var(--mut)}
+.qbtn{width:22px;height:22px;border-radius:50%;border:1.5px solid currentColor;background:var(--card);font-weight:800;font-size:12px;cursor:pointer;display:inline-grid;place-items:center;padding:0;line-height:1}
+.band.find{background:var(--b-find);border-color:var(--b-findl);color:var(--b-findl)}
+.band.rev{background:var(--b-rev);border-color:var(--b-revl);color:var(--b-revl)}
+.band.act{background:var(--b-act);border-color:var(--b-actl);color:var(--b-actl)}
+.band.fin{background:var(--b-fin);border-color:var(--b-finl);color:var(--b-finl)}
+.band::before{content:"";position:absolute;background:currentColor;border-radius:6px}
+.down .band::before{left:-2px;top:-2px;bottom:-2px;width:9px}
+.side .band::before{left:-2px;right:-2px;top:-2px;height:9px}
+svg.edges{position:absolute;left:0;top:0;overflow:visible;pointer-events:none}
+.bx{position:absolute;background:var(--card);border:1.6px solid var(--line);border-radius:10px;padding:9px 12px;box-shadow:var(--sh);cursor:pointer;overflow:hidden;color:var(--title)}
+.bx:hover{border-color:var(--link)}
+.bx.on{outline:3px solid var(--cyan);outline-offset:2px}
+.bx .k{font-size:10.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);margin-bottom:2px}
+.bx .t{font-weight:650;font-size:13.5px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
+.bx .d{font-size:12px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bx.st{border-color:var(--title)}
+.bx.qu{border-color:var(--b-findl)}
+.bx.qu .t{color:var(--link)}
+.bx.qu .t::before{content:"?";display:inline-grid;place-items:center;width:18px;height:18px;border-radius:50%;background:var(--link);color:var(--card);font-size:11px;font-weight:800;margin-right:6px;vertical-align:1px}
+.bx.gr{border:1.8px dashed var(--b-revl);background:var(--card);cursor:default}
+.gr .gh{font-weight:700;color:var(--rev);font-size:13px;margin-bottom:6px;cursor:pointer}
+.gr .gh small{font-weight:500;color:var(--mut)}
+.gr .row{display:flex;gap:6px;align-items:center;border:1px solid var(--line);background:var(--revbg);border-radius:7px;padding:5px 8px;margin-bottom:5px;cursor:pointer;min-height:30px}
+.gr .row:hover{border-color:var(--rev)}
+.gr .row.on{outline:2px solid var(--cyan)}
+.gr .row .n{font-weight:650;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:0 1 auto;max-width:48%}
+.gr .row .ps{display:flex;gap:3px;overflow:hidden;flex:1;justify-content:flex-end}
+.gr .row.fu{margin-left:16px;border-left:3px solid var(--warnl)}
+.gr .row .if{font-size:11px;color:var(--warn);font-weight:700;white-space:nowrap}
+.mini{font-size:11px;font-weight:600;border-radius:999px;padding:1px 7px;background:var(--warnbg);color:var(--warn);white-space:nowrap;border:1px solid var(--warnl)}
+.mini.dot::after{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:#D99A00;margin-left:4px;vertical-align:1px}
+.gr .add{width:100%;border:1.5px dashed var(--line);background:transparent;border-radius:7px;padding:5px 8px;font-size:12.5px;min-height:30px;resize:none}
+.bx.act{border-color:var(--b-actl)}
+.bx.act .k{color:var(--warn)}
+.bx.fin.ok{background:var(--okbg);border-color:var(--ok)}
+.bx.fin.am{background:var(--warnbg);border-color:var(--warnl)}
+.bx.fin .t{font-size:12.5px;font-weight:800}
+.bx.fin .d{color:var(--ink)}
+.bx.gh{border:1.6px dashed var(--input-bd);background:transparent;box-shadow:none;cursor:default;padding:7px 8px}
+.bx.gh .k{color:var(--link);margin:0 0 5px 2px}
+.gbtns{display:flex;flex-wrap:wrap;gap:4px}
+.gbtns button{border:1px solid var(--link);background:var(--card);color:var(--link);border-radius:999px;font-size:11.5px;font-weight:600;padding:2px 8px;cursor:pointer}
+.gbtns button:hover{background:var(--accbg)}
+.bx.gt{border:1.6px dashed var(--link);background:var(--accbg);font-size:12.5px;font-weight:600;color:var(--link);display:flex;align-items:center}
+.elab{position:absolute;transform:translate(-50%,-50%);background:var(--card);border:1.4px solid var(--input-bd);border-radius:999px;font-size:11.5px;font-weight:700;padding:2px 9px;white-space:nowrap;cursor:pointer;color:var(--title);max-width:180px;overflow:hidden;text-overflow:ellipsis;z-index:2}
+.elab.ok{border-color:var(--ok);color:var(--ok)}.elab.am{border-color:var(--b-actl);color:var(--warn)}
+.elab.on{outline:2px solid var(--cyan)}
+/* panel = P2A card */
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px;box-shadow:var(--sh)}
+.panel{position:sticky;top:70px;max-height:calc(100vh - 86px);overflow:auto}
+.ph{position:sticky;top:-14px;background:var(--card);margin:-14px -16px 6px;padding:13px 16px 8px;display:flex;align-items:center;gap:8px;z-index:2;border-bottom:1px solid var(--line)}
+.ph .lbl{margin:0}
+.ph .x{margin-left:auto;border:0;background:transparent;font-size:20px;cursor:pointer;color:var(--mut);padding:0 4px}
+.f{display:block;font-size:12px;color:var(--mut);margin:10px 0 4px;font-weight:600}
+.sec{font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--title);margin-top:16px}
+details.it{border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin-top:8px;background:var(--bg)}
+details.it.am{border-color:var(--warnl);background:var(--warnbg)}
+details.it>summary{cursor:pointer;font-weight:650;list-style:none;display:flex;gap:6px;align-items:center;color:var(--title)}
+details.it>summary::-webkit-details-marker{display:none}
+details.it>summary::before{content:"▸";color:var(--mut)}
+details.it[open]>summary::before{content:"▾"}
+details.it .in{background:var(--input-bg)}
+.acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px;align-items:center}
+.muted{color:var(--mut);font-size:12.5px}
+.helpul{margin:6px 0 0;padding-left:18px;color:var(--ink);font-size:13px}.helpul li{margin-bottom:4px}
+.todos{margin-top:10px;display:flex;flex-direction:column;gap:5px}
+.todos button{text-align:left;border:1px solid var(--warnl);background:var(--warnbg);color:var(--warn);border-radius:8px;padding:6px 9px;cursor:pointer;font-size:12.5px}
+.good{background:var(--okbg);color:var(--ok);border-radius:8px;padding:8px 10px;font-size:13px;margin-top:10px}
+.cb{display:flex;gap:8px;align-items:center;margin-top:10px;font-size:13px}
+.seg2{display:inline-flex;border:1px solid var(--line);border-radius:999px;padding:2px;gap:2px;margin-top:4px}
+.seg2 button{border:0;background:transparent;border-radius:999px;padding:4px 10px;font-size:12.5px;cursor:pointer;color:var(--mut);font-weight:600}
+.seg2 button[aria-pressed="true"]{background:var(--cyan);color:var(--on-accent)}
+/* details page */
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start;padding-bottom:40px}.two>*{min-width:0}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.row2>*{min-width:0}
+.watch{list-style:none;padding:0;margin:8px 0 0}.watch li{display:flex;gap:6px;margin-bottom:6px}
 /* dialogs */
 .scrim{position:fixed;inset:0;background:rgba(7,11,15,.55);z-index:50;display:flex;justify-content:center;align-items:flex-start;padding:max(5vh,16px) 16px 16px;overflow:auto}
-.dlg{background:var(--card);color:var(--ink);border:2px solid var(--cyan);border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.35);width:min(760px,100%);padding:20px}
-.dlg.wide{width:min(1040px,100%)}
-.dlg h2{font-size:18px;display:flex;align-items:center;gap:8px}
+.dlg{background:var(--card);color:var(--ink);border:2px solid var(--cyan);border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.4);width:min(720px,100%);padding:18px 20px}
+.dlg.wide{width:min(1080px,100%)}
+.dlg h2{font-size:13px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--title);display:flex;align-items:center;gap:8px;margin:0 0 8px}
 .dlg h2 .btn{margin-left:auto}
+.dlg h3{font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;margin:14px 0 6px}
 .list{display:flex;flex-direction:column;gap:6px;margin-top:10px;max-height:50vh;overflow:auto}
-.li{display:flex;gap:10px;align-items:center;border:1px solid var(--line);border-radius:8px;padding:10px 12px;cursor:pointer}
-.li:hover{border-color:var(--link)}
-.li.on{border-color:var(--cyan);background:var(--sel);outline:0}
-.li .t{font-weight:600;flex:1;min-width:0;overflow-wrap:anywhere}
-.li .s{font-size:12px;color:var(--mute);white-space:nowrap}
-pre.out{background:var(--soft);border:1px solid var(--line);border-radius:8px;padding:12px;font:12.5px/1.45 ui-monospace,Menlo,Consolas,monospace;white-space:pre-wrap;overflow-wrap:anywhere;max-height:40vh;overflow:auto;margin:8px 0}
-.tryg{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:16px;margin-top:10px}
-.tryg>*{min-width:0}
-.trow{border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin-bottom:6px}
-.trow .t{font-weight:600;font-size:14px}
-.trow .chips .chip{cursor:pointer;opacity:.55;background:var(--soft);border-color:var(--line);color:var(--ink)}
-.trow .chips .chip.on{opacity:1;outline:0;background:var(--ambbg);border-color:var(--ambl)}
-.trow .chips .chip.ok.on{background:var(--okbg);border-color:var(--okc);color:var(--okc)}
-.trow.sub{margin-left:16px;border-left:3px solid var(--ambl)}
-.stage-t{font-size:11.5px;font-weight:700;letter-spacing:.05em;color:var(--mute);text-transform:uppercase;margin:10px 0 6px}
-.endnote{background:var(--nav);color:var(--navink);border-radius:8px;padding:8px 10px;font-size:13px;margin:8px 0}
-.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--nav);color:var(--navink);padding:10px 16px;border-radius:10px;z-index:60;box-shadow:0 8px 30px rgba(0,0,0,.3);max-width:calc(100% - 32px)}
+.li{display:flex;gap:10px;align-items:center;border:1px solid var(--line);border-radius:8px;padding:9px 12px;cursor:pointer}
+.li:hover{border-color:var(--link)}.li.on{border-color:var(--cyan);background:var(--accbg)}
+.li .t{font-weight:600;flex:1;min-width:0;overflow-wrap:anywhere;color:var(--title)}.li .s{font-size:12px;color:var(--mut);white-space:nowrap}
+pre.out{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:11px;font:12.5px/1.5 ui-monospace,Menlo,Consolas,monospace;white-space:pre-wrap;overflow-wrap:anywhere;max-height:36vh;overflow:auto;margin:6px 0;color:var(--title)}
+.tryg{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:18px}.tryg>*{min-width:0}
+.trow{border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin-bottom:6px;border-left:4px solid var(--line)}
+.trow.find{border-left-color:var(--b-findl)}.trow.rev{border-left-color:var(--b-revl)}
+.trow .t{font-weight:650;font-size:13.5px;color:var(--title)}
+.chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+.chip{border:1px solid var(--line);border-radius:999px;padding:3px 10px;font-size:12.5px;background:var(--card);cursor:pointer;color:var(--ink)}
+.chip.on{background:var(--cyan);border-color:var(--cyan);color:var(--on-accent);font-weight:600}
+.chip.pass.on{background:var(--okbg);border-color:var(--ok);color:var(--ok)}
+.chip.prob.on{background:var(--warnbg);border-color:var(--warnl);color:var(--warn)}
+.res{border-radius:10px;padding:10px 12px;margin-bottom:8px;border:1.5px solid}
+.res.act{background:var(--b-act);border-color:var(--b-actl)}
+.res.fin{background:var(--b-fin);border-color:var(--b-finl)}
+.res .lbl{margin-bottom:4px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--nav);color:#fff;padding:10px 16px;border-radius:10px;z-index:60;box-shadow:0 8px 30px rgba(0,0,0,.3);max-width:calc(100% - 32px)}
 .how ol{margin:6px 0 0 18px;padding:0}.how li{margin-bottom:6px}
-.report li{margin-bottom:4px}
-@media (max-width:1380px){.work{grid-template-columns:minmax(0,1fr)}.panel{position:fixed;top:auto;right:16px;bottom:16px;width:min(390px,calc(100% - 32px));max-height:min(78vh,760px);z-index:40;box-shadow:0 18px 50px rgba(0,0,0,.3)}.panel.idle{display:none}}
-@media (max-width:1100px){.lanes{grid-template-columns:minmax(0,1fr) minmax(0,1.3fr)}}
-@media (max-width:700px){.lanes{grid-template-columns:minmax(0,1fr)}.two,.row2,.tryg{grid-template-columns:minmax(0,1fr)}.panel{left:8px;right:8px;width:auto;bottom:calc(8px + env(safe-area-inset-bottom,0px))}.brand small{display:none}.sopbar input.ttl{font-size:21px}}
+@media (max-width:1380px){.work{grid-template-columns:minmax(0,1fr)}.panel{position:fixed;top:auto;right:16px;bottom:16px;width:min(400px,calc(100% - 32px));max-height:min(80vh,780px);z-index:45;box-shadow:0 18px 50px rgba(0,0,0,.35);border:2px solid var(--cyan)}.panel.idle{display:none}}
+@media (max-width:900px){.strip{grid-template-columns:minmax(0,1fr)}.cv{max-height:none}}
+@media (max-width:640px){.two,.row2,.tryg{grid-template-columns:minmax(0,1fr)}.panel{left:8px;right:8px;width:auto;bottom:calc(8px + env(safe-area-inset-bottom,0px))}.logo span{display:none}.hd{gap:6px}.hbtn{padding:5px 10px}}
 </style>
 
-<header><div class="wrap bar">
- <div class="brand"><i></i>SOP Builder <small>4.1 · Find, Review, Act, Finish</small></div>
- <button class="hb" id="bSops">SOPs</button>
- <button class="hb" id="bUndo" title="Undo (Ctrl+Z)">Undo</button>
- <button class="hb todo" id="bTodo" hidden></button>
- <button class="hb" id="bHow">How to</button>
- <button class="hb" id="bTheme" aria-label="Switch light or dark">Light / dark</button>
- <button class="hb pri" id="bDl">Download SOP file</button>
+<header><div class="hd">
+ <div class="logo"><i></i>EVO <span>SOP BUILDER</span></div>
+ <div class="seg" role="group" aria-label="View"><button data-tab="map" aria-pressed="true">Diagram</button><button data-tab="details" aria-pressed="false">Details</button></div>
+ <div class="sp"></div>
+ <button class="hbtn todo" id="bTodo" hidden></button>
+ <button class="hbtn" id="bUndo" title="Undo (Ctrl+Z)">Undo</button>
+ <button class="hbtn pri" id="bTry">Try a case</button>
+ <div class="menu"><button class="hbtn" id="bMenu" aria-haspopup="true" aria-expanded="false">☰ Menu</button><div class="dd" id="dd" hidden>
+  <button data-m="sops">Your SOPs</button><button data-m="new">+ New SOP</button><button data-m="import">Import a .md file</button><button data-m="example">Add the example</button><hr>
+  <button data-m="download">Download SOP file</button><button data-m="how">How to</button><button data-m="theme">Light / dark</button></div></div>
 </div></header>
-<div class="wrap">
- <div class="sopbar"><input class="ttl" id="ttl" data-id="sop" data-k="title" aria-label="SOP title" placeholder="SOP title"><span class="muted" id="stat"></span></div>
- <div class="whenrow"><label for="when">When to use</label><input class="in" id="when" data-id="sop" data-k="when" placeholder="The member’s issue, e.g. A member asks why their account is not approved yet"></div>
- <div class="tabs" role="tablist"><button class="tab" role="tab" data-tab="map">Diagram</button><button class="tab" role="tab" data-tab="details">Details</button></div>
-</div>
+<div class="wrap" id="top"></div>
 <main class="wrap" id="main"></main>
 <input type="file" id="file" accept=".md,.txt,text/markdown,text/plain" hidden>
 
@@ -193,388 +197,427 @@ pre.out{background:var(--soft);border:1px solid var(--line);border-radius:8px;pa
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const uid=()=>Math.random().toString(36).slice(2,9);
-const VERSION='4.1',KEY='evosb41:';
-const store={get(k,d){try{const v=localStorage.getItem(KEY+k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem(KEY+k,JSON.stringify(v))}catch(e){}},raw(k){try{return JSON.parse(localStorage.getItem(k)||'null')}catch(e){return null}}};
+const VERSION='4.2',KEY='evosb42:';
+const store={get(k,d){try{const v=localStorage.getItem(KEY+k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem(KEY+k,JSON.stringify(v))}catch(e){}}};
 
-/* ---------- model ----------
- sop.find / sop.review = ordered lists of nodes:
-   step     {type:'step',name,detail}
-   question {type:'question',name,question,detail,answers:[ans]}   ans {label,ok,words,donow,reply,ticket,email,end,follow:[nodes]}
-   group    {type:'group',name,checks:[check]}                      check {name,detail,question,problems:[prob]}  prob {label,words,donow,reply,ticket,email,end,follow:[checks]}
- sop.act.pass {action,email,body,ticket}  sop.act.prob {action,ticket}  sop.fin {open,close} */
-const mkStep=(o={})=>({id:uid(),type:'step',name:'',detail:'',...o});
-const mkAns=(o={})=>({id:uid(),label:'',ok:false,words:'',donow:'',reply:'',ticket:'',email:'',end:false,follow:[],...o});
-const mkQ=(o={})=>({id:uid(),type:'question',name:'',question:'',detail:'',answers:[mkAns({label:'Yes',ok:true}),mkAns({label:'No'})],...o});
-const mkProb=(o={})=>({id:uid(),label:'',words:'',donow:'',reply:'',ticket:'',email:'',end:false,follow:[],...o});
-const mkCheck=(o={})=>({id:uid(),name:'',detail:'',question:'',problems:[],...o});
-const mkGroup=(o={})=>({id:uid(),type:'group',name:'Review',checks:[],...o});
-const base=()=>({id:uid(),title:'New SOP',tags:'',when:'',applies:'',topic:'',confluence:'',status:'Draft',links:[],find:[],review:[],act:{pass:{action:'',email:'',body:'',ticket:''},prob:{action:'',ticket:''}},fin:{open:'Hi XXX,\n\nThank you for your message. Before we can go ahead, we need:',close:'Once we have these, we will take another look.\n\nThank you,'},watch:[],emails:{},meta:{name:'',role:'',notes:''},updated:Date.now()});
-function blank(){const s=base();s.find=[mkStep({name:'Find the member in back office',detail:'Search by name, then narrow by email.'})];s.review=[mkGroup({name:'Review'})];return s}
-function example(){const s=base();s.title='Account approval: driving record (example)';s.tags='account not approved, driving record, pending account';s.topic='Registration';
- s.when='A member sent their driving record and asks why the account is not approved yet.';s.applies='Pending accounts';
- const P=(label,reply,ticket,o={})=>mkProb({label,reply,ticket,...o});
- s.find=[mkStep({name:'Find the member in back office',detail:'Search by name, then narrow by email.'}),
-  mkQ({name:'Driving record',question:'Is the upload a driving record?',detail:'A licence photo is not a driving record.',answers:[mkAns({label:'Yes',ok:true}),
-   mkAns({label:'Licence instead',words:'sent my licence, uploaded licence',donow:'Add a profile note.',reply:'your driving record (you sent your licence, which we cannot use instead)',ticket:'-Licence uploaded instead of driving record, requested record'}),
-   mkAns({label:'No account found',words:'not found, no account',reply:'the email address you signed up with',ticket:'-No account found under name and email given',end:true})]})];
- s.review=[mkGroup({name:'Account review',checks:[
-  mkCheck({name:'Selfie',detail:'Clear face, no sunglasses.',problems:[P('No selfie','a selfie','-No selfie, requested'),P('Blurry','a clearer selfie','-Selfie blurry, requested new one')]}),
-  mkCheck({name:'Licence photos',detail:'Front and back, clear, not expired.',problems:[P('Back missing','a photo of the back of your licence','-DL back missing, requested'),P('Expired','a photo of your renewed licence','-DL expired, requested renewal',{follow:[mkCheck({name:'Renewal receipt?',detail:'A paper renewal receipt can count for 90 days.',problems:[P('No receipt','your renewal receipt, if you have one','-No renewal receipt on file')]})]})]}),
-  mkCheck({name:'Card on file',problems:[P('Card expired','an updated payment card in the app','-Card on file expired, asked to update')]}),
-  mkCheck({name:'Profile',detail:'Address and date of birth filled in.',problems:[P('Incomplete','your full address in your profile','-Profile incomplete, asked to complete')]})]})];
- s.act.pass={action:'Approve the account',email:'ACCOUNT APPROVED',body:'Hi XXX,\n\nGood news: your account is approved. You can start driving now.\n\nThank you,',ticket:'-Received DA\n-No duplicates\n-Selfie and DL photos valid\n-Profile complete\n-Approved account'};
- s.act.prob={action:'Leave the account pending',ticket:'-Account left pending until the member sends the items above'};
- s.watch=['Out-of-province driving record: ask a lead before approving.','Never approve with a record older than 60 days.'];
- return s}
+/* ---------- model: a tree ----------
+ step     {type:'step',name,detail,next}
+ question {type:'question',question,detail,answers:[{label,words,next}]}      pick one, no wrong answer
+ group    {type:'group',name,checks:[check],pass,fail}                        Review: any order
+   check  {name,detail,problems:[prob]}  prob {label,words,donow,template,text,copilot,ticket,follow:[check]}
+ end      {type:'end',tone:'ok'|'am',action,template,text,copilot,ticket,combine}  Act + Finish
+ goto     {type:'goto',target}                                                continues at another box */
+const M={
+ step:o=>({id:uid(),type:'step',name:'',detail:'',next:null,...o}),
+ question:o=>({id:uid(),type:'question',question:'',detail:'',answers:[A('Yes'),A('No')],...o}),
+ group:o=>({id:uid(),type:'group',name:'Checks',checks:[],pass:M.end({tone:'ok'}),fail:M.end({tone:'am',combine:true,action:'Leave the account as it is'}),...o}),
+ end:o=>({id:uid(),type:'end',tone:'ok',action:'',template:'',text:'',copilot:'',ticket:'',combine:false,...o}),
+ goto:o=>({id:uid(),type:'goto',target:'',...o})};
+function A(label,o){return{id:uid(),label,words:'',next:null,...o}}
+const C=o=>({id:uid(),name:'',detail:'',problems:[],...o});
+const P=o=>({id:uid(),label:'',words:'',donow:'',template:'',text:'',copilot:'',ticket:'',follow:[],...o});
+const base=()=>({id:uid(),title:'New SOP',when:'',applies:'',tags:'',topic:'',confluence:'',status:'Draft',links:[],watch:[],meta:{name:'',role:'',notes:''},dir:'down',root:null,updated:Date.now()});
+function blank(){const s=base();s.root=M.step({name:'Find the member in back office',detail:'Search by name, then narrow by email.'});return s}
+function example(){const s=base();s.title='Reply to non-BC licence email (example)';s.when='A member replies to our non-BC driver licence email.';s.applies='Accounts flagged for a non-BC licence';s.tags='non-BC licence, student, visitor, updated licence';s.topic='Registration';
+ const E=(o)=>M.end(o);
+ const grp=M.group({name:'New licence',checks:[C({name:'Clear, front and back',problems:[P({label:'Back missing',template:'DL BACK MISSING',copilot:'Send a photo of the back of the licence',ticket:'-DL back missing, requested'}),P({label:'Blurry',template:'DL PHOTO BLURRY',copilot:'Send a clearer photo of the licence',ticket:'-DL photo blurry, requested new one'})]}),
+   C({name:'Not expired',problems:[P({label:'Expired',template:'DL EXPIRED',copilot:'The licence on file is expired; send the renewed one',ticket:'-DL expired, requested renewal',follow:[C({name:'Renewal receipt?',detail:'A paper renewal receipt can count for 90 days.',problems:[P({label:'No receipt',template:'NEED RENEWAL RECEIPT',copilot:'Send the renewal receipt if they have one',ticket:'-No renewal receipt'})]})]})]}),
+   C({name:'Name and DOB match the account',problems:[P({label:'Name mismatch',template:'NAME DOES NOT MATCH',copilot:'The name on the licence must match the account',ticket:'-Name on DL does not match account',donow:'Do not unsuspend.'})]})],
+  pass:E({tone:'ok',action:'Unsuspend the account',template:'DOCUMENTS VALIDATED, ACCOUNT ACTIVE',text:'Hi XXX,\nThank you for sending your updated driver’s licence. We have validated your documents, and your account is now active again.\nThank you',ticket:'-Updated DL received and validated\n-Account unsuspended'}),
+  fail:E({tone:'am',combine:true,action:'Account stays suspended',ticket:'-Account stays suspended until the member sends the items above'})});
+ const q3=M.question({question:'Program end date given?',answers:[A('Yes',{next:E({tone:'ok',action:'Note the program end date on the profile',template:'STUDENT BC: END DATE NOTED',ticket:'-Student, program end date noted'})}),A('No',{next:E({tone:'am',action:'Leave as it is',template:'STUDENT: NEED PROGRAM END DATE',copilot:'Ask for the program end date',ticket:'-Student, asked for program end date'})})]});
+ const q4=M.question({question:'Study permit with expiry date given?',answers:[A('Yes',{next:E({tone:'ok',action:'Note the permit expiry on the profile',template:'STUDENT: STUDY PERMIT NOTED',ticket:'-Study permit received, expiry noted'})}),A('No',{next:E({tone:'am',action:'Leave as it is',template:'STUDENT: NEED STUDY PERMIT',copilot:'Ask for the study permit and its expiry date',ticket:'-Asked for study permit and expiry'})})]});
+ const q2=M.question({question:'Which licence does the student have?',answers:[A('BC',{next:q3}),A('Non-Canadian',{next:q4})]});
+ const q1=M.question({question:'What does the member say?',detail:'Read the reply to our email.',answers:[A('Updated licence',{words:'updated, new licence, renewed',next:grp}),A('Visitor',{words:'visiting, tourist, here for',next:E({tone:'ok',action:'Add a profile note: visitor',template:'VISITOR NOTED',ticket:'-Member is a visitor, note added'})}),A('Student',{words:'student, studying, school',next:q2})]});
+ s.root=M.step({name:'Find the member in back office',detail:'Search by name, then narrow by email.',next:q1});
+ s.watch=['A licence from another province is not a visitor case: check the Non-BC SOP.'];return s}
 
-/* ---------- tree helpers ---------- */
-function walk(s,fn){ // fn(obj,kind,list,parent)
- const nodes=(L,par)=>L.forEach(n=>{fn(n,n.type,L,par);if(n.type==='question')n.answers.forEach(a=>{fn(a,'answer',n.answers,n);nodes(a.follow,a)});if(n.type==='group')checks(n.checks,n)});
- const checks=(L,par)=>L.forEach(c=>{fn(c,'check',L,par);c.problems.forEach(p=>{fn(p,'problem',c.problems,c);checks(p.follow,p)})});
- nodes(s.find,'find');nodes(s.review,'review')}
-function find(id){const s=sop();if(id==='sop')return{o:s,kind:'sop'};if(id==='pass')return{o:s.act.pass,kind:'pass'};if(id==='prob')return{o:s.act.prob,kind:'prob'};if(id==='fin')return{o:s.fin,kind:'fin'};
- let r=null;walk(s,(o,kind,list,par)=>{if(!r&&o.id===id)r={o,kind,list,par}});return r}
+/* ---------- tree walking ---------- */
+// visit every object with a setter that replaces the reference holding it
+function walk(s,fn){const node=(n,set,par,slot)=>{if(!n)return;fn(n,n.type,set,par,slot);
+  if(n.type==='step')node(n.next,v=>n.next=v,n,'next');
+  if(n.type==='question')n.answers.forEach(a=>{fn(a,'answer',null,n,'a');node(a.next,v=>a.next=v,a,'a:'+a.id)});
+  if(n.type==='group'){checks(n.checks,n);node(n.pass,v=>n.pass=v,n,'pass');node(n.fail,v=>n.fail=v,n,'fail')}};
+ const checks=(L,par)=>L.forEach(c=>{fn(c,'check',null,par,L);c.problems.forEach(p=>{fn(p,'problem',null,c,c.problems);checks(p.follow,p)})});
+ node(s.root,v=>s.root=v,null,'root')}
+function find(id){let r=null;walk(sop(),(o,kind,set,par,slot)=>{if(!r&&o.id===id)r={o,kind,set,par,slot}});return r}
+function holderOf(parId,slot){ // returns setter for a slot on a parent (for ghosts)
+ const s=sop();if(parId==='root')return v=>s.root=v;const r=find(parId);if(!r)return null;const o=r.o;
+ if(slot==='next')return v=>o.next=v;if(slot==='pass')return v=>o.pass=v;if(slot==='fail')return v=>o.fail=v;if(slot==='a')return v=>o.next=v;return null}
+const nameOf=n=>!n?'':n.type==='step'?(n.name||'Step'):n.type==='question'?(n.question||'Question'):n.type==='group'?(n.name||'Checks')+' (checks)':n.type==='end'?(n.action||'End'):'';
 
 /* ---------- state ---------- */
-let S=store.get('sops',null),migrated=0;
-if(!Array.isArray(S)||!S.length){S=[example()];const old=store.raw('evosb4:sops');if(Array.isArray(old))old.forEach(o=>{try{const c=from40(o);if(c){S.push(c);migrated++}}catch(e){}})}
+let S=store.get('sops',null);if(!Array.isArray(S)||!S.length)S=[example()];
 let cur=store.get('cur',S[0].id);if(!S.find(x=>x.id===cur))cur=S[0].id;
-let tab='map',selId=null,selSub=null;
+let tab='map',selId=null,selSub=null,zoom=store.get('zoom',1),showHelp=store.get('help',true);
 const sop=()=>S.find(x=>x.id===cur);
 const undo=[];let lastSnap=JSON.stringify(sop()),saveT=null,drawT=null;
-function save(){const s=sop();s.updated=Date.now();const j=JSON.stringify(s);if(j!==lastSnap){undo.push({id:s.id,j:lastSnap});if(undo.length>80)undo.shift();lastSnap=j}
- clearTimeout(saveT);saveT=setTimeout(()=>{store.set('sops',S);store.set('cur',cur)},250)}
+function save(){const s=sop();s.updated=Date.now();const j=JSON.stringify(s);if(j!==lastSnap){undo.push({id:s.id,j:lastSnap});if(undo.length>80)undo.shift();lastSnap=j}clearTimeout(saveT);saveT=setTimeout(()=>{store.set('sops',S);store.set('cur',cur)},250)}
 function doUndo(){const u=undo.pop();if(!u){toast('Nothing to undo');return}if(u.restore&&!S.find(x=>x.id===u.id)){S.unshift(JSON.parse(u.j));cur=u.id;lastSnap=u.j;store.set('sops',S);render();toast('SOP restored');return}
  const i=S.findIndex(x=>x.id===u.id);if(i<0)return;S[i]=JSON.parse(u.j);cur=u.id;lastSnap=u.j;if(selId&&!find(selId))selId=null;store.set('sops',S);render();toast('Undone')}
 
-/* ---------- what is left to fill ---------- */
-function todos(){const s=sop(),T=[];
- if(!s.when.trim())T.push({id:'sop',m:'When to use is empty'});
- walk(s,(o,kind,list,par)=>{
-  if((kind==='step'||kind==='check')&&!o.name.trim())T.push({id:o.id,m:'A '+kind+' has no name'});
-  if(kind==='question'){if(!o.question.trim()&&!o.name.trim())T.push({id:o.id,m:'A question has no text'});if(!o.answers.some(a=>!a.ok))T.push({id:o.id,m:'"'+(o.name||o.question)+'" has no problem answer'})}
-  if(kind==='group'&&!o.checks.length)T.push({id:o.id,m:'Group "'+o.name+'" has no checks'});
-  if(kind==='check'&&!o.problems.length)T.push({id:o.id,m:'"'+(o.name||'Check')+'" has no problems yet'});
-  if((kind==='problem'||(kind==='answer'&&!o.ok))){const nm='"'+(o.label||'…')+'"';if(!o.label.trim())T.push({id:par.id,sub:o.id,m:'An answer has no name'});
-   else if(!o.reply.trim()&&!o.email.trim())T.push({id:par.id,sub:o.id,m:nm+' has no reply line'});
-   else if(!o.ticket.trim())T.push({id:par.id,sub:o.id,m:nm+' has no ticket line'})}});
- if(!s.act.pass.action.trim())T.push({id:'pass',m:'All pass: what does the agent do?'});
- if(!s.act.pass.ticket.trim())T.push({id:'pass',m:'All pass has no ticket'});
+/* ---------- to finish ---------- */
+const probTodo=p=>!p.label.trim()?'has no name':!p.template.trim()&&!p.copilot.trim()?'has no template or Copilot point':!p.ticket.trim()?'has no ticket line':'';
+function todos(){const s=sop(),T=[];if(!s.when.trim())T.push({id:'when',m:'When to use is empty'});let open=0;
+ walk(s,(o,k,set,par)=>{
+  if(k==='step'&&!o.name.trim())T.push({id:o.id,m:'A step has no name'});
+  if(k==='question'){if(!o.question.trim())T.push({id:o.id,m:'A question has no text'});o.answers.forEach(a=>{if(!a.next)open++})}
+  if(k==='step'&&!o.next&&o===s.root)open++;
+  if(k==='group'&&!o.checks.length)T.push({id:o.id,m:'"'+o.name+'" has no checks'});
+  if(k==='check'&&!o.problems.length)T.push({id:o.id,m:'"'+(o.name||'Check')+'" has no problems'});
+  if(k==='problem'){const m=probTodo(o);if(m)T.push({id:par.id,sub:o.id,m:'"'+(o.label||'…')+'" '+m})}
+  if(k==='end'){if(!o.action.trim())T.push({id:o.id,m:'An end has no action (Act)'});if(!o.combine&&!o.template.trim())T.push({id:o.id,m:'"'+(o.action||'An end')+'" has no template'});if(!o.ticket.trim())T.push({id:o.id,m:'"'+(o.action||'An end')+'" has no ticket line'})}
+  if(k==='goto'&&!find(o.target))T.push({id:o.id,m:'A "continues at" has no target'})});
  return T}
-const incomplete=o=>!o.ok&&(!o.label.trim()||(!o.reply.trim()&&!o.email.trim())||!o.ticket.trim());
 
-/* ---------- canvas ---------- */
-const isOn=id=>selId===id?' on':'';
-function chip(o,parId,ok){return `<span class="chip${ok||o.ok?' ok':''}${selSub===o.id?' sel':''}" data-s="${parId}" data-sub="${o.id}" title="${esc(o.label)}">${esc(o.label||'…')}${!ok&&incomplete(o)?'<i class="dot" title="Not finished"></i>':''}${o.end?'<span class="end">■</span>':''}</span>`}
-function lines(o){let h='';if(o.donow&&o.donow.trim())h+=`<div class="ln"><b>Do</b>${esc(o.donow)}</div>`;if(o.reply&&o.reply.trim())h+=`<div class="ln"><b>Reply</b>${esc(o.reply)}</div>`;else if(o.email&&o.email.trim())h+=`<div class="ln"><b>Email</b>${esc(o.email)}</div>`;if(o.ticket&&o.ticket.trim())h+=`<div class="ln"><b>Ticket</b>${esc(o.ticket.split('\n')[0])}</div>`;return h}
-function nodeHtml(n,num){
- if(n.type==='step')return `<div class="nd st${isOn(n.id)}" data-s="${n.id}"><div class="t">${num?`<span class="num">${num}</span>`:''}${esc(n.name||'Unnamed step')}</div>${n.detail?`<div class="d">${esc(n.detail)}</div>`:''}</div>`;
- if(n.type==='question'){const br=n.answers.filter(a=>!a.ok&&(lines(a)||a.follow.length||a.end));
-  return `<div class="nd qu${isOn(n.id)}" data-s="${n.id}"><div class="t">${esc(n.question||n.name||'New question')}</div>${n.detail?`<div class="d">${esc(n.detail)}</div>`:''}
-  <div class="chips">${n.answers.map(a=>chip(a,n.id)).join('')}</div>
-  ${br.map(a=>`<div class="br" data-s="${n.id}" data-sub="${a.id}"><div class="bh">If “${esc(a.label)}”</div>${lines(a)}${a.follow.length?`<div class="sub">${a.follow.map(f=>nodeHtml(f,'')).join('')}</div>`:''}<div class="ft${a.end?' end':''}">${a.end?'■ Ends the case':'↩ Back to the flow'}</div></div>`).join('')}</div>`}
- if(n.type==='group')return `<div class="grp${isOn(n.id)}" data-s="${n.id}"><div class="gh">${esc(n.name||'Checks')} <small>· any order</small></div><div class="cks">${n.checks.map(checkHtml).join('')||'<div class="empty">No checks yet.</div>'}</div>
-  <textarea class="in addck" data-addck="${n.id}" rows="1" placeholder="+ Type a check, press Enter"></textarea></div>`;
- return ''}
-function checkHtml(c){const fol=c.problems.filter(p=>p.follow.length);
- return `<div class="ck${isOn(c.id)}" data-s="${c.id}"><div class="t">${esc(c.name||'Unnamed check')}</div>${c.detail?`<div class="d muted" style="font-size:12px">${esc(c.detail)}</div>`:''}
- <div class="chips"><span class="chip ok" data-s="${c.id}">Pass</span>${c.problems.map(p=>chip(p,c.id)).join('')}</div>
- ${fol.map(p=>`<div class="fu"><div class="if">↳ if ${esc(p.label)}:</div>${p.follow.map(checkHtml).join('')}</div>`).join('')}</div>`}
-function laneHtml(stage){const L=sop()[stage];let k=0;
- const body=L.map((n,i)=>(i?'<div class="arr" aria-hidden="true">↓</div>':'')+nodeHtml(n,n.type==='group'?'':String(++k))).join('');
- return body+`<div class="adds"><button data-add="${stage}|step">+ Step</button><button data-add="${stage}|question">+ Question</button><button data-add="${stage}|group">+ Check group</button></div>`}
-function mapHtml(){const s=sop(),a=s.act,ex=buildCase(s,null);
- return `<div class="work"><div class="lanes">
- <section class="lane"><div class="lh"><span class="k">1</span>Find <small>in this order</small></div>${laneHtml('find')}</section>
- <section class="lane"><div class="lh"><span class="k">2</span>Review <small>dashed = any order</small></div>${laneHtml('review')}</section>
- <section class="lane"><div class="lh"><span class="k">3</span>Act</div>
-  <div class="act pass${isOn('pass')}" data-s="pass"><div class="h">All pass</div><div class="ln">${esc(a.pass.action||'What the agent does…')}</div>${a.pass.email?`<div class="ln"><b>Email</b>${esc(a.pass.email)}</div>`:''}${a.pass.ticket?`<div class="ln"><b>Ticket</b>${esc(a.pass.ticket.split('\n').length+' lines')}</div>`:''}</div>
-  <div class="act prob${isOn('prob')}" data-s="prob"><div class="h">Any problem</div><div class="ln">${esc(a.prob.action||'What the agent does…')}</div>${a.prob.ticket?`<div class="ln"><b>Ticket</b>${esc(a.prob.ticket.split('\n')[0])}</div>`:''}</div>
-  <div class="muted" style="margin-top:8px">A problem marked ■ ends the case where it is found.</div></section>
- <section class="lane"><div class="lh"><span class="k">4</span>Finish <small>built for you</small></div>
-  <div class="fin${isOn('fin')}" data-s="fin"><div class="h">One email</div><div class="mail">${esc(s.fin.open)}\n<i>• one line for each problem found</i>\n\n${esc(s.fin.close)}</div></div>
-  <div class="fin"><div class="h">One ticket</div><div class="ln">The ticket lines of what was found, then the Act line.</div></div>
-  <button class="try" id="bTry">Try a case</button></section>
- </div>${panelHtml()}</div>`}
+/* ---------- layout ---------- */
+const DIM={down:{U:236,find:112,act:92,fin:126,gap:44,head:54,bw:212,bh:70,finh:100,gw:0},side:{U:124,find:262,act:246,fin:282,gap:40,head:62,bw:222,bh:70,finh:100,gw:300}};
+function groupRows(g){let n=0;const r=L=>L.forEach(c=>{n++;c.problems.forEach(p=>r(p.follow))});r(g.checks);return n}
+const groupH=g=>44+groupRows(g)*35+40;
+function layout(s){const dir=s.dir,D=DIM[dir];const items=[];let maxF=0,hasG=false,maxGH=0;
+ function mk(n,parent,label,tone,fd,underGroup,slot){let T;
+  if(!n){T={kind:'ghost',par:parent,slot,label,tone,fd,underGroup}}
+  else T={kind:n.type,o:n,par:parent,label,tone,fd,underGroup};
+  T.kids=[];
+  if(n&&n.type==='step'){maxF=Math.max(maxF,fd);T.kids.push(mk(n.next,n,'',null,fd+1,false,'next'))}
+  else if(n&&n.type==='question'){maxF=Math.max(maxF,fd);n.answers.forEach(a=>{const c=mk(a.next,n,a.label,null,fd+1,false,'a:'+a.id);c.ans=a;T.kids.push(c)})}
+  else if(n&&n.type==='group'){hasG=true;maxGH=Math.max(maxGH,groupH(n));T.kids.push(mk(n.pass,n,'All pass','ok',fd,true,'pass'));T.kids.push(mk(n.fail,n,'Any problem','am',fd,true,'fail'))}
+  else{if(!underGroup)maxF=Math.max(maxF,fd)} // ghost / goto inside Find
+  items.push(T);return T}
+ const R=s.root?mk(s.root,null,'',null,0,false,'root'):mk(null,null,'',null,0,false,'root');
+ // levels
+ const G=maxF+1,AL=maxF+2,FL=maxF+3;
+ items.forEach(T=>{T.lv=T.kind==='group'?G:T.kind==='end'?AL:(T.kind==='ghost'||T.kind==='goto')&&T.underGroup?AL:T.fd});
+ // level extents along the depth axis
+ const size=[];for(let i=0;i<=maxF;i++)size[i]=D.find;size[G]=dir==='down'?(hasG?maxGH+40:60):(hasG?D.gw+50:120);size[AL]=D.act;size[FL]=D.fin;
+ const bandOf=i=>i<=maxF?0:i===G?1:i===AL?2:3;const start=[];let p=D.head+16;
+ for(let i=0;i<=FL;i++){if(i>0&&bandOf(i)!==bandOf(i-1))p+=D.gap+(dir==='down'?44:0);start[i]=p;p+=size[i]}
+ const depthEnd=p+20;
+ // breadth units
+ const minU=T=>T.kind==='group'?(dir==='down'?2:Math.max(2,Math.ceil((groupH(T.o)+24)/D.U))):1;
+ const units=T=>T.w=Math.max(T.kids.reduce((a,k)=>a+units(k),0),minU(T));units(R);
+ const place=(T,st)=>{T.c=st+T.w/2;const sum=T.kids.reduce((a,k)=>a+k.w,0);let x=st+(T.w-sum)/2;T.kids.forEach(k=>{place(k,x);x+=k.w})};place(R,0);
+ const pad=dir==='down'?56:76;const breadth=R.w*D.U+pad*2;
+ const geo=T=>{const d=start[T.lv],b=pad+T.c*D.U;let w,h;
+  if(T.kind==='group'){if(dir==='down'){w=T.w*D.U-28;h=groupH(T.o)}else{w=D.gw;h=Math.max(groupH(T.o),T.w*D.U-24)}}
+  else if(T.kind==='ghost'){w=D.bw;h=66}else if(T.kind==='goto'){w=D.bw;h=44}else{w=D.bw;h=D.bh}
+  if(dir==='down')return{x:b-w/2,y:d+(size[T.lv]-h)/2-(T.kind==='group'?0:0),w,h};return{x:d+(size[T.lv]-w)/2,y:b-h/2,w,h}};
+ items.forEach(T=>{T.g=geo(T);if(T.kind==='end'){const f={w:dir==='down'?D.bw:D.bw+20,h:D.finh};const d=start[FL],b=pad+T.c*D.U;T.fg=dir==='down'?{x:b-f.w/2,y:d+(size[FL]-f.h)/2,...f}:{x:d+(size[FL]-f.w)/2,y:b-f.h/2,...f}}});
+ const W=dir==='down'?Math.max(breadth,820):depthEnd,H=dir==='down'?depthEnd:Math.max(breadth,420)+D.head;
+ const bands=[[0,maxF,'find'],[G,G,'rev'],[AL,AL,'act'],[FL,FL,'fin']].map(([a,z,k])=>({k,a:start[a]-(dir==='down'?44:0)-12,z:start[z]+size[z]+6}));
+ return {items,R,W,H,bands,dir,D,pad}}
 
-/* ---------- side panel ---------- */
-const F=(id,k,v,lab,ph,rows)=>`<label class="f">${lab}</label>${rows?`<textarea class="in" rows="${rows}" data-id="${id}" data-k="${k}" placeholder="${esc(ph||'')}">${esc(v)}</textarea>`:`<input class="in" data-id="${id}" data-k="${k}" value="${esc(v)}" placeholder="${esc(ph||'')}">`}`;
-function moveBtns(id,kind){const r=find(id);if(!r)return '';const top=r.par==='find'||r.par==='review';
- return `<div class="acts"><button class="btn" data-do="up" data-id="${id}">↑ Up</button><button class="btn" data-do="down" data-id="${id}">↓ Down</button>${top?`<button class="btn" data-do="stage" data-id="${id}">Move to ${r.par==='find'?'Review':'Find'}</button>`:''}<span style="margin-left:auto"></span><button class="btn del" data-do="del" data-id="${id}">Remove</button></div>`}
-function itemHtml(o,parId,isAns){const op=selSub===o.id;
- return `<details class="it${o.ok?' okk':''}" ${op?'open':''} data-item="${o.id}"><summary>${esc(o.label||'New')}${o.ok?' <span class="muted">· OK</span>':''}${!o.ok&&incomplete(o)?' <i class="dot" style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#D99A00"></i>':''}${o.end?' <span class="muted">· ends the case</span>':''}</summary>
- ${F(o.id,'label',o.label,'Name',o.ok?'Yes':'Problem in 1-3 words')}
- ${o.ok?'':`${F(o.id,'words',o.words,'Words the member uses','e.g. blurry, can’t see')}
- ${F(o.id,'donow',o.donow,'Do now','What the agent does right away',2)}
- ${F(o.id,'reply',o.reply,'Reply line (joins the one email)','e.g. a photo of the back of your licence',2)}
- ${F(o.id,'ticket',o.ticket,'Ticket line','-DL back missing, requested',2)}
- <label class="cb"><input type="checkbox" data-id="${o.id}" data-k="end" ${o.end?'checked':''}> Ends the case here</label>
- <div class="acts">${isAns?`<button class="btn" data-do="fstep" data-id="${o.id}">+ Step for this answer</button><button class="btn" data-do="fq" data-id="${o.id}">+ Question</button>`:`<button class="btn" data-do="fck" data-id="${o.id}">+ Follow-up check</button>`}</div>
- <details style="margin-top:8px"><summary class="muted" style="cursor:pointer">P2A email template (optional)</summary>${F(o.id,'email',o.email,'Template title','Leave empty to use the reply line')}${o.email.trim()?`<label class="f">Template text</label><textarea class="in" rows="4" data-em="${esc(o.email.trim())}">${esc(sop().emails[o.email.trim()]||'')}</textarea>`:''}</details>
- <div class="acts"><span style="margin-left:auto"></span><button class="btn del" data-do="del" data-id="${o.id}">Remove</button></div>`}</details>`}
+/* ---------- render the canvas ---------- */
+const BANDS={find:['1 · Find','gate and pick-one questions, in order'],rev:['2 · Review','several checks, any order, find every problem'],act:['3 · Act','what the agent does in back office'],fin:['4 · Finish','template, Copilot prompt and ticket']};
+function edgePath(a,b,dir){if(dir==='down'){const x1=a.x+a.w/2,y1=a.y+a.h,x2=b.x+b.w/2,y2=b.y,m=(y1+y2)/2;return{d:`M${x1} ${y1} C ${x1} ${m}, ${x2} ${m}, ${x2} ${y2}`,lx:x2,ly:y2-16}}
+ const x1=a.x+a.w,y1=a.y+a.h/2,x2=b.x,y2=b.y+b.h/2,m=(x1+x2)/2;return{d:`M${x1} ${y1} C ${m} ${y1}, ${m} ${y2}, ${x2} ${y2}`,lx:x2-14,ly:y2-18}}
+function canvasHtml(){const s=sop(),Lt=layout(s),dir=Lt.dir;let svg='',html='';
+ Lt.bands.forEach(b=>{const [t,sub]=BANDS[b.k];const st=dir==='down'?`left:12px;right:12px;top:${b.a}px;height:${b.z-b.a}px`:`top:12px;bottom:12px;left:${b.a}px;width:${b.z-b.a}px`;
+  const hs=dir==='down'?'left:22px;top:10px':'left:14px;top:18px';
+  html+=`<div class="band ${b.k}" style="${st}"><div class="bh" style="${hs}"><span class="bt">${t}</span><button class="qbtn" data-help="${b.k}" aria-label="What goes in ${t}">?</button><span class="bs">${sub}</span></div></div>`});
+ Lt.items.forEach(T=>{const g=T.g;
+  if(T.par!==undefined&&T.par!==null){const pT=Lt.items.find(x=>x.o===T.par);if(pT){const pg=pT.g;const e=edgePath(pg,g,dir);const long=T.lv-pT.lv>2&&T.kind!=='ghost';const col=T.tone==='ok'?'var(--ok)':T.tone==='am'?'var(--b-actl)':'var(--mut)';
+    svg+=`<path d="${e.d}" fill="none" stroke="${col}" stroke-width="2" ${long?'stroke-dasharray="3 5"':''} marker-end="url(#ar)"/>`;
+    if(T.label){const on=T.ans&&selSub===T.ans.id?' on':'';html+=`<div class="elab ${T.tone||''}${on}" style="left:${e.lx}px;top:${e.ly}px" data-s="${pT.o.id}" ${T.ans?`data-sub="${T.ans.id}"`:''}>${esc(T.label||'…')}</div>`}}}
+  const pos=`left:${g.x}px;top:${g.y}px;width:${g.w}px;height:${g.h}px`,on=o=>o&&selId===o.id&&!selSub?' on':'';
+  if(T.kind==='step')html+=`<div class="bx st${on(T.o)}" style="${pos}" data-s="${T.o.id}"><div class="k">Step</div><div class="t">${esc(T.o.name||'Unnamed step')}</div></div>`;
+  if(T.kind==='question')html+=`<div class="bx qu${on(T.o)}" style="${pos}" data-s="${T.o.id}"><div class="t">${esc(T.o.question||'New question')}</div>${T.o.detail?`<div class="d">${esc(T.o.detail)}</div>`:''}</div>`;
+  if(T.kind==='group'){const rows=[];const r=(L,dep,iff)=>L.forEach(c=>{rows.push(`<div class="row${dep?' fu':''}${selId===T.o.id&&selSub===c.id?' on':''}" data-s="${T.o.id}" data-sub="${c.id}">${iff?`<span class="if">if ${esc(iff)}:</span>`:''}<span class="n">${esc(c.name||'Unnamed check')}</span><span class="ps">${c.problems.map(p=>`<span class="mini${probTodo(p)?' dot':''}">${esc(p.label||'…')}</span>`).join('')||'<span class="muted">no problems yet</span>'}</span></div>`);c.problems.forEach(p=>r(p.follow,dep+1,p.label))});r(T.o.checks,0,'');
+   html+=`<div class="bx gr${on(T.o)}" style="${pos}"><div class="gh" data-s="${T.o.id}">${esc(T.o.name||'Checks')} <small>· any order</small></div>${rows.join('')}<textarea class="add" rows="1" data-addck="${T.o.id}" placeholder="+ Type a check, press Enter"></textarea></div>`}
+  if(T.kind==='ghost'){const pid=T.par?T.par.id:'root',slot=T.slot.startsWith('a:')?'a':T.slot,ref=T.slot.startsWith('a:')?T.slot.slice(2):pid;const types=T.underGroup?['end','goto']:['step','question','group','end','goto'];
+   const nm={step:'Step',question:'Question',group:'Checks',end:'End',goto:'↪ Continue at'};
+   html+=`<div class="bx gh" style="${pos}"><div class="k">+ Then…</div><div class="gbtns">${types.map(t=>`<button data-g="${T.slot.startsWith('a:')?ref:pid}|${slot}|${t}">${nm[t]}</button>`).join('')}</div></div>`}
+  if(T.kind==='goto'){const tg=find(T.o.target);html+=`<div class="bx gt${on(T.o)}" style="${pos}" data-s="${T.o.id}">↪ Continues at: ${esc(tg?nameOf(tg.o):'pick a box')}</div>`}
+  if(T.kind==='end'){const o=T.o,f=T.fg;html+=`<div class="bx act${on(o)}" style="${pos}" data-s="${o.id}"><div class="k">Do</div><div class="t">${esc(o.action||'What the agent does…')}</div></div>`;
+   const e=edgePath(g,f,dir);svg+=`<path d="${e.d}" fill="none" stroke="var(--mut)" stroke-width="2" marker-end="url(#ar)"/>`;
+   html+=`<div class="bx fin ${o.tone==='am'?'am':'ok'}${on(o)}" style="left:${f.x}px;top:${f.y}px;width:${f.w}px;height:${f.h}px" data-s="${o.id}"><div class="t">✉ ${esc(o.combine?'Template for each problem found':(o.template||'No template yet'))}</div>${o.copilot&&!o.combine?`<div class="d">✦ ${esc(o.copilot)}</div>`:o.combine?'<div class="d">✦ Copilot combines them</div>':''}<div class="d">🎫 ${esc((o.ticket||'no ticket yet').split('\n')[0])}</div></div>`}});
+ return `<div class="cv" id="cv"><div class="cvi ${dir}" id="cvi" style="width:${Lt.W}px;height:${Lt.H}px;transform:scale(${zoom})">${html.replace(/^/,'')}<svg class="edges" width="${Lt.W}" height="${Lt.H}"><defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#7D8892"/></marker></defs>${svg}</svg></div></div>`}
+// keep the SVG under the boxes
+function fixLayers(){const i=$('#cvi');if(!i)return;const sv=i.querySelector('svg.edges');const firstBox=i.querySelector('.bx,.elab');if(sv&&firstBox)i.insertBefore(sv,firstBox);const s=sop(),Lt=layout(s);i.style.width=Lt.W+'px';i.style.height=Lt.H+'px';const cv=$('#cv');if(cv){i.parentElement.style.setProperty('--w',Lt.W*zoom+'px')}
+ const sizer=$('#cvs');if(sizer){sizer.style.width=Lt.W*zoom+'px';sizer.style.height=Lt.H*zoom+'px'}}
+
+/* ---------- panel ---------- */
+const F=(id,k,v,lab,ph,rows,list)=>`<label class="f">${lab}</label>${rows?`<textarea class="in" rows="${rows}" data-id="${id}" data-k="${k}" placeholder="${esc(ph||'')}">${esc(v)}</textarea>`:`<input class="in" data-id="${id}" data-k="${k}" value="${esc(v)}" placeholder="${esc(ph||'')}" ${list?'list="tpls"':''}>`}`;
+function tplTitles(){const set=new Set();S.forEach(s=>walk(s,(o,k)=>{if((k==='problem'||k==='end')&&o.template&&o.template.trim())set.add(o.template.trim())}));return [...set].sort()}
+const tplText=t=>{let x='';S.forEach(s=>walk(s,(o,k)=>{if(!x&&(k==='problem'||k==='end')&&o.template.trim()===t&&o.text.trim())x=o.text}));return x};
+function probHtml(p,openId){return `<details class="it${probTodo(p)?' am':''}" ${openId===p.id?'open':''} data-item="${p.id}"><summary>${esc(p.label||'New problem')}</summary>
+ ${F(p.id,'label',p.label,'Problem (1-3 words)','Back missing')}${F(p.id,'words',p.words,'Words the member uses','')}${F(p.id,'donow',p.donow,'Do now','What the agent does right away',2)}
+ ${F(p.id,'template',p.template,'Template title (P2A finds it by this name)','Type or pick a title',0,1)}${F(p.id,'text',p.text,'Template text (optional, paste it)','Hi XXX, …',3)}
+ ${F(p.id,'copilot',p.copilot,'Copilot point (what the member must do)','Send a photo of the back of the licence',2)}${F(p.id,'ticket',p.ticket,'Ticket line','-DL back missing, requested',2)}
+ <div class="acts"><button class="btn sec sm" data-do="fck" data-id="${p.id}">+ Follow-up check</button><span class="sp" style="flex:1"></span><button class="btn danger sm" data-do="del" data-id="${p.id}">Remove</button></div></details>`}
 function panelHtml(){const r=selId?find(selId):null;
- if(!r){const T=todos();return `<aside class="panel idle" id="panel"><div class="pk">Edit</div><div class="ph"><p style="margin:6px 0">Click any box or chip to edit it here.</p><ul><li><b>Arrow</b> = must come first.</li><li><b>Dashed group</b> = any order.</li><li><b>Chips</b> = what the agent can find. Green is a pass.</li><li><b>■</b> = ends the case.</li><li>Problems found stack into one email and one ticket.</li></ul></div>
+ if(!r){const T=todos();return `<aside class="card panel idle" id="panel"><div class="ph"><span class="lbl">Edit</span></div>
+ <div class="muted" style="font-size:13px">Click any box to edit it here. Dashed boxes with buttons are open paths: pick what comes next.</div>
+ <ul class="helpul"><li><b>Find</b>: the gate and pick-one questions.</li><li><b>Review</b>: a dashed group of checks, any order.</li><li><b>Act</b>: what the agent does.</li><li><b>Finish</b>: template, Copilot prompt and ticket.</li></ul>
  ${T.length?`<div class="sec">To finish (${T.length})</div><div class="todos">${T.slice(0,8).map(t=>`<button data-s="${t.id}" ${t.sub?`data-sub="${t.sub}"`:''}>${esc(t.m)}</button>`).join('')}</div>`:'<div class="good">✓ Every box is filled in.</div>'}</aside>`}
  const o=r.o,k=r.kind,X=`<button class="x" data-do="close" aria-label="Close">×</button>`;let h='';
- if(k==='step')h=`<div class="pk">Step ${X}</div>${F(o.id,'name',o.name,'What the agent does','Find the member in back office')}${F(o.id,'detail',o.detail,'Detail (short)','Where to look',2)}${moveBtns(o.id)}`;
- else if(k==='question')h=`<div class="pk">Question ${X}</div>${F(o.id,'question',o.question,'The question','Is the upload a driving record?')}${F(o.id,'detail',o.detail,'Detail (short)','',2)}
-  <div class="sec">Answers</div>${o.answers.map(a=>itemHtml(a,o.id,true)).join('')}<div class="acts"><button class="btn" data-do="addans" data-id="${o.id}">+ Add answer</button></div>${moveBtns(o.id)}`;
- else if(k==='group')h=`<div class="pk">Check group · any order ${X}</div>${F(o.id,'name',o.name,'Group name','Account review')}<label class="f">Add checks (one per line)</label><textarea class="in" rows="2" data-addck="${o.id}" placeholder="Selfie&#10;Card on file"></textarea><div class="muted" style="margin-top:4px">Press Enter to add.</div>${moveBtns(o.id)}`;
- else if(k==='check')h=`<div class="pk">Check ${X}</div>${F(o.id,'name',o.name,'What the agent checks','Licence photos')}${F(o.id,'detail',o.detail,'Detail (short)','Front and back, clear, not expired',2)}
-  <div class="sec">Problems the agent can find</div><input class="in" style="margin-top:6px" data-addprob="${o.id}" placeholder="+ Type problems, comma between, Enter">
-  ${o.problems.map(p=>itemHtml(p,o.id,false)).join('')||'<div class="muted" style="margin-top:6px">None yet. Pass is always there.</div>'}${moveBtns(o.id)}`;
- else if(k==='answer'||k==='problem'){selSub=o.id;selId=r.par.id;return panelHtml()}
- else if(k==='pass')h=`<div class="pk">Act · All pass ${X}</div>${F('pass','action',o.action,'What the agent does','Approve the account')}${F('pass','email',o.email,'Email title','ACCOUNT APPROVED')}${F('pass','body',o.body,'Email text','Hi XXX,…',5)}${F('pass','ticket',o.ticket,'Ticket','-Approved account',4)}`;
- else if(k==='prob')h=`<div class="pk">Act · Any problem ${X}</div>${F('prob','action',o.action,'What the agent does','Leave the account pending')}${F('prob','ticket',o.ticket,'Last ticket line','-Left pending until…',3)}<div class="muted" style="margin-top:8px">The email and the rest of the ticket come from the problems found.</div>`;
- else if(k==='fin')h=`<div class="pk">Finish · the one email ${X}</div><div class="muted">The reply lines of what was found go between these two parts. XXX = first name.</div>${F('fin','open',o.open,'Opening','Hi XXX,…',4)}${F('fin','close',o.close,'Closing','Thank you,',3)}`;
- else if(k==='sop')h=`<div class="pk">SOP ${X}</div>${F('sop','when',o.when,'When to use','',2)}`;
- return `<aside class="panel" id="panel">${h}</aside>`}
+ const del=`<div class="acts"><span style="flex:1"></span><button class="btn danger sm" data-do="del" data-id="${o.id}">Remove</button></div>`;
+ if(k==='step')h=`<div class="ph"><span class="lbl">Step · Find</span>${X}</div>${F(o.id,'name',o.name,'What the agent does','Find the member in back office')}${F(o.id,'detail',o.detail,'Detail (short)','Where to look',2)}
+  <div class="sec">Add right after this</div><div class="acts"><button class="btn sec sm" data-do="ins" data-id="${o.id}" data-t="step">+ Step</button><button class="btn sec sm" data-do="ins" data-id="${o.id}" data-t="question">+ Question</button></div>${del}`;
+ else if(k==='question')h=`<div class="ph"><span class="lbl">Question · pick one</span>${X}</div>${F(o.id,'question',o.question,'The question','What does the member say?')}${F(o.id,'detail',o.detail,'Detail (short)','',2)}
+  <div class="sec">Answers</div>${o.answers.map(a=>`<details class="it" ${selSub===a.id?'open':''} data-item="${a.id}"><summary>${esc(a.label||'New answer')} <span class="muted">→ ${esc(a.next?({step:'step',question:'question',group:'checks',end:'end',goto:'continues'})[a.next.type]:'open')}</span></summary>${F(a.id,'label',a.label,'Answer','Student')}${F(a.id,'words',a.words,'Words the member uses','')}<div class="acts"><span style="flex:1"></span><button class="btn danger sm" data-do="del" data-id="${a.id}">Remove answer and its path</button></div></details>`).join('')}
+  <div class="acts"><button class="btn sec sm" data-do="addans" data-id="${o.id}">+ Add answer</button></div>${del}`;
+ else if(k==='group'){const c=selSub?find(selSub):null;
+  if(c&&c.kind==='check'){const ch=c.o;h=`<div class="ph"><span class="lbl">Check · Review</span>${X}</div><div class="muted">In “${esc(o.name)}”, any order.</div>${F(ch.id,'name',ch.name,'What the agent checks','Not expired')}${F(ch.id,'detail',ch.detail,'Detail (short)','',2)}
+   <div class="sec">Problems the agent can find</div><input class="in" style="margin-top:6px" data-addprob="${ch.id}" placeholder="+ Type problems, comma between, Enter">${ch.problems.map(p=>probHtml(p,selProb)).join('')||'<div class="muted" style="margin-top:6px">None yet. Pass is always there.</div>'}
+   <div class="acts"><button class="btn sec sm" data-do="ckup" data-id="${ch.id}">↑ Up</button><button class="btn sec sm" data-do="ckdown" data-id="${ch.id}">↓ Down</button><span style="flex:1"></span><button class="btn danger sm" data-do="del" data-id="${ch.id}">Remove check</button></div>`}
+  else h=`<div class="ph"><span class="lbl">Check group · Review</span>${X}</div>${F(o.id,'name',o.name,'Group name','New licence')}<label class="f">Add checks (one per line, Enter)</label><textarea class="in" rows="2" data-addck="${o.id}" placeholder="Selfie&#10;Card on file"></textarea><div class="muted" style="margin-top:8px">Click a check in the group to give it problems. All pass and Any problem each lead to their own end.</div>${del}`}
+ else if(k==='end')h=`<div class="ph"><span class="lbl">End · Act + Finish</span>${X}</div>
+  <label class="f">This end is</label><div class="seg2"><button data-do="tone" data-id="${o.id}" data-v="ok" aria-pressed="${o.tone!=='am'}">All good</button><button data-do="tone" data-id="${o.id}" data-v="am" aria-pressed="${o.tone==='am'}">Something missing</button></div>
+  ${F(o.id,'action',o.action,'Act: what the agent does in back office','Unsuspend the account')}
+  ${o.combine?`<div class="sec">Finish</div><div class="muted" style="margin-top:4px">Uses the template and Copilot point of each problem found, combined by Copilot into one email.</div>`:`${F(o.id,'template',o.template,'Template title (P2A finds it by this name)','Type or pick a title',0,1)}${F(o.id,'text',o.text,'Template text (optional, paste it)','Hi XXX, …',4)}${F(o.id,'copilot',o.copilot,'Copilot point (optional)','',2)}`}
+  ${F(o.id,'ticket',o.ticket,o.combine?'Last ticket line':'Ticket','-Account unsuspended',3)}${r.par&&r.par.type==='group'?'':del}`;
+ else if(k==='goto'){const opts=[];walk(sop(),(x,kk)=>{if(['step','question','group'].includes(kk))opts.push(x)});
+  h=`<div class="ph"><span class="lbl">Continues at</span>${X}</div><label class="f">The case goes on at</label><select class="in" data-id="${o.id}" data-k="target"><option value="">Pick a box…</option>${opts.map(x=>`<option value="${x.id}" ${o.target===x.id?'selected':''}>${esc(nameOf(x))}</option>`).join('')}</select>${del}`}
+ else if(k==='answer'||k==='check'||k==='problem'){return null}
+ return `<aside class="card panel" id="panel">${h}</aside>`}
+let selProb=null;
 
-/* ---------- details tab ---------- */
-function detailsHtml(){const s=sop();return `<div class="two">
- <div class="card"><h2>About this SOP</h2>
- ${F('sop','applies',s.applies,'Applies to','e.g. Pending accounts')}${F('sop','tags',s.tags,'Tags (comma between)','')}
+/* ---------- top strip & pages ---------- */
+function topHtml(){const s=sop();return `<div class="strip"><div><label class="lbl" for="ttl">SOP</label><input class="in ttl" id="ttl" data-id="sop" data-k="title" value="${esc(s.title)}"></div>
+ <div><label class="lbl" for="when">When to use <small>the member’s issue, in one line</small></label><input class="in" id="when" data-id="sop" data-k="when" value="${esc(s.when)}" placeholder="A member replies to our non-BC licence email"></div>
+ <div class="tools">${tab==='map'?`<div class="seg" style="background:var(--card);border-color:var(--line)" role="group" aria-label="Direction"><button data-dir="down" aria-pressed="${s.dir!=='side'}" style="${s.dir!=='side'?'':'color:var(--mut)'}">⇣ Top to bottom</button><button data-dir="side" aria-pressed="${s.dir==='side'}" style="${s.dir==='side'?'':'color:var(--mut)'}">⇢ Sideways</button></div>
+ <div class="zoom"><button data-z="-1" aria-label="Zoom out">−</button><span>${Math.round(zoom*100)}%</span><button data-z="1" aria-label="Zoom in">+</button><button data-z="fit">Fit</button></div>`:''}</div></div>
+ ${showHelp&&tab==='map'?`<div class="banner"><span>Build in the diagram: dashed boxes are open paths, pick what comes next. Click any box to edit it. Each band has a <b>?</b> that explains it.</span><button class="btn sec sm" data-do="hidehelp">Got it</button></div>`:''}`}
+function detailsHtml(){const s=sop();return `<div class="two"><div class="card"><span class="lbl">About this SOP</span>
+ ${F('sop','applies',s.applies,'Applies to','')}${F('sop','tags',s.tags,'Tags (comma between)','')}
  <div class="row2"><div>${F('sop','topic',s.topic,'Topic','Registration')}</div><div><label class="f">Status</label><select class="in" data-id="sop" data-k="status">${['Draft','In review','Ready'].map(x=>`<option ${s.status===x?'selected':''}>${x}</option>`).join('')}</select></div></div>
  ${F('sop','confluence',s.confluence,'Confluence page (the source)','https://…')}
- <h2 style="margin-top:18px">Tool links</h2>${s.links.map((l,i)=>`<div class="row2" style="grid-template-columns:1fr 1.4fr auto;margin-bottom:6px"><input class="in" data-link="${i}|l" value="${esc(l.l)}" placeholder="Name"><input class="in" data-link="${i}|u" value="${esc(l.u)}" placeholder="https://…"><button class="btn" data-do="dell" data-id="${i}">×</button></div>`).join('')}
- <button class="btn" data-do="addl">+ Add link</button>
- <h2 style="margin-top:18px">Watch out for</h2><div class="muted">The 2 to 4 mistakes that cost the most.</div>
- <ol class="watch">${s.watch.map((w,i)=>`<li><textarea class="in" rows="2" data-watch="${i}">${esc(w)}</textarea><button class="btn" data-do="delw" data-id="${i}">×</button></li>`).join('')}</ol><button class="btn" data-do="addw">+ Add</button></div>
- <div class="card"><h2>Sent with the file</h2><div class="muted">Shows in P2A when an admin imports it.</div>
- <div class="row2">${'<div>'+F('meta','name',s.meta.name,'Your name','')+'</div><div>'+F('meta','role',s.meta.role,'Your role','Team lead')+'</div>'}</div>${F('meta','notes',s.meta.notes,'Notes for the admin','',3)}
- <h2 style="margin-top:18px">This SOP on this device</h2><div class="muted">Saved in this browser only. Download the file to keep or share it.</div>
- <div class="acts"><button class="btn" data-do="dup">Make a copy</button><button class="btn del" data-do="delsop">Delete this SOP</button></div></div></div>`}
-
-/* ---------- render ---------- */
-function render(){const s=sop();$('#ttl').value=s.title;$('#when').value=s.when;
- document.querySelectorAll('.tab').forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===tab?'true':'false'));
- $('#main').innerHTML=tab==='map'?mapHtml():detailsHtml();
+ <div class="sec">Tool links</div>${s.links.map((l,i)=>`<div class="row2" style="grid-template-columns:1fr 1.4fr auto;margin-top:6px"><input class="in" data-link="${i}|l" value="${esc(l.l)}" placeholder="Name"><input class="in" data-link="${i}|u" value="${esc(l.u)}" placeholder="https://…"><button class="btn danger sm" data-do="dell" data-id="${i}">×</button></div>`).join('')}<div class="acts"><button class="btn sec sm" data-do="addl">+ Add link</button></div>
+ <div class="sec">Watch out for</div><div class="muted">The 2 to 4 mistakes that cost the most.</div><ul class="watch">${s.watch.map((w,i)=>`<li><textarea class="in" rows="2" data-watch="${i}">${esc(w)}</textarea><button class="btn danger sm" data-do="delw" data-id="${i}">×</button></li>`).join('')}</ul><div class="acts"><button class="btn sec sm" data-do="addw">+ Add</button></div></div>
+ <div class="card"><span class="lbl">Sent with the file</span><div class="muted">Shows in P2A when an admin imports it.</div><div class="row2"><div>${F('meta','name',s.meta.name,'Your name','')}</div><div>${F('meta','role',s.meta.role,'Your role','Team lead')}</div></div>${F('meta','notes',s.meta.notes,'Notes for the admin','',3)}
+ <div class="sec">This SOP on this device</div><div class="muted">Saved in this browser only. Download the file to keep or share it.</div><div class="acts"><button class="btn sec" data-do="dup">Make a copy</button><button class="btn danger" data-do="delsop">Delete this SOP</button></div></div></div>`}
+function render(){document.querySelectorAll('[data-tab]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.tab===tab?'true':'false'));
+ $('#top').innerHTML=topHtml();
+ if(tab==='map'){const p=panelHtml()||'';$('#main').innerHTML=`<div class="work"><div>${canvasHtml()}</div>${p}</div>`;fixLayers()}else $('#main').innerHTML=detailsHtml();
+ const T=todos(),bt=$('#bTodo');bt.hidden=!T.length;bt.textContent=T.length+' to finish'}
+function redraw(){if(tab!=='map')return;const cv=$('#cv');if(!cv)return;const sl=cv.scrollLeft,st=cv.scrollTop;const t=document.createElement('div');t.innerHTML=canvasHtml();cv.replaceWith(t.firstElementChild);const n=$('#cv');n.scrollLeft=sl;n.scrollTop=st;fixLayers();
  const T=todos(),bt=$('#bTodo');bt.hidden=!T.length;bt.textContent=T.length+' to finish';
- let n=0;walk(s,(o,k)=>{if(k==='step'||k==='question'||k==='check')n++});$('#stat').textContent=s.status+' · '+n+' boxes'}
-function redrawLanes(){if(tab!=='map')return;const t=document.createElement('div');t.innerHTML=mapHtml();const nl=t.querySelector('.lanes'),ol=$('.lanes');if(nl&&ol)ol.replaceWith(nl);
- const T=todos(),bt=$('#bTodo');bt.hidden=!T.length;bt.textContent=T.length+' to finish';
- // refresh panel summaries without touching inputs
- document.querySelectorAll('#panel details.it>summary').forEach(sm=>{const id=sm.parentElement.dataset.item,r=find(id);if(!r)return;const o=r.o;sm.innerHTML=`${esc(o.label||'New')}${o.ok?' <span class="muted">· OK</span>':''}${!o.ok&&incomplete(o)?' <i class="dot" style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#D99A00"></i>':''}${o.end?' <span class="muted">· ends the case</span>':''}`})}
-function select(id,sub){selId=id;selSub=sub||null;if(tab!=='map'){tab='map'}render();
- const el=document.querySelector(`#panel [data-item="${sub}"] input, #panel input, #panel textarea`);if(el&&!sub&&window.innerWidth>700){el.focus()}
- if(sub){const d=document.querySelector(`#panel [data-item="${sub}"]`);if(d)d.scrollIntoView({block:'nearest'})}}
+ document.querySelectorAll('#panel details.it>summary').forEach(sm=>{const r=find(sm.parentElement.dataset.item);if(r&&r.kind==='problem'){sm.textContent=r.o.label||'New problem';sm.parentElement.classList.toggle('am',!!probTodo(r.o))}})}
+function select(id,sub){if(id==='when'){tab='map';render();$('#when').focus();return}
+ const r=find(id);if(!r)return;
+ if(r.kind==='answer'){selId=r.par.id;selSub=r.o.id;selProb=null}
+ else if(r.kind==='check'){const g=groupOf(r.o.id);selId=g?g.id:null;selSub=r.o.id;selProb=null}
+ else if(r.kind==='problem'){const c=find(r.par.id);const g=groupOf(c.o.id);selId=g?g.id:null;selSub=c.o.id;selProb=r.o.id}
+ else{selId=id;selSub=sub||null;selProb=null;if(sub){const q=find(sub);if(q&&q.kind==='problem'){const c=q.par;selSub=c.id;selProb=sub}}}
+ tab='map';render();const d=selProb?document.querySelector(`#panel [data-item="${selProb}"]`):selSub?document.querySelector(`#panel [data-item="${selSub}"]`):null;if(d)d.scrollIntoView({block:'nearest'});
+ else{const f=document.querySelector('#panel input.in, #panel textarea.in');if(f&&window.innerWidth>900)f.focus({preventScroll:true})}}
+function groupOf(checkId){let g=null;walk(sop(),(o,k)=>{if(k==='group'&&!g){let hit=false;const r=L=>L.forEach(c=>{if(c.id===checkId)hit=true;c.problems.forEach(p=>r(p.follow))});r(o.checks);if(hit)g=o}});return g}
 
 /* ---------- edits ---------- */
-function setField(id,k,v){if(id==='meta'){sop().meta[k]=v;return}const r=find(id);if(!r)return;r.o[k]=v}
+function setField(id,k,v){const s=sop();if(id==='sop'){s[k]=v;return}if(id==='meta'){s.meta[k]=v;return}const r=find(id);if(r)r.o[k]=v}
 document.addEventListener('input',e=>{const el=e.target;
- if(el.dataset.id&&el.dataset.k){setField(el.dataset.id,el.dataset.k,el.type==='checkbox'?el.checked:el.value);save();clearTimeout(drawT);drawT=setTimeout(redrawLanes,120);return}
- if(el.dataset.em!=null){sop().emails[el.dataset.em]=el.value;save();return}
+ if(el.dataset.id&&el.dataset.k){setField(el.dataset.id,el.dataset.k,el.value);
+  if(el.dataset.k==='template'&&el.value.trim()){const r=find(el.dataset.id);const tx=tplText(el.value.trim());if(r&&!r.o.text.trim()&&tx){r.o.text=tx;const ta=document.querySelector(`#panel [data-id="${el.dataset.id}"][data-k="text"]`);if(ta)ta.value=tx}}
+  save();clearTimeout(drawT);drawT=setTimeout(redraw,140);return}
  if(el.dataset.watch!=null){sop().watch[+el.dataset.watch]=el.value;save();return}
  if(el.dataset.link){const [i,k]=el.dataset.link.split('|');sop().links[+i][k]=el.value;save();return}});
-document.addEventListener('change',e=>{const el=e.target;if(el.type==='checkbox'&&el.dataset.id){setField(el.dataset.id,el.dataset.k,el.checked);save();redrawLanes()}else if(el.tagName==='SELECT'&&el.dataset.id){setField(el.dataset.id,el.dataset.k,el.value);save();render()}});
+document.addEventListener('change',e=>{const el=e.target;if(el.tagName==='SELECT'&&el.dataset.id){setField(el.dataset.id,el.dataset.k,el.value);save();render()}});
 document.addEventListener('keydown',e=>{const el=e.target;
- if(e.key==='Enter'&&!e.shiftKey&&(el.dataset.addck||el.dataset.addprob)){e.preventDefault();const txt=el.value.trim();if(!txt)return;const r=find(el.dataset.addck||el.dataset.addprob);if(!r)return;
-  if(el.dataset.addck){txt.split('\n').map(x=>x.trim()).filter(Boolean).forEach(x=>r.o.checks.push(mkCheck({name:x})));save();const keep=el.closest('#panel')?null:el.dataset.addck;render();const ne=document.querySelector(keep?`.lanes [data-addck="${keep}"]`:`#panel [data-addck]`);if(ne)ne.focus();return}
-  const ps=txt.split(',').map(x=>x.trim()).filter(Boolean).map(x=>mkProb({label:x}));r.o.problems.push(...ps);save();selSub=ps[0].id;render();const ne=document.querySelector('#panel [data-addprob]');if(ne)ne.focus();return}
+ if(e.key==='Enter'&&!e.shiftKey&&(el.dataset.addck||el.dataset.addprob)){e.preventDefault();const txt=el.value.trim();if(!txt)return;
+  if(el.dataset.addck){const r=find(el.dataset.addck);if(!r)return;const added=txt.split('\n').map(x=>x.trim()).filter(Boolean).map(x=>C({name:x}));r.o.checks.push(...added);save();const inPanel=!!el.closest('#panel');if(!inPanel){selId=r.o.id;selSub=added[added.length-1].id}render();const ne=document.querySelector(inPanel?'#panel [data-addck]':`#cvi [data-addck="${r.o.id}"]`);if(ne)ne.focus({preventScroll:true});return}
+  const r=find(el.dataset.addprob);if(!r)return;const ps=txt.split(',').map(x=>x.trim()).filter(Boolean).map(x=>P({label:x}));r.o.problems.push(...ps);save();selProb=ps[0].id;render();const ne=document.querySelector('#panel [data-addprob]');if(ne)ne.focus({preventScroll:true});return}
  if((e.ctrlKey||e.metaKey)&&e.key==='z'&&!/INPUT|TEXTAREA/.test(document.activeElement.tagName)){e.preventDefault();doUndo()}
- if(e.key==='Escape'){if(dlg)closeDlg();else if(selId){selId=null;selSub=null;render()}}});
-function moveIn(list,i,d){const j=i+d;if(j<0||j>=list.length)return false;[list[i],list[j]]=[list[j],list[i]];return true}
-document.addEventListener('click',e=>{if(e.target.closest('.scrim'))return;const t=e.target.closest('[data-do],[data-add],[data-s],[data-tab],#bTry');if(!t)return;if(e.target.closest('textarea,input,select,summary')&&!t.dataset.do)return;const s=sop();
+ if(e.key==='Escape'){if(dlg)closeDlg();else if(!$('#dd').hidden)$('#dd').hidden=true;else if(selId){selId=null;selSub=null;selProb=null;render()}}});
+function removeObj(r){const s=sop();
+ if(r.kind==='step'){r.set(r.o.next);return true}
+ if(['question','group','goto'].includes(r.kind)){r.set(null);return true}
+ if(r.kind==='end'){if(r.par&&r.par.type==='group'){toast('Group ends stay: edit them instead');return false}r.set(null);return true}
+ if(r.kind==='answer'){const L=r.par.answers;if(L.length<2){toast('A question keeps at least one answer');return false}L.splice(L.indexOf(r.o),1);return true}
+ if(r.kind==='check'||r.kind==='problem'){r.slot.splice(r.slot.indexOf(r.o),1);return true}return false}
+document.addEventListener('click',e=>{const dd=$('#dd');if(!e.target.closest('.menu'))dd.hidden=true;if(e.target.closest('.scrim'))return;
+ const t=e.target.closest('[data-do],[data-g],[data-s],[data-tab],[data-dir],[data-z],[data-help],[data-m]');if(!t)return;if(e.target.closest('textarea,input,select,summary')&&!t.dataset.do)return;const s=sop();
+ if(t.dataset.m){dd.hidden=true;menu(t.dataset.m);return}
  if(t.dataset.tab){tab=t.dataset.tab;render();return}
- if(t.id==='bTry'){tryDlg();return}
- if(t.dataset.add){const [stage,type]=t.dataset.add.split('|');const n=type==='step'?mkStep():type==='question'?mkQ():mkGroup({name:'Checks'});s[stage].push(n);save();select(n.id);return}
+ if(t.dataset.dir){s.dir=t.dataset.dir;save();render();fitZoom();return}
+ if(t.dataset.z){const cv=$('#cv');if(t.dataset.z==='fit'){fitZoom();return}else zoom=Math.max(.35,Math.min(1.6,zoom+(+t.dataset.z)*.1));zoom=Math.round(zoom*100)/100;store.set('zoom',zoom);render();return}
+ if(t.dataset.help){helpDlg(t.dataset.help);return}
+ if(t.dataset.g){const [pid,slot,type]=t.dataset.g.split('|');let set;
+  if(slot==='a'){const r=find(pid);if(!r)return;set=v=>r.o.next=v}else set=holderOf(pid,slot);if(!set)return;
+  const n=M[type]({});if(type==='end'&&(slot==='fail'))n.tone='am';set(n);save();if(type==='goto'){select(n.id);return}select(n.id);return}
  if(t.dataset.s&&!t.dataset.do){e.stopPropagation();select(t.dataset.s,t.dataset.sub);return}
- const d=t.dataset.do,id=t.dataset.id,r=id!=null?find(id):null;
- if(d==='close'){selId=null;selSub=null;render();return}
- if(d==='up'||d==='down'){if(r&&moveIn(r.list,r.list.indexOf(r.o),d==='up'?-1:1)){save();render()}return}
- if(d==='stage'){if(!r)return;r.list.splice(r.list.indexOf(r.o),1);s[r.par==='find'?'review':'find'].push(r.o);save();render();toast('Moved to '+(r.par==='find'?'Review':'Find'));return}
- if(d==='del'){if(!r)return;if(!t.classList.contains('sure')){t.classList.add('sure');t.textContent='Sure? Remove';setTimeout(()=>{if(t.isConnected){t.classList.remove('sure');t.textContent='Remove'}},3500);return}
-  if(r.kind==='answer'&&r.o.ok&&r.list.filter(a=>a.ok).length<2){toast('Every question keeps one OK answer');return}
-  r.list.splice(r.list.indexOf(r.o),1);if(selId===id){selId=null}selSub=null;save();render();toast('Removed. Undo brings it back.');return}
- if(d==='addans'){const a=mkAns({label:''});r.o.answers.push(a);save();selSub=a.id;render();const x=document.querySelector(`#panel [data-item="${a.id}"] input`);if(x)x.focus();return}
- if(d==='fstep'||d==='fq'){const n=d==='fstep'?mkStep():mkQ();r.o.follow.push(n);save();select(n.id);return}
- if(d==='fck'){const c=mkCheck();r.o.follow.push(c);save();select(c.id);return}
- if(d==='addl'){s.links.push({l:'',u:''});save();render();return}
- if(d==='dell'){s.links.splice(+id,1);save();render();return}
- if(d==='addw'){s.watch.push('');save();render();const w=document.querySelectorAll('[data-watch]');if(w.length)w[w.length-1].focus();return}
- if(d==='delw'){s.watch.splice(+id,1);save();render();return}
+ const d=t.dataset.do,id=t.dataset.id,r=id!=null&&!/^\d+$/.test(id)?find(id):null;
+ if(d==='close'){selId=null;selSub=null;selProb=null;render();return}
+ if(d==='hidehelp'){showHelp=false;store.set('help',false);render();return}
+ if(d==='tone'){r.o.tone=t.dataset.v;save();render();return}
+ if(d==='ins'){const n=M[t.dataset.t]({});if(t.dataset.t==='step')n.next=r.o.next;else n.answers[0].next=r.o.next;r.o.next=n;save();select(n.id);return}
+ if(d==='addans'){const a=A('');r.o.answers.push(a);save();selSub=a.id;render();const x=document.querySelector(`#panel [data-item="${a.id}"] input`);if(x)x.focus();return}
+ if(d==='fck'){const c=C({});r.o.follow.push(c);save();select(c.id);return}
+ if(d==='ckup'||d==='ckdown'){const L=r.slot,i=L.indexOf(r.o),j=i+(d==='ckup'?-1:1);if(j<0||j>=L.length)return;[L[i],L[j]]=[L[j],L[i]];save();render();return}
+ if(d==='del'){if(!r)return;if(!t.classList.contains('sure')){t.classList.add('sure');const tx=t.textContent;t.textContent='Sure? Remove';setTimeout(()=>{if(t.isConnected){t.classList.remove('sure');t.textContent=tx}},3500);return}
+  if(removeObj(r)){if(selId===id)selId=null;if(selSub===id)selSub=null;selProb=null;save();render();toast('Removed. Undo brings it back.')}return}
+ if(d==='addl'){s.links.push({l:'',u:''});save();render();return}if(d==='dell'){s.links.splice(+id,1);save();render();return}
+ if(d==='addw'){s.watch.push('');save();render();return}if(d==='delw'){s.watch.splice(+id,1);save();render();return}
  if(d==='dup'){const c=JSON.parse(JSON.stringify(s));c.id=uid();c.title=s.title+' (copy)';S.unshift(c);cur=c.id;lastSnap=JSON.stringify(c);store.set('sops',S);store.set('cur',cur);render();toast('Copy made');return}
  if(d==='delsop'){if(!t.classList.contains('sure')){t.classList.add('sure');t.textContent='Sure? Delete it';setTimeout(()=>{if(t.isConnected){t.classList.remove('sure');t.textContent='Delete this SOP'}},3500);return}
-  undo.push({id:s.id,j:JSON.stringify(s),restore:true});S=S.filter(x=>x.id!==s.id);if(!S.length)S=[blank()];cur=S[0].id;lastSnap=JSON.stringify(sop());store.set('sops',S);store.set('cur',cur);tab='map';selId=null;render();toast('Deleted. Undo brings it back.');return}
-});
-$('#bUndo').onclick=doUndo;
-$('#bTodo').onclick=()=>{const T=todos();if(T.length)select(T[0].id,T[0].sub)};
+  undo.push({id:s.id,j:JSON.stringify(s),restore:true});S=S.filter(x=>x.id!==s.id);if(!S.length)S=[blank()];cur=S[0].id;lastSnap=JSON.stringify(sop());store.set('sops',S);store.set('cur',cur);tab='map';selId=null;render();toast('Deleted. Undo brings it back.');return}});
+$('#bUndo').onclick=doUndo;$('#bTodo').onclick=()=>{const T=todos();if(T.length)select(T[0].id,T[0].sub)};
+$('#bMenu').onclick=e=>{e.stopPropagation();const dd=$('#dd');dd.hidden=!dd.hidden;$('#bMenu').setAttribute('aria-expanded',String(!dd.hidden))};
+$('#bTry').onclick=()=>tryDlg();
+function menu(m){if(m==='sops')sopsDlg();if(m==='new')addSop(blank(),true);if(m==='import')$('#file').click();if(m==='example')addSop(example());if(m==='download')dlDlg();if(m==='how')howDlg();
+ if(m==='theme'){const r=document.documentElement,now=r.dataset.theme||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'),n=now==='dark'?'light':'dark';r.dataset.theme=n;store.set('theme',n)}}
+function addSop(b,focus){S.unshift(b);cur=b.id;selId=null;lastSnap=JSON.stringify(b);store.set('sops',S);store.set('cur',cur);tab='map';closeDlg();render();fitZoom();if(focus)setTimeout(()=>{$('#ttl').focus();$('#ttl').select()},30)}
+
+/* ---------- lane help ---------- */
+const HELP={
+ find:['1 · Find','Decide whether this SOP fits the case, and which path it takes.',['Find the member in back office.','Questions with one answer that send you down a path: “What does the member say?”, “Which licence?”','Gates that stop the case: “No account found” leads straight to an end.'],['Checks you want to collect several problems from (those go in Review).','Template text or ticket wording (that is Finish).','Long instructions: keep a step to 3-7 words, details go in Detail.'],'Ask: if this answer is X, do I go somewhere different? If yes, it is a Find question.'],
+ rev:['2 · Review','Look at a document or account and check several separate things, in any order, so you catch every problem before you reply.',['A check group: “New licence: clear, not expired, name matches”.','For each check, the problems the agent can find, each with its template title, Copilot point and ticket line.','Follow-up checks that only matter when a problem is found (Expired → Renewal receipt?).'],['Pick-one questions that change the path (those are Find).','Steps in a fixed order.','The final action, like Approve (that is Act).'],'Ask: if this check fails, do I still want to look at the others? If yes, it belongs in Review.'],
+ act:['3 · Act','What the agent does in back office once the path is decided.',['One clear action per end: Unsuspend the account, Add a profile note, Leave as it is.','Whether the end is All good (green) or Something missing (amber).'],['What to tell the member (Finish).','New checks or questions (Find or Review).'],'Every path ends with one Act box.'],
+ fin:['4 · Finish','What goes to the member and into the ticket. Mostly filled in for you from what was found.',['The template title for this end (P2A finds the template by name), with its text pasted if you have it.','Copilot points: short bullets of what the member must do. Try a case turns them into a Copilot prompt that finds the templates and combines them into one email.','The ticket lines, short, in the -Verb style.'],['Actions in back office (Act).','Member details: never names, emails or numbers.'],'Check it with Try a case: tap what you would find and read the email prompt and ticket.']};
+function helpDlg(k){const [t,what,yes,no,tip]=HELP[k];openDlg(`<h2>${t}<button class="btn sec sm" data-close>Close</button></h2><p style="margin:0 0 6px;color:var(--title)">${what}</p>
+ <h3 style="color:var(--ok)">Should have</h3><ul class="helpul">${yes.map(x=>`<li>${x}</li>`).join('')}</ul><h3 style="color:var(--warn)">Should not have</h3><ul class="helpul">${no.map(x=>`<li>${x}</li>`).join('')}</ul><div class="banner" style="margin-top:12px">${tip}</div>`)}
 
 /* ---------- try a case ---------- */
-function buildCase(s,picks){ // picks: Map id -> answerId (question) or Set of problemIds (check)
- const R=[],TK=[],DO=[];let ended=null;const P=picks||new Map();
- const take=o=>{if(o.reply.trim())R.push(o.reply.trim());if(o.ticket.trim())TK.push(o.ticket.trim());if(o.donow.trim())DO.push(o.donow.trim());if(o.end&&!ended)ended=o.label};
- const nodes=L=>L.forEach(n=>{if(ended)return;if(n.type==='question'){const a=n.answers.find(x=>x.id===P.get(n.id))||n.answers.find(x=>x.ok);if(a&&!a.ok){take(a)}if(a&&!ended)nodes(a.follow)}if(n.type==='group')checks(n.checks)});
- const checks=L=>L.forEach(c=>{if(ended)return;const set=P.get(c.id)||new Set();c.problems.forEach(p=>{if(set.has(p.id)){take(p);checks(p.follow)}})});
- nodes(s.find);nodes(s.review);
- const prob=R.length+TK.length>0||ended;let email='',ticket='';
- if(prob){email=R.length?s.fin.open.trim()+'\n\n'+R.map(x=>'- '+x).join('\n')+'\n\n'+s.fin.close.trim():'';ticket=[...TK,...(ended?[]:(s.act.prob.ticket.trim()?[s.act.prob.ticket.trim()]:[]))].join('\n')}
- else{email=s.act.pass.body.trim();ticket=s.act.pass.ticket.trim()}
- return {prob,email,ticket,DO,ended,action:ended?'Case ends: '+ended:prob?s.act.prob.action:s.act.pass.action}}
-function tryDlg(){const s=sop(),P=new Map();
- const draw=d=>{const nodes=(L,sub)=>L.map(n=>{if(n.type==='step')return `<div class="trow${sub?' sub':''}"><div class="t">${esc(n.name)}</div></div>`;
-   if(n.type==='question'){const sel=P.get(n.id)||(n.answers.find(a=>a.ok)||{}).id;const a=n.answers.find(x=>x.id===sel);return `<div class="trow${sub?' sub':''}"><div class="t">${esc(n.question||n.name)}</div><div class="chips">${n.answers.map(x=>`<span class="chip${x.ok?' ok':''}${x.id===sel?' on':''}" data-pq="${n.id}|${x.id}">${esc(x.label)}${x.end?' ■':''}</span>`).join('')}</div></div>${a?nodes(a.follow,true):''}`}
-   if(n.type==='group')return `<div class="stage-t" style="text-transform:none;letter-spacing:0">${esc(n.name)} · any order</div>`+checks(n.checks,sub);return ''}).join('');
-  const checks=(L,sub)=>L.map(c=>{const set=P.get(c.id)||new Set();return `<div class="trow${sub?' sub':''}"><div class="t">${esc(c.name)}</div><div class="chips"><span class="chip ok${set.size?'':' on'}" data-pc="${c.id}|pass">Pass</span>${c.problems.map(p=>`<span class="chip${set.has(p.id)?' on':''}" data-pc="${c.id}|${p.id}">${esc(p.label)}${p.end?' ■':''}</span>`).join('')}</div></div>${c.problems.filter(p=>set.has(p.id)).map(p=>checks(p.follow,true)).join('')}`}).join('');
-  const out=buildCase(s,P);
-  d.querySelector('#tl').innerHTML=`<div class="stage-t">1 · Find</div>${nodes(s.find)}<div class="stage-t">2 · Review</div>${nodes(s.review)}`;
-  d.querySelector('#tr').innerHTML=`<div class="stage-t">3 · Act</div><div class="${out.ended?'endnote':out.prob?'act prob':'act pass'}" style="cursor:default">${esc(out.action||'—')}</div>${out.DO.length?`<div class="muted" style="margin-top:6px">Do now: ${esc(out.DO.join(' · '))}</div>`:''}
-  <div class="stage-t">4 · Finish: email</div><pre class="out" id="tEm">${esc(out.email||'No email')}</pre><button class="btn" data-cp="tEm">Copy email</button>
-  <div class="stage-t">Ticket</div><pre class="out" id="tTk">${esc(out.ticket||'No ticket')}</pre><button class="btn" data-cp="tTk">Copy ticket</button>`};
- openDlg(`<h2>Try a case <button class="btn" data-close>Close</button></h2><div class="muted">Tap what you would find. Nothing tapped = everything passes. Nothing is saved.</div><div class="tryg"><div id="tl"></div><div id="tr"></div></div>`,d=>{draw(d);
+function runCase(s,PK){const path=[],probs=[],ticks=[],dos=[];let end=null,guard=0;let n=s.root;
+ while(n&&guard++<60){if(n.type==='step'){path.push({n});n=n.next;continue}
+  if(n.type==='question'){const a=n.answers.find(x=>x.id===PK.get(n.id))||n.answers[0];path.push({n,a});n=a?a.next:null;continue}
+  if(n.type==='group'){path.push({n});const got=[];const r=L=>L.forEach(c=>{const set=PK.get(c.id)||new Set();c.problems.forEach(p=>{if(set.has(p.id)){got.push(p);r(p.follow)}})});r(n.checks);probs.push(...got);n=got.length?n.fail:n.pass;continue}
+  if(n.type==='goto'){const t=find(n.target);n=t?t.o:null;continue}
+  if(n.type==='end'){end=n;break}}
+ const tpl=[],pts=[];let ticket=[];
+ probs.forEach(p=>{if(p.template.trim()&&!tpl.some(x=>x.t===p.template.trim()))tpl.push({t:p.template.trim(),x:p.text});if(p.copilot.trim())pts.push(p.copilot.trim());if(p.ticket.trim())ticket.push(p.ticket.trim());if(p.donow.trim())dos.push(p.donow.trim())});
+ if(end){if(!end.combine&&end.template.trim())tpl.push({t:end.template.trim(),x:end.text});if(!end.combine&&end.copilot.trim())pts.push(end.copilot.trim());if(end.ticket.trim())ticket.push(end.ticket.trim())}
+ return {path,end,tpl,pts,ticket:ticket.join('\n'),dos,prompt:prompt(tpl,pts)}}
+function prompt(tpl,pts){if(!tpl.length&&!pts.length)return '';const L=['Write one email reply to the member. Use XXX for their first name.'];
+ if(tpl.length){L.push('','Find these templates in my saved Evo reply templates'+(tpl.length>1?' and combine them into one email':' and use it')+':',...tpl.map(x=>'- '+x.t));
+  const withText=tpl.filter(x=>x.x&&x.x.trim());if(withText.length){L.push('','Template text I have:');withText.forEach(x=>L.push('['+x.t+']',x.x.trim(),''))}}
+ if(pts.length)L.push('','The email must cover:',...pts.map(p=>'- '+p));
+ L.push('','Rules:','- One greeting: "Hi XXX,".','- Keep each template’s facts and wording; do not promise anything new.',...(tpl.length>1?['- Start each later part with "Additionally,".']:[]),'- Remove repeated thank-yous, apologies and sign-offs.','- End with one "Thank you" and no signature.','- Plain text, no member details other than the first name.');
+ return L.join('\n')}
+function tryDlg(){const s=sop(),PK=new Map();
+ const draw=d=>{const R=runCase(s,PK);
+  const left=R.path.map(({n,a})=>{if(n.type==='step')return `<div class="trow find"><div class="t">${esc(n.name)}</div></div>`;
+   if(n.type==='question')return `<div class="trow find"><div class="t">${esc(n.question)}</div><div class="chips">${n.answers.map(x=>`<button class="chip${a&&a.id===x.id?' on':''}" data-pq="${n.id}|${x.id}">${esc(x.label||'…')}</button>`).join('')}</div></div>`;
+   if(n.type==='group'){const rows=[];const r=(L,dep)=>L.forEach(c=>{const set=PK.get(c.id)||new Set();rows.push(`<div class="trow rev" style="margin-left:${dep*16}px"><div class="t">${esc(c.name)}</div><div class="chips"><button class="chip pass${set.size?'':' on'}" data-pc="${c.id}|pass">Pass</button>${c.problems.map(p=>`<button class="chip prob${set.has(p.id)?' on':''}" data-pc="${c.id}|${p.id}">${esc(p.label||'…')}</button>`).join('')}</div></div>`);c.problems.filter(p=>set.has(p.id)).forEach(p=>r(p.follow,dep+1))});r(n.checks,0);return `<div class="lbl" style="margin-top:10px;color:var(--rev)">${esc(n.name)} · any order</div>`+rows.join('')}return ''}).join('');
+  const e=R.end;
+  d.querySelector('#tl').innerHTML=`<div class="lbl" style="color:var(--b-findl)">Walk the case</div>${left}${!e?'<div class="banner">This path has no end yet. Add one in the diagram.</div>':''}`;
+  d.querySelector('#tr').innerHTML=e?`<div class="res act"><span class="lbl" style="color:var(--warn)">3 · Act</span><div style="color:var(--title);font-weight:600">${esc(e.action||'—')}</div>${R.dos.length?`<div class="muted">Do now: ${esc(R.dos.join(' · '))}</div>`:''}</div>
+  <div class="res fin"><span class="lbl" style="color:var(--ok)">4 · Finish</span><div class="muted">Templates: ${R.tpl.length?R.tpl.map(x=>'<b>'+esc(x.t)+'</b>').join(', '):'none'}</div>
+  <div class="lbl" style="margin-top:8px">Copilot reply prompt</div><pre class="out" id="tPr">${esc(R.prompt||'No email for this path.')}</pre>${R.prompt?'<button class="btn sm" data-cp="tPr">Copy prompt</button>':''}
+  <div class="lbl" style="margin-top:10px">Ticket</div><pre class="out" id="tTk">${esc(R.ticket||'No ticket lines.')}</pre><button class="btn sec sm" data-cp="tTk">Copy ticket</button></div>`:'<div class="muted">Pick answers on the left.</div>'};
+ openDlg(`<h2>Try a case<button class="btn sec sm" data-close>Close</button></h2><div class="muted">Tap what you would find. Nothing tapped in a check = Pass. Paste the prompt into Copilot to see the full email. Nothing is saved.</div><div class="tryg" style="margin-top:10px"><div id="tl"></div><div id="tr"></div></div>`,d=>{draw(d);
   d.addEventListener('click',e=>{const q=e.target.closest('[data-pq]'),c=e.target.closest('[data-pc]'),cp=e.target.closest('[data-cp]');
-   if(q){const [n,a]=q.dataset.pq.split('|');P.set(n,a);draw(d)}
-   if(c){const [id,p]=c.dataset.pc.split('|');const set=new Set(P.get(id)||[]);if(p==='pass')set.clear();else set.has(p)?set.delete(p):set.add(p);P.set(id,set);draw(d)}
-   if(cp){copy(d.querySelector('#'+cp.dataset.cp).textContent)}})})}
+   if(q){const [n,a]=q.dataset.pq.split('|');PK.set(n,a);draw(d)}
+   if(c){const [id,p]=c.dataset.pc.split('|');const set=new Set(PK.get(id)||[]);if(p==='pass')set.clear();else set.has(p)?set.delete(p):set.add(p);PK.set(id,set);draw(d)}
+   if(cp)copy(d.querySelector('#'+cp.dataset.cp).textContent)})},true)}
 async function copy(t){try{await navigator.clipboard.writeText(t);toast('Copied')}catch(e){toast('Copy is not available here: select the text and press Ctrl+C')}}
 
-/* ---------- export (P2A import format) ---------- */
+/* ---------- export: P2A import format + the tree for round trips ---------- */
 const one=t=>String(t||'').replace(/\s*\n\s*/g,' ').trim();
-const nl=t=>String(t||'').trim().replace(/\n/g,'\\n');
-function items(s){const I=[];
- const nodes=(L,stage,fol)=>L.forEach(n=>{if(n.type==='group'){n.checks.forEach(c=>check(c,stage,n.name,fol));return}const it={o:n,kind:n.type,stage,fol};I.push(it);it.n=I.length;
-  if(n.type==='question')n.answers.forEach(a=>{if(!a.ok&&a.follow.length)nodes(a.follow,stage,{n:it.n,label:a.label})})});
- const check=(c,stage,g,fol)=>{const it={o:c,kind:'check',stage,group:g,fol};I.push(it);it.n=I.length;c.problems.forEach(p=>p.follow.forEach(f=>check(f,stage,g,{n:it.n,label:p.label})))};
- nodes(s.find,'find');nodes(s.review,'review');return I}
-function toMd(s){s=s||sop();const I=items(s),L=[];
- L.push('# SOP for P2A: '+one(s.title),'');if(s.meta.name||s.meta.role)L.push('From: '+one(s.meta.name)+(s.meta.role?' ('+one(s.meta.role)+')':''));
+function toMd(s){s=s||sop();const steps=[],Q=[],O=[],only=[],D=[],TK=[],CP=[],tpls=new Map();let okOnly=null,allOk='',firstPass=null;
+ const add=(name,detail)=>{steps.push(one(name)+(detail&&detail.trim()?' — '+one(detail):''));return steps.length};
+ const keepTpl=(t,x)=>{if(t&&t.trim()&&x&&x.trim()&&!tpls.has(t.trim()))tpls.set(t.trim(),x)};
+ const node=(n,fol)=>{if(!n)return[];const nums=[];
+  if(n.type==='step'){const k=add(n.name||'Step','');nums.push(k);if(fol)fol.push(k);nums.push(...node(n.next,fol))}
+  else if(n.type==='question'){const k=add(n.question||'Question',n.detail);nums.push(k);if(fol)fol.push(k);if(n.question.trim())Q.push('- Step '+k+': '+one(n.question));
+   n.answers.forEach(a=>{const nx=a.next;let tpl='-',then='';if(nx&&nx.type==='end'){tpl=one(nx.template)||'-';then=' | then: stop';keepTpl(nx.template,nx.text);if(nx.action.trim())D.push('- '+one(a.label)+': '+one(nx.action));if(nx.ticket.trim())TK.push('- At step '+k+': '+one(a.label)+': '+nx.ticket.trim().replace(/\n/g,'\\n'));if(nx.copilot.trim())CP.push('- At step '+k+': '+one(a.label)+': '+one(nx.copilot))}
+    O.push('- At step '+k+': '+one(a.label||'Answer')+' -> '+tpl+(a.words.trim()?' | '+one(a.words):'')+then);
+    if(nx&&nx.type!=='end'&&nx.type!=='goto'){const sub=[];node(nx,sub);if(sub.length)only.push('- Only when '+one(a.label)+': step '+sub.join(', '))}})}
+  else if(n.type==='group'){const ck=(L,par)=>L.forEach(c=>{const k=add(c.name||'Check',c.detail);nums.push(k);if(fol)fol.push(k);if(par)par.push(k);
+     c.problems.forEach(p=>{O.push('- At step '+k+': '+one(p.label||'Problem')+' -> '+(one(p.template)||'-')+(p.words.trim()?' | '+one(p.words):''));keepTpl(p.template,p.text);if(p.donow.trim())D.push('- '+one(p.label)+': '+one(p.donow));if(p.ticket.trim())TK.push('- At step '+k+': '+one(p.label)+': '+p.ticket.trim().replace(/\n/g,'\\n'));if(p.copilot.trim())CP.push('- At step '+k+': '+one(p.label)+': '+one(p.copilot));
+      if(p.follow.length){const sub=[];ck(p.follow,sub);only.push('- Only when '+one(p.label)+': step '+sub.join(', '))}})});
+   ck(n.checks,null);if(!firstPass&&n.pass){firstPass=n.pass}}
+  return nums};
+ node(s.root,null);
+ if(firstPass&&firstPass.action.trim()){okOnly=add(firstPass.action,'');allOk=one(firstPass.template);keepTpl(firstPass.template,firstPass.text);if(firstPass.ticket.trim())TK.push('- All OK: '+firstPass.ticket.trim().replace(/\n/g,'\\n'))}
+ const L=['# SOP for P2A: '+one(s.title),''];if(s.meta.name||s.meta.role)L.push('From: '+one(s.meta.name)+(s.meta.role?' ('+one(s.meta.role)+')':''));
  L.push('Sent: '+new Date().toISOString().slice(0,10),'Made with: SOP Builder '+VERSION);if(s.meta.notes.trim())L.push('Notes: '+one(s.meta.notes));
  L.push('','## SOP','','Title: '+one(s.title));if(s.tags.trim())L.push('Tags: '+one(s.tags));if(s.topic.trim())L.push('Topic: '+one(s.topic));
- if(s.when.trim()||s.applies.trim())L.push('When to use: '+one(s.when)+(s.applies.trim()?' | Applies to: '+one(s.applies):''));
- if(s.confluence.trim())L.push('Confluence: '+one(s.confluence));const ln=s.links.filter(l=>l.u.trim());if(ln.length){L.push('Tool links:');ln.forEach(l=>L.push('- '+one(l.l||l.u)+': '+one(l.u)))}
- L.push('','Steps:');I.forEach(it=>{const o=it.o,nm=it.kind==='question'?(o.name||o.question):o.name;L.push(it.n+'. '+one(nm||'Step '+it.n)+(o.detail&&o.detail.trim()?' — '+one(o.detail):''))});
- const okN=I.length+1;if(s.act.pass.action.trim())L.push(okN+'. '+one(s.act.pass.action));
- const Q=I.filter(it=>(it.o.question||'').trim());if(Q.length){L.push('','Questions:');Q.forEach(it=>L.push('- Step '+it.n+': '+one(it.o.question)))}
- const ans=it=>it.kind==='question'?it.o.answers.filter(a=>!a.ok):it.kind==='check'?it.o.problems:[];
- L.push('','Outcomes:');I.forEach(it=>ans(it).forEach(a=>L.push('- At step '+it.n+': '+one(a.label||'Answer')+' -> '+(one(a.email)||'-')+(a.words.trim()?' | '+one(a.words):'')+(a.end?' | then: stop':''))));
- const only=new Map();I.filter(it=>it.fol).forEach(it=>{const k=it.fol.label;if(!only.has(k))only.set(k,[]);only.get(k).push(it.n)});only.forEach((v,k)=>L.push('- Only when '+one(k)+': step '+v.join(', ')));
- if(s.act.pass.action.trim())L.push('- Only when all OK: step '+okN);if(s.act.pass.email.trim())L.push('- All OK -> '+one(s.act.pass.email));
- const D=[];I.forEach(it=>ans(it).forEach(a=>{if(a.donow.trim())D.push('- '+one(a.label)+': '+one(a.donow))}));if(D.length)L.push('','Do now:',...new Set(D));
- const RL=[];I.forEach(it=>ans(it).forEach(a=>{if(a.reply.trim())RL.push('- At step '+it.n+': '+one(a.label)+': '+one(a.reply))}));
- if(RL.length)L.push('','Reply lines:',...RL);
- const T=[];I.forEach(it=>ans(it).forEach(a=>{if(a.ticket.trim())T.push('- At step '+it.n+': '+one(a.label)+': '+nl(a.ticket))}));if(s.act.pass.ticket.trim())T.push('- All OK: '+nl(s.act.pass.ticket));if(s.act.prob.ticket.trim())T.push('- Any problem: '+nl(s.act.prob.ticket));
- if(T.length)L.push('','Ticket lines:',...T);
- L.push('','Act:','- All pass: '+one(s.act.pass.action),'- Any problem: '+one(s.act.prob.action));
- L.push('','Email frame:','- Opening: '+nl(s.fin.open),'- Closing: '+nl(s.fin.close));
- L.push('','Stages:');I.forEach(it=>{const p=['- Step '+it.n+': '+it.stage,it.kind];if(it.group)p.push('group: '+one(it.group));if(it.kind==='question'){const ok=it.o.answers.find(a=>a.ok);if(ok)p.push('ok: '+one(ok.label))}if(it.fol)p.push('follow of step '+it.fol.n+': '+one(it.fol.label));L.push(p.join(' | '))});
+ if(s.when.trim()||s.applies.trim())L.push('When to use: '+one(s.when)+(s.applies.trim()?' | Applies to: '+one(s.applies):''));if(s.confluence.trim())L.push('Confluence: '+one(s.confluence));
+ const ln=s.links.filter(l=>l.u.trim());if(ln.length){L.push('Tool links:');ln.forEach(l=>L.push('- '+one(l.l||l.u)+': '+one(l.u)))}
+ L.push('','Steps:',...steps.map((x,i)=>(i+1)+'. '+x));if(Q.length)L.push('','Questions:',...Q);
+ L.push('','Outcomes:',...O,...only);if(okOnly)L.push('- Only when all OK: step '+okOnly);if(allOk)L.push('- All OK -> '+allOk);
+ if(D.length)L.push('','Do now:',...new Set(D));if(CP.length)L.push('','Copilot points:',...CP);if(TK.length)L.push('','Ticket lines:',...TK);
  const W=s.watch.filter(w=>w.trim());if(W.length)L.push('','Watch out for:',...W.map(w=>'- '+one(w)));
- const E=new Map();if(s.act.pass.email.trim()&&s.act.pass.body.trim())E.set(s.act.pass.email.trim(),s.act.pass.body);
- walk(s,(o,k)=>{if((k==='answer'||k==='problem')&&o.email.trim()&&(s.emails[o.email.trim()]||'').trim())E.set(o.email.trim(),s.emails[o.email.trim()])});
- if(E.size){L.push('','## Replies');E.forEach((b,t)=>L.push('','### Reply: '+t,String(b).replace(/^#{1,6}\s+/gm,'').trim()))}
+ if(tpls.size){L.push('','## Replies');tpls.forEach((x,t)=>L.push('','### Reply: '+t,String(x).replace(/^#{1,6}\s+/gm,'').trim()))}
+ const data=JSON.stringify({v:VERSION,sop:{...s,id:undefined}}).replace(/</g,'\\u003c');
+ L.push('','## Builder data','Kept for SOP Builder round trips. P2A skips this section.','```json',data,'```');
  return L.join('\n').replace(/\n{3,}/g,'\n\n')+'\n'}
 
 /* ---------- import ---------- */
-function parseMd(txt){const P={title:'',tags:'',topic:'',conf:'',when:'',applies:'',links:[],meta:{name:'',role:'',notes:''},steps:{},qs:{},outs:[],dn:{},rl:[],tk:[],okOnly:[],only:[],after:[],def:'',act:{},frame:{},stages:{},watch:[],open:[],replies:{}};
+function reId(s){const seen=new Map();walk(s,o=>{const n=uid();seen.set(o.id,n);o.id=n});walk(s,(o,k)=>{if(k==='goto'&&seen.has(o.target))o.target=seen.get(o.target)});return s}
+function fromMd(txt){const R=[];const m=String(txt).match(/## Builder data[\s\S]*?```json\s*([\s\S]*?)```/);
+ if(m){try{const j=JSON.parse(m[1]);const s={...base(),...j.sop};s.id=uid();reId(s);return{s,R}}catch(e){R.push('The Builder data could not be read, so the steps were read instead.')}}
+ // older files: steps, outcomes, Only when
+ const Pr={steps:{},qs:{},outs:[],dn:{},tk:[],okOnly:[],only:[],def:'',watch:[],replies:{},title:'',tags:'',topic:'',when:'',applies:'',conf:'',links:[],meta:{name:'',role:'',notes:''},open:[]};
  const lines=String(txt||'').replace(/\r/g,'').split('\n');const top=lines.findIndex(l=>/^##\s+(reply templates|replies|ticket templates)\b/i.test(l));const body=top>=0?lines.slice(0,top):lines,rep=top>=0?lines.slice(top):[];
- const h1=body.find(l=>/^#\s+/.test(l));if(h1)P.title=h1.replace(/^#\s+(SOP for P2A:|P2A package:)?\s*/i,'').trim();let sec='';
- for(const raw of body){const l=raw.trim();let m;if(!l)continue;
-  if(m=l.match(/^title\s*:\s*(.+)$/i)){P.title=m[1].trim();continue}if(m=l.match(/^tags\s*:\s*(.*)$/i)){P.tags=m[1].trim();continue}if(m=l.match(/^topic\s*:\s*(.*)$/i)){P.topic=m[1].trim();continue}if(m=l.match(/^confluence\s*:\s*(.*)$/i)){P.conf=m[1].trim();continue}
-  if(!sec&&(m=l.match(/^from\s*:\s*(.*?)(?:\s*\((.*)\))?$/i))){P.meta.name=m[1].trim();P.meta.role=(m[2]||'').trim();continue}if(!sec&&(m=l.match(/^notes\s*:\s*(.+)$/i))){P.meta.notes=m[1].trim();continue}
-  if(m=l.match(/^when to use\s*:\s*(.*)$/i)){const p=m[1].split(/\|\s*applies to\s*:/i);P.when=p[0].trim();P.applies=(p[1]||'').trim();continue}
-  if(m=l.match(/^(tool links|steps|questions|outcomes?|do now|reply lines|ticket lines|act|email frame|stages|watch out for|open points|clarifications)\s*:\s*$/i)){sec=m[1].toLowerCase();continue}
-  if(/^#/.test(l)||/^(sent|made with)\s*:/i.test(l))continue;const it=l.replace(/^[-*•]\s*/,'');
-  if(sec==='steps'&&(m=l.match(/^(\d+)[.)]\s*(.+)$/))){const p=m[2].split(/\s+[—–]\s+/);P.steps[+m[1]]={name:p[0].trim(),detail:p.slice(1).join(' — ').trim()};continue}
-  if(sec==='tool links'&&(m=it.match(/^(.*?):\s*(https?:\/\/\S+)$/))){P.links.push({l:m[1].trim(),u:m[2]});continue}
-  if(sec==='questions'&&(m=it.match(/^step\s+(\d+)\s*:\s*(.+)$/i))){P.qs[+m[1]]=m[2].trim();continue}
-  if(sec.startsWith('outcome')){
-   if(m=it.match(/^at step (\d+)\s*:\s*(.+)$/i)){const p=m[2].split(/\s*(?:->|→|=>)\s*/),a=(p.slice(1).join(' -> ')||'').split('|').map(x=>x.trim());let th='';const k=a.findIndex((x,q)=>q>0&&/^then\s*:/i.test(x));if(k>0){th=a[k].replace(/^then\s*:/i,'').trim();a.splice(k,1)}P.outs.push({n:+m[1],label:p[0].trim(),email:a[0]&&a[0]!=='-'?a[0]:'',words:a.slice(1).filter(Boolean).join(', '),then:th});continue}
-   if(m=it.match(/^only when all ok\s*:\s*(.+)$/i)){P.okOnly=(m[1].match(/\d+/g)||[]).map(Number);continue}
-   if(m=it.match(/^after step (\d+)\s*:\s*(.+)$/i)){P.after.push({n:+m[1],to:m[2].trim()});continue}
-   if(m=it.match(/^(?:default|all ok)\s*(?:->|→|=>|:)\s*(.+)$/i)){P.def=m[1].trim();continue}
-   if(m=it.match(/^only when (.+?)\s*:\s*(?:steps?\s*)?([\d,\s]+)$/i)){P.only.push({label:m[1].trim(),steps:(m[2].match(/\d+/g)||[]).map(Number)});continue}}
-  if(sec==='do now'&&(m=it.match(/^(.+?)\s*:\s*(.+)$/))){P.dn[m[1].trim().toLowerCase()]=m[2].trim();continue}
-  if(sec==='reply lines'&&(m=it.match(/^at step (\d+)\s*:\s*(.+?)\s*:\s*(.+)$/i))){P.rl.push({n:+m[1],label:m[2].trim().toLowerCase(),t:m[3].trim()});continue}
-  if(sec==='ticket lines'){const un=x=>x.replace(/\\n/g,'\n');if(m=it.match(/^all ok\s*:\s*(.+)$/i)){P.act.passTicket=un(m[1].trim());continue}if(m=it.match(/^any problem\s*:\s*(.+)$/i)){P.act.probTicket=un(m[1].trim());continue}if(m=it.match(/^at step (\d+)\s*:\s*(.+?)\s*:\s*(.+)$/i)){P.tk.push({n:+m[1],label:m[2].trim().toLowerCase(),t:un(m[3].trim())});continue}}
-  if(sec==='act'){if(m=it.match(/^all pass\s*:\s*(.*)$/i)){P.act.pass=m[1].trim();continue}if(m=it.match(/^any problem\s*:\s*(.*)$/i)){P.act.prob=m[1].trim();continue}}
-  if(sec==='email frame'){if(m=it.match(/^opening\s*:\s*(.*)$/i)){P.frame.open=m[1].replace(/\\n/g,'\n');continue}if(m=it.match(/^closing\s*:\s*(.*)$/i)){P.frame.close=m[1].replace(/\\n/g,'\n');continue}}
-  if(sec==='stages'&&(m=it.match(/^step (\d+)\s*:\s*(.+)$/i))){const p=m[2].split('|').map(x=>x.trim()),o={stage:p[0].toLowerCase()==='find'?'find':'review',kind:p[1]||'check'};p.slice(2).forEach(x=>{let q;if(q=x.match(/^group\s*:\s*(.*)$/i))o.group=q[1];else if(q=x.match(/^ok\s*:\s*(.*)$/i))o.ok=q[1];else if(q=x.match(/^follow of step (\d+)\s*:\s*(.*)$/i))o.fol={n:+q[1],label:q[2]}});P.stages[+m[1]]=o;continue}
-  if(sec==='watch out for'){P.watch.push(it);continue}if(sec==='open points'){P.open.push(it);continue}}
- let curT=null,buf=[];const flush=()=>{if(curT)P.replies[curT]=buf.join('\n').trim();curT=null;buf=[]};
- rep.forEach(l=>{let m;if(m=l.match(/^###\s+(?:reply|email)\s*:\s*(.+)$/i)){flush();curT=m[1].trim();return}if(/^###?\s/.test(l)){flush();return}if(curT&&!/^tags\s*:/i.test(l))buf.push(l)});flush();return P}
-function fromMd(txt){const P=parseMd(txt),R=[],s=base();s.title=P.title||'Imported SOP';s.tags=P.tags;s.topic=P.topic;s.confluence=P.conf;s.when=P.when;s.applies=P.applies;s.links=P.links;s.meta=P.meta;s.watch=P.watch;
- if(P.frame.open)s.fin.open=P.frame.open;if(P.frame.close)s.fin.close=P.frame.close;
- const okSet=new Set(P.okOnly);const nums=Object.keys(P.steps).map(Number).sort((a,b)=>a-b).filter(n=>!okSet.has(n));
- if(P.okOnly.length)s.act.pass.action=P.okOnly.map(n=>P.steps[n]?P.steps[n].name:'').filter(Boolean).join('; ');
- if(P.act.pass)s.act.pass.action=P.act.pass;if(P.act.prob)s.act.prob.action=P.act.prob;if(P.act.passTicket)s.act.pass.ticket=P.act.passTicket;if(P.act.probTicket)s.act.prob.ticket=P.act.probTicket;
- if(P.def&&P.def!=='-'){s.act.pass.email=P.def;s.act.pass.body=P.replies[P.def]||''}
- const outsAt=n=>P.outs.filter(o=>o.n===n);
- const fill=(o,n)=>{const lab=o.label.toLowerCase();const r=P.rl.find(x=>x.n===n&&x.label===lab),t=P.tk.find(x=>x.n===n&&x.label===lab);if(r)o.reply=r.t;if(t)o.ticket=t.t;if(P.dn[lab])o.donow=P.dn[lab];if(o.email&&P.replies[o.email])s.emails[o.email]=P.replies[o.email];return o};
- const mkAnswers=n=>outsAt(n).map(o=>fill(mkAns({label:o.label,email:o.email,words:o.words,end:/^(stop|end)/i.test(o.then)}),n));
- const mkProbs=n=>outsAt(n).map(o=>fill(mkProb({label:o.label,email:o.email,words:o.words,end:/^(stop|end)/i.test(o.then)}),n));
- const own=Object.keys(P.stages).length>0,obj={};
- // which step each "Only when" step follows (old files)
- const folOf={};if(!own)P.only.forEach(g=>{const owner=P.outs.find(o=>o.label.toLowerCase()===g.label.toLowerCase());if(owner)g.steps.forEach(n=>{if(!okSet.has(n))folOf[n]={n:owner.n,label:owner.label}})});
- const findN=own?null:(nums.length?nums[0]:null);
- nums.forEach(n=>{const st=P.steps[n];const g=own?(P.stages[n]||{stage:'review',kind:'check',group:'Review'}):{stage:n===findN?'find':'review',kind:n===findN?(P.qs[n]||outsAt(n).length?'question':'step'):'check',group:'Review',fol:folOf[n]};
-  let o;if(g.kind==='question'){o=mkQ({name:st.name,question:P.qs[n]||'',detail:st.detail,answers:[mkAns({label:g.ok||'Yes',ok:true}),...mkAnswers(n)]})}else if(g.kind==='step'){o=mkStep({name:st.name,detail:st.detail})}else{o=mkCheck({name:st.name,detail:st.detail,question:P.qs[n]||'',problems:mkProbs(n)})}
-  obj[n]={o,g};
-  if(g.fol&&obj[g.fol.n]){const par=obj[g.fol.n].o,lab=g.fol.label.toLowerCase();const host=(par.answers||par.problems||[]).find(x=>x.label.toLowerCase()===lab);
-   if(host){if(par.problems&&o.type){o=mkCheck({name:o.name,detail:o.detail,question:o.question||'',problems:o.answers?o.answers.filter(a=>!a.ok).map(a=>mkProb(a)):[]});obj[n].o=o}
-    if(par.answers&&!o.type){o=mkStep({name:o.name,detail:o.detail});obj[n].o=o}
-    host.follow.push(o);return}}
-  const list=s[g.stage];if(g.kind==='check'){let last=list[list.length-1];if(!last||last.type!=='group'||last.name!==(g.group||'Review')){last=mkGroup({name:g.group||'Review'});list.push(last)}last.checks.push(o)}else list.push(o)});
- if(!own){if(findN!=null)R.push('Step '+findN+' went to Find; the other steps became one check group in Review (any order). Move any that must come first with "Move to Find".');
-  if(P.okOnly.length)R.push('Step '+P.okOnly.join(', ')+' ran only when all OK, so it is now the All pass action.');
-  if(Object.keys(folOf).length)R.push('Steps '+Object.keys(folOf).join(', ')+' only ran for one answer, so they now sit under that answer.');
-  P.after.forEach(a=>R.push('"After step '+a.n+': '+a.to+'" has no place in 4.1; check the order.'));
-  P.outs.filter(o=>o.then&&!/^(stop|end)/i.test(o.then)).forEach(o=>R.push('"'+o.label+'" said then: '+o.then+'. 4.1 has no skips; check it.'));
-  const ne=P.outs.filter(o=>o.email).length;if(ne)R.push(ne+' answers keep their P2A email template. Add short reply lines when you can.')}
- if(P.open.length){s.meta.notes=(s.meta.notes?s.meta.notes+'\n':'')+'Open points: '+P.open.join(' / ');R.push(P.open.length+' open point(s) moved to Notes (Details).')}
- if(!s.find.length&&!s.review.length){s.find.push(mkStep({name:'Find the member in back office'}));R.push('No steps found, so it starts with one step.')}
+ const h1=body.find(l=>/^#\s+/.test(l));if(h1)Pr.title=h1.replace(/^#\s+(SOP for P2A:|P2A package:)?\s*/i,'').trim();let sec='';
+ for(const raw of body){const l=raw.trim();let x;if(!l)continue;
+  if(x=l.match(/^title\s*:\s*(.+)$/i)){Pr.title=x[1].trim();continue}if(x=l.match(/^tags\s*:\s*(.*)$/i)){Pr.tags=x[1].trim();continue}if(x=l.match(/^topic\s*:\s*(.*)$/i)){Pr.topic=x[1].trim();continue}if(x=l.match(/^confluence\s*:\s*(.*)$/i)){Pr.conf=x[1].trim();continue}
+  if(!sec&&(x=l.match(/^from\s*:\s*(.*?)(?:\s*\((.*)\))?$/i))){Pr.meta.name=x[1].trim();Pr.meta.role=(x[2]||'').trim();continue}
+  if(x=l.match(/^when to use\s*:\s*(.*)$/i)){const p=x[1].split(/\|\s*applies to\s*:/i);Pr.when=p[0].trim();Pr.applies=(p[1]||'').trim();continue}
+  if(x=l.match(/^(tool links|steps|questions|outcomes?|do now|reply lines|ticket lines|copilot points|act|email frame|stages|watch out for|open points|clarifications)\s*:\s*$/i)){sec=x[1].toLowerCase();continue}
+  if(/^#/.test(l)||/^(sent|made with|notes)\s*:/i.test(l))continue;const it=l.replace(/^[-*•]\s*/,'');
+  if(sec==='steps'&&(x=l.match(/^(\d+)[.)]\s*(.+)$/))){const p=x[2].split(/\s+[—–]\s+/);Pr.steps[+x[1]]={name:p[0].trim(),detail:p.slice(1).join(' — ').trim()};continue}
+  if(sec==='tool links'&&(x=it.match(/^(.*?):\s*(https?:\/\/\S+)$/))){Pr.links.push({l:x[1].trim(),u:x[2]});continue}
+  if(sec==='questions'&&(x=it.match(/^step\s+(\d+)\s*:\s*(.+)$/i))){Pr.qs[+x[1]]=x[2].trim();continue}
+  if(sec.startsWith('outcome')){if(x=it.match(/^at step (\d+)\s*:\s*(.+)$/i)){const p=x[2].split(/\s*(?:->|→|=>)\s*/),a=(p.slice(1).join(' -> ')||'').split('|').map(y=>y.trim());let th='';const k=a.findIndex((y,q)=>q>0&&/^then\s*:/i.test(y));if(k>0){th=a[k].replace(/^then\s*:/i,'').trim();a.splice(k,1)}Pr.outs.push({n:+x[1],label:p[0].trim(),email:a[0]&&a[0]!=='-'?a[0]:'',words:a.slice(1).filter(Boolean).join(', '),then:th});continue}
+   if(x=it.match(/^only when all ok\s*:\s*(.+)$/i)){Pr.okOnly=(x[1].match(/\d+/g)||[]).map(Number);continue}if(x=it.match(/^(?:default|all ok)\s*(?:->|→|=>|:)\s*(.+)$/i)){Pr.def=x[1].trim();continue}
+   if(x=it.match(/^only when (.+?)\s*:\s*(?:steps?\s*)?([\d,\s]+)$/i)){Pr.only.push({label:x[1].trim(),steps:(x[2].match(/\d+/g)||[]).map(Number)});continue}}
+  if(sec==='do now'&&(x=it.match(/^(.+?)\s*:\s*(.+)$/))){Pr.dn[x[1].trim().toLowerCase()]=x[2].trim();continue}
+  if(sec==='ticket lines'){if(x=it.match(/^all ok\s*:\s*(.+)$/i)){Pr.okTicket=x[1].replace(/\\n/g,'\n');continue}if(x=it.match(/^at step (\d+)\s*:\s*(.+?)\s*:\s*(.+)$/i)){Pr.tk.push({n:+x[1],label:x[2].trim().toLowerCase(),t:x[3].replace(/\\n/g,'\n')});continue}}
+  if(sec==='watch out for'){Pr.watch.push(it);continue}if(sec==='open points'){Pr.open.push(it);continue}}
+ let ct=null,buf=[];const flush=()=>{if(ct)Pr.replies[ct]=buf.join('\n').trim();ct=null;buf=[]};rep.forEach(l=>{let x;if(x=l.match(/^###\s+(?:reply|email)\s*:\s*(.+)$/i)){flush();ct=x[1].trim();return}if(/^#{2,3}\s/.test(l)){flush();return}if(ct&&!/^tags\s*:/i.test(l))buf.push(l)});flush();
+ const s=base();Object.assign(s,{title:Pr.title||'Imported SOP',tags:Pr.tags,topic:Pr.topic,when:Pr.when,applies:Pr.applies,confluence:Pr.conf,links:Pr.links,watch:Pr.watch,meta:{...Pr.meta,notes:Pr.open.length?'Open points: '+Pr.open.join(' / '):''}});
+ const okSet=new Set(Pr.okOnly),folSet=new Set();Pr.only.forEach(g=>g.steps.forEach(n=>folSet.add(n)));
+ const nums=Object.keys(Pr.steps).map(Number).sort((a,b)=>a-b).filter(n=>!okSet.has(n));
+ const outsAt=n=>Pr.outs.filter(o=>o.n===n);
+ const mkP=(o,n)=>{const lab=o.label.toLowerCase(),t=Pr.tk.find(x=>x.n===n&&x.label===lab);return P({label:o.label,words:o.words,template:o.email,text:o.email?Pr.replies[o.email]||'':'',donow:Pr.dn[lab]||'',ticket:t?t.t:''})};
+ // leading steps without outcomes stay steps; the rest become one check group
+ const lead=[];let i=0;while(i<nums.length&&!outsAt(nums[i]).length&&!Pr.qs[nums[i]]&&!folSet.has(nums[i])){lead.push(nums[i]);i++}
+ const grp=M.group({name:'Review',checks:[]});const byNum={};
+ nums.slice(i).forEach(n=>{const st=Pr.steps[n];const c=C({name:st.name,detail:st.detail||Pr.qs[n]||'',problems:outsAt(n).map(o=>mkP(o,n))});byNum[n]=c});
+ nums.slice(i).forEach(n=>{if(folSet.has(n)){const g=Pr.only.find(x=>x.steps.includes(n));let host=null;Object.values(byNum).forEach(c=>c.problems.forEach(p=>{if(!host&&p.label.toLowerCase()===g.label.toLowerCase())host=p}));if(host){host.follow.push(byNum[n]);return}}grp.checks.push(byNum[n])});
+ grp.pass=M.end({tone:'ok',action:Pr.okOnly.map(n=>Pr.steps[n]?Pr.steps[n].name:'').filter(Boolean).join('; '),template:Pr.def&&Pr.def!=='-'?Pr.def:'',text:Pr.replies[Pr.def]||'',ticket:Pr.okTicket||''});
+ let tail=grp.checks.length?grp:null;
+ for(let j=lead.length-1;j>=0;j--){const st=Pr.steps[lead[j]];tail=M.step({name:st.name,detail:st.detail,next:tail})}
+ s.root=tail||M.step({name:'Find the member in back office'});
+ R.push((lead.length?'Step '+lead.join(', ')+' stayed in Find; ':'')+(grp.checks.length?'the other steps became one check group in Review (any order).':'no checks were found.'));
+ if(Pr.okOnly.length)R.push('Step '+Pr.okOnly.join(', ')+' (only when all OK) is now the All pass action.');
+ if(folSet.size)R.push('Steps '+[...folSet].join(', ')+' only ran for one problem, so they are now follow-up checks.');
+ const stops=Pr.outs.filter(o=>/^(stop|end)/i.test(o.then));const stopL=[...new Set(stops.map(o=>o.label).filter(l=>!/^other$/i.test(l)))];if(stopL.length)R.push(stopL.map(l=>'"'+l+'"').join(', ')+' ended the case. If that is a path, make it a Find question.');
+ const qs=Object.keys(Pr.qs).length;if(qs)R.push('Questions became check details.');
  return {s,R}}
-function from40(o){if(!o||!Array.isArray(o.checks))return null;const s=base();Object.assign(s,{title:o.title||'SOP',tags:o.tags||'',when:o.when||'',applies:o.applies||'',topic:o.topic||'',confluence:o.confluence||'',status:o.status||'Draft',links:o.links||[],watch:o.watch||[],emails:o.emails||{},meta:o.meta||s.meta});
- const conv=(a,P)=>P({label:a.label||'',words:a.words||'',donow:a.donow||'',ticket:a.ticket||'',email:a.email||'',end:a.then&&a.then.t==='end'});
- o.checks.forEach((c,i)=>{const real=c.answers.filter(a=>!a.ok&&!a.other);if(i===0){s.find.push(mkQ({name:c.name,question:c.question,detail:c.detail,answers:[mkAns({label:(c.answers.find(a=>a.ok)||{}).label||'Yes',ok:true}),...real.map(a=>conv(a,mkAns))]}));return}
-  let g=s.review[0];if(!g){g=mkGroup({name:'Review'});s.review.push(g)}g.checks.push(mkCheck({name:c.name,detail:c.detail,question:c.question,problems:real.map(a=>conv(a,mkProb))}))});
- const ok=o.allok||{};s.act.pass={action:ok.action||'',email:ok.email||'',body:(o.emails||{})[ok.email]||'',ticket:ok.ticket||''};s.title=s.title+(/\(4\.0\)$/.test(s.title)?'':' (from 4.0)');return s}
 
 /* ---------- dialogs ---------- */
 let dlg=null;function closeDlg(){if(dlg){dlg.remove();dlg=null}}
-function openDlg(html,onMount,wide){closeDlg();dlg=document.createElement('div');dlg.className='scrim';dlg.innerHTML=`<div class="dlg${wide===false?'':' wide'}" role="dialog" aria-modal="true">${html}</div>`;dlg.addEventListener('click',e=>{if(e.target===dlg||e.target.closest('[data-close]'))closeDlg()});document.body.appendChild(dlg);onMount&&onMount(dlg)}
-function sopsDlg(q=''){const L=S.filter(x=>x.title.toLowerCase().includes(q.toLowerCase()));openDlg(`<h2>Your SOPs <button class="btn" data-close>Close</button></h2>
- <input class="in" id="sq" placeholder="Search SOPs" value="${esc(q)}" aria-label="Search SOPs">
+function openDlg(html,onMount,wide){closeDlg();dlg=document.createElement('div');dlg.className='scrim';dlg.innerHTML=`<div class="dlg${wide?' wide':''}" role="dialog" aria-modal="true">${html}</div>`;dlg.addEventListener('click',e=>{if(e.target===dlg||e.target.closest('[data-close]'))closeDlg()});document.body.appendChild(dlg);onMount&&onMount(dlg)}
+function sopsDlg(q=''){const L=S.filter(x=>x.title.toLowerCase().includes(q.toLowerCase()));openDlg(`<h2>Your SOPs<button class="btn sec sm" data-close>Close</button></h2><input class="in" id="sq" placeholder="Search SOPs" value="${esc(q)}" aria-label="Search SOPs">
  <div class="list">${L.map(x=>`<div class="li ${x.id===cur?'on':''}" data-open="${x.id}"><span class="t">${esc(x.title)}</span><span class="s">${esc(x.status)}</span></div>`).join('')||'<div class="muted">No SOP matches.</div>'}</div>
- <div class="acts"><button class="btn pri" id="nNew">+ New SOP</button><button class="btn" id="nImp">Import a .md file</button><button class="btn" id="nEx">Add the example</button></div>
- <div class="muted" style="margin-top:10px">Import reads P2A SOP files, older Builder files and dictation files.</div>`,d=>{
+ <div class="acts"><button class="btn" id="nNew">+ New SOP</button><button class="btn sec" id="nImp">Import a .md file</button><button class="btn sec" id="nEx">Add the example</button></div>`,d=>{
  const sq=d.querySelector('#sq');sq.focus();sq.setSelectionRange(q.length,q.length);sq.oninput=()=>sopsDlg(sq.value);
- d.querySelectorAll('[data-open]').forEach(x=>x.onclick=()=>{cur=x.dataset.open;selId=null;lastSnap=JSON.stringify(sop());store.set('cur',cur);closeDlg();render()});
- const add=b=>{S.unshift(b);cur=b.id;selId=null;lastSnap=JSON.stringify(b);store.set('sops',S);store.set('cur',cur);tab='map';closeDlg();render()};
- d.querySelector('#nNew').onclick=()=>{add(blank());setTimeout(()=>{$('#ttl').focus();$('#ttl').select()},30)};
- d.querySelector('#nImp').onclick=()=>$('#file').click();d.querySelector('#nEx').onclick=()=>add(example())},false)}
-$('#bSops').onclick=()=>sopsDlg();
+ d.querySelectorAll('[data-open]').forEach(x=>x.onclick=()=>{cur=x.dataset.open;selId=null;lastSnap=JSON.stringify(sop());store.set('cur',cur);closeDlg();render();fitZoom()});
+ d.querySelector('#nNew').onclick=()=>addSop(blank(),true);d.querySelector('#nImp').onclick=()=>$('#file').click();d.querySelector('#nEx').onclick=()=>addSop(example())})}
 $('#file').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;let txt='';try{txt=await f.text()}catch(x){toast('Could not read that file');return}
- const {s,R}=fromMd(txt);S.unshift(s);cur=s.id;selId=null;lastSnap=JSON.stringify(s);store.set('sops',S);store.set('cur',cur);tab='map';render();
- openDlg(`<h2>Imported: ${esc(s.title)} <button class="btn" data-close>OK</button></h2>${R.length?`<div class="muted">What changed on the way in:</div><ul class="report">${R.map(r=>`<li>${esc(r)}</li>`).join('')}</ul>`:'<div class="good">Nothing needed changing.</div>'}<div class="muted">The amber dots show what is left to fill.</div>`,null,false)};
+ const {s,R}=fromMd(txt);addSop(s);openDlg(`<h2>Imported<button class="btn sec sm" data-close>OK</button></h2><div style="font-weight:650;color:var(--title)">${esc(s.title)}</div>${R.length?`<ul class="helpul">${R.map(r=>`<li>${esc(r)}</li>`).join('')}</ul>`:'<div class="good">Read back exactly as it was built.</div>'}<div class="muted" style="margin-top:8px">The “to finish” button shows what is left to fill.</div>`)};
 function dlDlg(){const s=sop(),T=todos(),fn='SOP-'+(s.title.replace(/[^\w\- ]+/g,'').trim().replace(/\s+/g,'-').slice(0,60)||'sop')+'.md';
- openDlg(`<h2>Download SOP file <button class="btn" data-close>Close</button></h2>
- <div class="muted">A Markdown file in the P2A format. An admin imports it in P2A (Architecture › SOPs › Import); it lands In review.</div>
- ${T.length?`<div class="todos"><button disabled>⚑ ${T.length} thing${T.length>1?'s':''} left to fill. You can still download.</button></div>`:'<div class="good">✓ Every box is filled in.</div>'}
- <div class="row2">${'<div>'+F('meta','name',s.meta.name,'Your name','')+'</div><div>'+F('meta','role',s.meta.role,'Your role','')+'</div>'}</div>
+ openDlg(`<h2>Download SOP file<button class="btn sec sm" data-close>Close</button></h2><div class="muted">A Markdown file in the P2A format. An admin imports it in P2A (Architecture › SOPs › Import); it lands In review. The Builder can open it again exactly as built.</div>
+ ${T.length?`<div class="todos"><button disabled>${T.length} thing${T.length>1?'s':''} left to fill. You can still download.</button></div>`:'<div class="good">✓ Every box is filled in.</div>'}
+ <div class="row2"><div>${F('meta','name',s.meta.name,'Your name','')}</div><div>${F('meta','role',s.meta.role,'Your role','')}</div></div>
  <details style="margin-top:10px"><summary style="cursor:pointer;font-weight:600">See the file</summary><pre class="out" id="mdout">${esc(toMd(s))}</pre></details>
- <div class="acts"><button class="btn pri" id="dDl">Download ${esc(fn)}</button><button class="btn" id="dCp">Copy as text</button></div>`,d=>{
+ <div class="acts"><button class="btn" id="dDl">Download ${esc(fn)}</button><button class="btn sec" id="dCp">Copy as text</button></div>`,d=>{
  d.querySelector('#dDl').onclick=async()=>{const txt=toMd(sop());let dd=null;try{dd=window.claude&&window.claude.use?await window.claude.use('downloads'):null}catch(x){dd=null}
   if(dd){try{const r=await dd.save({filename:fn,data:txt});if(r&&r.status==='saved')toast('Saved '+fn)}catch(x){if(x&&x.code!=='cancelled'&&x.code!=='declined')toast('Could not save. Use Copy as text.')}return}
   try{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([txt],{type:'text/markdown'}));a.download=fn;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500);toast('Downloading '+fn)}catch(x){toast('Download is not available here. Use Copy as text.')}};
- d.querySelector('#dCp').onclick=()=>copy(toMd(sop()));
- d.querySelectorAll('[data-id]').forEach(i=>i.addEventListener('input',()=>{d.querySelector('#mdout').textContent=toMd(sop())}))},false)}
-$('#bDl').onclick=dlDlg;
-$('#bHow').onclick=()=>openDlg(`<h2>How to build an SOP <button class="btn" data-close>Close</button></h2><div class="how">
- <p class="muted">Check, find the problem, act. You draw it in four lanes.</p><ol>
- <li><b>Title and When to use:</b> the member’s issue in one line.</li>
- <li><b>Find:</b> what must happen first, in order. Usually “Find the member” and one question that decides if this SOP fits. Give each answer chip its lines, or mark it ■ ends the case.</li>
- <li><b>Review:</b> add a check group and type the checks, Enter after each. They can be done in any order.</li>
- <li><b>Problems:</b> click a check and type its problems, comma between. Pass is always there. Click a chip to give it a reply line, a ticket line and a Do now. A problem can add a follow-up check.</li>
- <li><b>Act:</b> what the agent does when all pass, and when there is any problem.</li>
- <li><b>Finish:</b> nothing to build. One email and one ticket are made from what was found. Write the email’s opening and closing once.</li>
- <li><b>Try a case:</b> tap what you would find and read the email and ticket.</li>
- <li><b>Download</b> the file and send it to an admin to import into P2A.</li></ol>
- <p class="muted">Amber dots mark what is left to fill. Undo (Ctrl+Z) takes back the last change. Everything is saved in this browser only.</p></div>`,null,false);
-$('#bTheme').onclick=()=>{const r=document.documentElement,now=r.dataset.theme||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'),n=now==='dark'?'light':'dark';r.dataset.theme=n;store.set('theme',n)};
+ d.querySelector('#dCp').onclick=()=>copy(toMd(sop()));d.querySelectorAll('[data-id]').forEach(i=>i.addEventListener('input',()=>{d.querySelector('#mdout').textContent=toMd(sop())}))})}
+function howDlg(){openDlg(`<h2>How to build an SOP<button class="btn sec sm" data-close>Close</button></h2><div class="how"><p class="muted">Check, find the problem, act. You draw it as a tree across four bands.</p><ol>
+ <li><b>SOP and When to use:</b> the member’s issue in one line.</li>
+ <li><b>Find:</b> start with “Find the member”. Under each box a dashed box asks what comes next: Step, Question, Checks, End or Continue at.</li>
+ <li><b>Questions</b> have one answer each time (Student, Visitor…). Each answer gets its own path.</li>
+ <li><b>Checks</b> make a Review group: type checks, Enter after each. Click a check to type its problems, comma between. Give each problem a template title, a Copilot point and a ticket line.</li>
+ <li><b>Ends</b> are Act (what you do) + Finish (template and ticket). A group always has two: All pass and Any problem.</li>
+ <li><b>Continue at</b> joins a path back to a box that already exists.</li>
+ <li><b>Try a case</b> walks a path and builds the Copilot prompt and ticket. Paste the prompt into Copilot to check the full email.</li>
+ <li><b>Download</b> from the menu and send it to an admin to import into P2A.</li></ol>
+ <p class="muted">⇣ / ⇢ switches the tree direction. Undo (Ctrl+Z) takes back the last change. Everything is saved in this browser only.</p></div>`)}
 {const th=store.get('theme',null);if(th)document.documentElement.dataset.theme=th}
 let tT=null;function toast(m){let t=$('.toast');if(!t){t=document.createElement('div');t.className='toast';t.setAttribute('role','status');document.body.appendChild(t)}t.textContent=m;clearTimeout(tT);tT=setTimeout(()=>t.remove(),2600)}
-
-window.__sb41={toMd,fromMd,from40,buildCase,todos,sop:()=>sop(),S:()=>S,select};
-render();if(migrated)toast(migrated+' SOP'+(migrated>1?'s':'')+' from 4.0 brought over');
+// template title suggestions
+const dl=document.createElement('datalist');dl.id='tpls';document.body.appendChild(dl);setInterval(()=>{const v=tplTitles().map(t=>`<option value="${esc(t)}">`).join('');if(dl.innerHTML!==v)dl.innerHTML=v},1500);
+dl.innerHTML=tplTitles().map(t=>`<option value="${esc(t)}">`).join('');
+window.__sb42={toMd,fromMd,runCase,todos,layout,sop:()=>sop(),S:()=>S,select,example};
+function fitZoom(){const cv=$('#cv');if(!cv)return;const Lt=layout(sop());zoom=Math.round(Math.max(window.innerWidth<700?.5:.35,Math.min(1,(cv.clientWidth-8)/Lt.W))*100)/100;store.set('zoom',zoom);render()}
+render();if(store.get('zoom',null)===null||store.get('fitv',0)!==1){store.set('fitv',1);fitZoom()}
 })();
 </script>
 </body></html>
